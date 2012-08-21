@@ -69,7 +69,7 @@ namespace Braincase.GanttChart
             _mChart.TaskMouseOver += new EventHandler<TaskMouseEventArgs>(_mChart_TaskMouseOver);
             _mChart.TaskMouseOut += new EventHandler<TaskMouseEventArgs>(_mChart_TaskMouseOut);
             _mChart.TaskSelected += new EventHandler<TaskMouseEventArgs>(_mChart_TaskSelected);
-            //_mChart.PaintOverlay += painter.ChartOverlayPainter;
+            _mChart.PaintOverlay += painter.ChartOverlayPainter;
             _mChart.AllowTaskDragDrop = true;
 
             // Set Time information
@@ -85,7 +85,7 @@ namespace Braincase.GanttChart
 
         void _mChart_TaskSelected(object sender, TaskMouseEventArgs e)
         {
-            _mPropertyGrid.SelectedObject = _mChart.SelectedTask;
+            _mPropertyGrid.SelectedObjects = _mChart.SelectedTasks.ToArray();
         }
 
         void _mChart_TaskMouseOut(object sender, TaskMouseEventArgs e)
@@ -98,9 +98,17 @@ namespace Braincase.GanttChart
             lblStatus.Text = string.Format("{0} to {1}", _mProject.GetDateTime(e.Task.Start).ToLongDateString(), _mProject.GetDateTime(e.Task.End).ToLongDateString());
         }
 
-        private void _mPropertyGrid_SelectedGridItemChanged(object sender, SelectedGridItemChangedEventArgs e)
+        #region Main Menu
+
+        private void _mDateTimePicker_ValueChanged(object sender, EventArgs e)
         {
+            _mProject.Start = _mDateTimePicker.Value;
             _mChart.Invalidate();
+        }
+
+        private void mnuFileExit_Click(object sender, EventArgs e)
+        {
+            this.Close();
         }
 
         private void mnuFilePrint_Click(object sender, EventArgs e)
@@ -114,22 +122,6 @@ namespace Braincase.GanttChart
                     dialog.Document.Print();
                 }
             }
-        }
-
-        void doc_PrintPage(object sender, System.Drawing.Printing.PrintPageEventArgs e)
-        {
-            _mChart.Draw(e.Graphics);
-        }
-
-        private void mnuFileExit_Click(object sender, EventArgs e)
-        {
-            this.Close();
-        }
-
-        private void _mDateTimePicker_ValueChanged(object sender, EventArgs e)
-        {
-            _mProject.Start = _mDateTimePicker.Value;
-            _mChart.Invalidate();
         }
 
         private void mnuViewDaysDayOfWeek_Click(object sender, EventArgs e)
@@ -175,6 +167,28 @@ namespace Braincase.GanttChart
                 System.Diagnostics.Process.Start("http://www.jakesee.com/net-c-winforms-gantt-chart-control/");
             }
         }
+
+        private void mnuViewRelationships_Click(object sender, EventArgs e)
+        {
+            _mChart.ShowRelationships = mnuViewRelationships.Checked = !mnuViewRelationships.Checked;
+            _mChart.Invalidate();
+        }
+
+        #endregion Main Menu
+
+        #region Other UI
+
+        private void _mPropertyGrid_SelectedGridItemChanged(object sender, SelectedGridItemChangedEventArgs e)
+        {
+            _mChart.Invalidate();
+        }
+
+        void doc_PrintPage(object sender, System.Drawing.Printing.PrintPageEventArgs e)
+        {
+            _mChart.Draw(e.Graphics);
+        }
+
+        #endregion Other UI   
     }
 
     public class OverlayPainter
@@ -183,27 +197,19 @@ namespace Braincase.GanttChart
         {
             var g = e.Graphics;
             var chart = e.Chart;
-            /*if (DraggedRect != Rectangle.Empty)
-                g.FillRectangle(Brushes.SlateGray, DraggedRect);
-
-            if (Line != int.MinValue)
-            {
-                float y = Line * e.Chart.BarSpacing - (chart.BarSpacing - chart.BarHeight) / 2.0f;
-                g.DrawLine(Pens.CornflowerBlue, new PointF(0, y), new PointF(chart.Width, y));
-            }*/
-
-            int line = 12;
-            g.DrawString("Left Click - Select task and display properties in PropertyGrid", chart.Font, chart.FontColor, new PointF(10, chart.Height - line-- * chart.BarSpacing / 2));
-            g.DrawString("Left Mouse Drag - Change task starting point", chart.Font, chart.FontColor, new PointF(10, chart.Height - line-- * chart.BarSpacing / 2));
-            g.DrawString("Right Mouse Drag - Change task duration", chart.Font, chart.FontColor, new PointF(10, chart.Height - line-- * chart.BarSpacing / 2));
-            g.DrawString("Middle Mouse Drag - Change task complete percentage", chart.Font, chart.FontColor, new PointF(10, chart.Height - line-- * chart.BarSpacing / 2));
-            g.DrawString("Left Doubleclick - Toggle collaspe on task group", chart.Font, chart.FontColor, new PointF(10, chart.Height - line-- * chart.BarSpacing / 2));
-            g.DrawString("Left Mouse Dragdrop onto another task - Group drag task under drop task", chart.Font, chart.FontColor, new PointF(10, chart.Height - line-- * chart.BarSpacing / 2));
-            g.DrawString("SHIFT + Left Mouse Dragdrop onto another task - Make drop task precedent of drag task", chart.Font, chart.FontColor, new PointF(10, chart.Height - line-- * chart.BarSpacing / 2));
-            g.DrawString("ALT + Left Dragdrop onto another task - Ungroup drag task from drop task / Remove drop task from drag task precedent list", chart.Font, chart.FontColor, new PointF(10, chart.Height - line-- * chart.BarSpacing / 2));
-            g.DrawString("SHIFT + Left Mouse Dragdrop - Order tasks", chart.Font, chart.FontColor, new PointF(10, chart.Height - line-- * chart.BarSpacing / 2));
-            g.DrawString("SHIFT + Middle Click - Create new task", chart.Font, chart.FontColor, new PointF(10, chart.Height - line-- * chart.BarSpacing / 2));
-            g.DrawString("ALT + Middle Click - Delete task", chart.Font, chart.FontColor, new PointF(10, chart.Height - line-- * chart.BarSpacing / 2));
+            int row = 12;
+            var color = chart.HeaderFormat.Color;
+            g.DrawString("Left Click - Select task and display properties in PropertyGrid", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
+            g.DrawString("Left Mouse Drag - Change task starting point", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
+            g.DrawString("Right Mouse Drag - Change task duration", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
+            g.DrawString("Middle Mouse Drag - Change task complete percentage", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
+            g.DrawString("Left Doubleclick - Toggle collaspe on task group", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
+            g.DrawString("Left Mouse Dragdrop onto another task - Group drag task under drop task", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
+            g.DrawString("SHIFT + Left Mouse Dragdrop onto another task - Make drop task precedent of drag task", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
+            g.DrawString("ALT + Left Dragdrop onto another task - Ungroup drag task from drop task / Remove drop task from drag task precedent list", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
+            g.DrawString("SHIFT + Left Mouse Dragdrop - Order tasks", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
+            g.DrawString("SHIFT + Middle Click - Create new task", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
+            g.DrawString("ALT + Middle Click - Delete task", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
         }
 
         public void Clear()

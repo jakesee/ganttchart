@@ -9,10 +9,7 @@ using System.Windows.Forms;
 
 namespace Braincase.GanttChart
 {
-    public enum TimeScaleDisplay
-    {
-        DayOfWeek, DayOfMonth, WeekOfYear
-    }
+    
 
     public partial class Chart : UserControl
     {
@@ -22,16 +19,33 @@ namespace Braincase.GanttChart
         public Chart()
         {
             // Factory values
+            HeaderHeight = 32;
             BarSpacing = 26;
             BarHeight = 20;
             BarWidth = 20;
-            FontColor = Brushes.Black;
-            TaskBorderColor = Pens.Maroon;
-            TaskBackColor = Brushes.MediumSlateBlue;
-            TaskForeColor = Brushes.YellowGreen;
-            GridLineColor = Pens.LightGray;
             TimeScaleDisplay = GanttChart.TimeScaleDisplay.DayOfWeek;
             AllowTaskDragDrop = true;
+            ShowRelationships = true;
+
+            // Formatting
+            TaskFormat = new GanttChart.TaskFormat() {
+                Color = Brushes.Black,
+                Border = Pens.Maroon,
+                BackFill = Brushes.MediumSlateBlue,
+                ForeFill = Brushes.YellowGreen
+            };
+            CriticalTaskFormat = new GanttChart.TaskFormat() {
+                Color = Brushes.Black,
+                Border = Pens.Maroon,
+                BackFill = Brushes.Crimson,
+                ForeFill = Brushes.YellowGreen
+            };
+            HeaderFormat = new GanttChart.HeaderFormat() {
+                Color = Brushes.Black,
+                Border = new Pen(SystemColors.ActiveBorder),
+                GradientLight = SystemColors.ButtonHighlight,
+                GradientDark = SystemColors.ButtonFace
+            };
 
             // Designer values
             InitializeComponent();
@@ -74,6 +88,12 @@ namespace Braincase.GanttChart
         }
 
         /// <summary>
+        /// Get or set header pixel height
+        /// </summary>
+        [DefaultValue(20)]
+        public int HeaderHeight { get; set; }
+
+        /// <summary>
         /// Get or set pixel distance from top of each Task to the next
         /// </summary>
         [DefaultValue(26)]
@@ -92,35 +112,28 @@ namespace Braincase.GanttChart
         public int BarWidth { get; set; }
 
         /// <summary>
-        /// Get or set Task outline color
+        /// Format for Tasks
         /// </summary>
-        public Pen TaskBorderColor { get; set; }
+        public TaskFormat TaskFormat { get; set;  }
 
         /// <summary>
-        /// Get or set the grid line pen color
+        /// Format for critical Tasks
         /// </summary>
-        public Pen GridLineColor { get; set; }
+        public TaskFormat CriticalTaskFormat { get; set; }
 
         /// <summary>
-        /// Get or set Task background color
+        /// Format for headers
         /// </summary>
-        public Brush TaskBackColor { get; set; }
-
-        /// <summary>
-        /// Get or set Task foreground color
-        /// </summary>
-        public Brush TaskForeColor { get; set; }
-
-        /// <summary>
-        /// Get or set Task font color
-        /// </summary>
-        public Brush FontColor { get; set; }
+        public HeaderFormat HeaderFormat { get; set; }
 
         /// <summary>
         /// Get or set whether dragging of Tasks is allowed. Set to false when not dragging to skip drag(drop) tracking.
         /// </summary>
         [DefaultValue(true)]
         public bool AllowTaskDragDrop { get; set; }
+
+        [DefaultValue(true)]
+        public bool ShowRelationships { get; set; }
 
         /// <summary>
         /// Get or set the time scale display format
@@ -181,20 +194,20 @@ namespace Braincase.GanttChart
         /// <summary>
         /// Occurs before the header gets painted
         /// </summary>
-        public event EventHandler<ChartPaintEventArgs> PaintHeader = null;
+        public event EventHandler<HeaderPaintEventArgs> PaintHeader = null;
 
         /// <summary>
         /// Get the line number of the specified task
         /// </summary>
         /// <param name="task"></param>
-        /// <param name="line"></param>
+        /// <param name="row"></param>
         /// <returns></returns>
-        public bool TryGetLine(Task task, out int line)
+        public bool TryGetLine(Task task, out int row)
         {
-            line = 0;
+            row = 0;
             if (_mTaskRects.ContainsKey(task))
             {
-                line = _mTaskRects[task].Top / this.BarSpacing;
+                row = _ClientCoordToRow(_mTaskRects[task].Top);
                 return true;
             }
             return false;
@@ -203,15 +216,15 @@ namespace Braincase.GanttChart
         /// <summary>
         /// Get the task at the specified line number
         /// </summary>
-        /// <param name="line"></param>
+        /// <param name="row"></param>
         /// <param name="task"></param>
         /// <returns></returns>
-        public bool TryGetTask(int line, out Task task)
+        public bool TryGetTask(int row, out Task task)
         {
             task = null;
-            if (line > 0 && line < _mProject.Tasks.Count())
+            if (row > 0 && row < _mProject.Tasks.Count())
             {
-                task = _mProject.Tasks.ElementAtOrDefault(line - 1);
+                task = _mProject.Tasks.ElementAtOrDefault(row - 1);
                 return true;
             }
             return false;
@@ -236,16 +249,16 @@ namespace Braincase.GanttChart
         {
             _mTaskRects.Clear(); // clear bar areas
             _Resize(); // resize drawing area
-            int line = 0; // starting line;
-            line = _DrawHeader(graphics, line);
+            _DrawHeader(graphics);
 
+            int row = 0;
             if (_mProject != null)
             {
                 // draw bar charts
-                this._DrawTasks(graphics, this.VisibleTasks, line);
+                row = this._DrawTasks(graphics, this.VisibleTasks, 0);
 
                 // draw predecessor arrows
-                this._DrawPredecessorLines(graphics);
+                if (this.ShowRelationships) this._DrawPredecessorLines(graphics);
             }
 
             // draw "Now" line
@@ -255,7 +268,7 @@ namespace Braincase.GanttChart
                 graphics.DrawLine(Pens.Gray, new PointF() { X = xf, Y = h }, new PointF() { X = xf, Y = h + 2.5f });
 
             // Paint overlays
-            OnPaintOverlay(new ChartPaintEventArgs(this, line, graphics, this.ClientRectangle, this.Font, this.FontColor, this.TaskBorderColor, this.GridLineColor, this.TaskBackColor, this.TaskForeColor));
+            OnPaintOverlay(new ChartPaintEventArgs(graphics, this.ClientRectangle, this));
 
             // flush
             graphics.Flush();
@@ -291,9 +304,8 @@ namespace Braincase.GanttChart
                 Task target = task;
                 if (target == _mDragSource) target = null;
                 Rectangle targetRect = target == null ? Rectangle.Empty : _mTaskRects[target];
-                int line = e.Location.Y / BarSpacing;
-                if (line < 1) line = 0;
-                OnTaskMouseDrag(new TaskDragDropEventArgs(_mDragStartLocation, _mDragLastLocation, _mDragSource, _mTaskRects[_mDragSource], target, targetRect, line, e.Button, e.Clicks, e.X, e.Y, e.Delta));
+                int row = _ClientCoordToRow(e.Location.Y);
+                OnTaskMouseDrag(new TaskDragDropEventArgs(_mDragStartLocation, _mDragLastLocation, _mDragSource, _mTaskRects[_mDragSource], target, targetRect, row, e.Button, e.Clicks, e.X, e.Y, e.Delta));
                 _mDragLastLocation = e.Location;
             }
 
@@ -338,9 +350,8 @@ namespace Braincase.GanttChart
                 var target = _GetTaskUnderMouse(e);
                 if (target == _mDragSource) target = null;
                 var targetRect = target == null ? Rectangle.Empty : _mTaskRects[target];
-                int line = e.Location.Y / BarSpacing;
-                if (line < 1) line = 0;
-                OnTaskMouseDrop(new TaskDragDropEventArgs(_mDragStartLocation, _mDragLastLocation, _mDragSource, _mTaskRects[_mDragSource], target, targetRect, line, e.Button, e.Clicks, e.X, e.Y, e.Delta));
+                int row = _ClientCoordToRow(e.Location.Y);
+                OnTaskMouseDrop(new TaskDragDropEventArgs(_mDragStartLocation, _mDragLastLocation, _mDragSource, _mTaskRects[_mDragSource], target, targetRect, row, e.Button, e.Clicks, e.X, e.Y, e.Delta));
                 _mDragSource = null;
                 _mDragLastLocation = Point.Empty;
                 _mDragStartLocation = Point.Empty;
@@ -404,7 +415,7 @@ namespace Braincase.GanttChart
                     if (Control.ModifierKeys.HasFlag(Keys.Shift))
                     {
                         // insertion line
-                        _mPainter.Line = e.Line;
+                        _mPainter.Row = e.Row;
                     }
                     else
                     {
@@ -416,7 +427,7 @@ namespace Braincase.GanttChart
                 else // drop targetting (subtask / predecessor)
                 {
                     _mPainter.DraggedRect = e.TargetRect;
-                    _mPainter.Line = int.MinValue;
+                    _mPainter.Row = int.MinValue;
                 }
             }
             this.Invalidate();
@@ -439,7 +450,7 @@ namespace Braincase.GanttChart
                         // insert
                         int from;
                         if (this.TryGetLine(e.Source, out from))
-                            _mProject.Move(e.Source, e.Line - from);
+                            _mProject.Move(e.Source, e.Row - from);
                     }
                     else
                     {
@@ -501,7 +512,12 @@ namespace Braincase.GanttChart
             else if (e.Button == System.Windows.Forms.MouseButtons.Middle)
             {
                 if (ModifierKeys.HasFlag(Keys.Shift))
-                    _mProject.CreateTask();
+                {
+                    var newtask = _mProject.CreateTask();
+                    newtask.Start = e.Task.Start;
+                    newtask.Duration = 5;
+                    _mProject.Move(newtask, _mProject.IndexOf(e.Task) + 1 - _mProject.IndexOf(newtask));
+                }
                 else if (Control.ModifierKeys.HasFlag(Keys.Alt))
                     _mProject.Remove(e.Task);
             }
@@ -540,8 +556,7 @@ namespace Braincase.GanttChart
             if (this.PaintOverlay != null)
                 PaintOverlay(this, e);
 
-            if(!e.Handled)
-                _mPainter.ChartOverlayPainter(this, e);
+            _mPainter.ChartOverlayPainter(this, e);
         }
         #endregion Chart Events
 
@@ -558,9 +573,9 @@ namespace Braincase.GanttChart
                     g.DrawRectangle(Pens.Red, DraggedRect);
                 }
 
-                if (Line != int.MinValue)
+                if (Row != int.MinValue)
                 {
-                    float y = Line * e.Chart.BarSpacing - (chart.BarSpacing - chart.BarHeight) / 2.0f;
+                    float y = e.Chart._RowToClientCoord(Row) - (e.Chart.BarSpacing - e.Chart.BarHeight) / 2.0f;
                     g.DrawLine(Pens.CornflowerBlue, new PointF(0, y), new PointF(chart.Width, y));
                 }
             }
@@ -568,16 +583,41 @@ namespace Braincase.GanttChart
             public void Clear()
             {
                 DraggedRect = Rectangle.Empty;
-                Line = int.MinValue;
+                Row = int.MinValue;
             }
 
             public Rectangle DraggedRect = Rectangle.Empty;
 
-            public int Line = int.MinValue;
+            public int Row = int.MinValue;
         }
         #endregion
 
         #region Private Helper Methods
+
+        /// <summary>
+        /// Convert client Y coordinate to zero based row number
+        /// </summary>
+        /// <param name="y"></param>
+        /// <returns></returns>
+        private int _ClientCoordToRow(float y)
+        {
+           var row = (int)((y - this.BarSpacing - this.HeaderHeight) / this.BarSpacing);
+           return row < 0 ? 0 : row;
+        }
+        /// <summary>
+        /// Convert zero based row number to client Y coordinates
+        /// </summary>
+        /// <param name="row"></param>
+        /// <returns></returns>
+        private float _RowToClientCoord(int row)
+        {
+            return row * this.BarSpacing + this.BarSpacing + this.HeaderHeight;
+        }
+
+        private Rectangle _RowToTaskRect(int row, Task task)
+        {
+            return new Rectangle(task.Start * this.BarWidth, (int)_RowToClientCoord(row), task.Duration * this.BarWidth, this.BarHeight);
+        }
 
         private void _DrawMarker(Graphics graphics, float offsetX, float offsetY)
         {
@@ -586,7 +626,7 @@ namespace Braincase.GanttChart
             graphics.DrawPolygon(new Pen(SystemColors.ButtonShadow), marker);
         }
 
-        private int _DrawHeaderWeek(Graphics graphics, ChartPaintEventArgs e)
+        private void _DrawHeaderWeek(Graphics graphics, HeaderPaintEventArgs e)
         {
             var max = this.Width / this.BarWidth;
             var start = _mProject.Start.AddDays(-(int)_mProject.Start.DayOfWeek);
@@ -597,20 +637,20 @@ namespace Braincase.GanttChart
             for (int i = 0; i < max; i++)
             {
                 current = start.AddDays(i * 7);
-                var h2rect = new Rectangle(i * this.BarWidth - this.BarWidth / 2, (e.Line + 1) * this.BarSpacing, this.BarWidth, this.BarHeight);
+                var h2rect = new Rectangle(i * this.BarWidth - this.BarWidth / 2, this.HeaderHeight, this.BarWidth, this.BarHeight);
                 var column = new Rectangle(h2rect.Left, h2rect.Bottom - 3, this.BarWidth, this.Height);
                 if (TimeScaleDisplay == GanttChart.TimeScaleDisplay.DayOfMonth)
                 {
                     var h2 = current.Day.ToString();
                     var h2pos = _TextAlignCenterMiddle(graphics, h2rect, h2, e.Font);
-                    graphics.DrawString(h2, e.Font, e.FontColor, h2pos);
+                    graphics.DrawString(h2, e.Font, e.Format.Color, h2pos);
                     if (month != current.Month)
                     {
                         var h1 = current.ToString("MMM yy");
-                        var h1rect = new Rectangle(i * this.BarWidth - this.BarWidth / 2, 0, Enumerable.Range(1, DateTime.DaysInMonth(current.Year, current.Month)).Select(x => new DateTime(current.Year, current.Month, x)).Count(d => d.DayOfWeek == DayOfWeek.Sunday) * BarWidth, BarSpacing);
+                        var h1rect = new Rectangle(i * this.BarWidth - this.BarWidth / 2, 0, Enumerable.Range(1, DateTime.DaysInMonth(current.Year, current.Month)).Select(x => new DateTime(current.Year, current.Month, x)).Count(d => d.DayOfWeek == DayOfWeek.Sunday) * BarWidth, this.HeaderHeight);
                         var h1pos = _TextAlignCenterMiddle(graphics, h1rect, h1, e.Font);
-                        graphics.DrawString(h1, e.Font, e.FontColor, h1pos);
-                        graphics.DrawLine(new Pen(SystemColors.ActiveBorder), new PointF(i * this.BarWidth - this.BarWidth / 2, 0), new PointF(i * this.BarWidth - this.BarWidth / 2, BarSpacing));
+                        graphics.DrawString(h1, e.Font, e.Format.Color, h1pos);
+                        graphics.DrawLine(e.Format.Border, new PointF(h1rect.Left, h1rect.Top), new PointF(h1rect.Left, h1rect.Bottom));
                     }
                     month = current.Month;
                 }
@@ -618,105 +658,93 @@ namespace Braincase.GanttChart
                 {
                     var h2 = (zerobasedweek + 1).ToString();
                     var h2pos = _TextAlignCenterMiddle(graphics, h2rect, h2, e.Font);
-                    graphics.DrawString(h2, e.Font, e.FontColor, h2pos);
+                    graphics.DrawString(h2, e.Font, e.Format.Color, h2pos);
                     if (i % 4 == 0)
                     {
                         var h1 = current.ToShortDateString();
-                        var h1rect = new Rectangle(i * this.BarWidth - this.BarWidth / 2, 0, 4 * BarWidth, BarSpacing);
+                        var h1rect = new Rectangle(i * this.BarWidth - this.BarWidth / 2, 0, 4 * BarWidth, this.HeaderHeight);
                         var h1pos = _TextAlignLeftMiddle(graphics, h1rect, current.ToShortDateString(), e.Font, h2pos.X - h1rect.Left);
-                        graphics.DrawString(h1, e.Font, e.FontColor, h1pos);
-                        _DrawMarker(graphics, (h2rect.Left + h2rect.Right) / 2f, BarSpacing - 5f);
+                        graphics.DrawString(h1, e.Font, e.Format.Color, h1pos);
+                        _DrawMarker(graphics, (h2rect.Left + h2rect.Right) / 2f, this.HeaderHeight - 5f);
                         
                     }
                     zerobasedweek = ++zerobasedweek % 52;
                 }
-                graphics.DrawLine(new Pen(SystemColors.ActiveBorder), new Point(column.Left, column.Top), new Point(column.Left, column.Bottom));
+                graphics.DrawLine(e.Format.Border, new Point(column.Left, column.Top), new Point(column.Left, column.Bottom));
             }
-
-            return e.Line + 2;
         }
 
-        private int _DrawHeaderDay(Graphics graphics, ChartPaintEventArgs e)
+        private void _DrawHeaderDay(Graphics graphics, HeaderPaintEventArgs e)
         {
             var max = this.Width / this.BarWidth;
             DateTime current;
             for (int i = 0; i < max; i++)
             {
                 current = _mProject.Start.AddDays(i);
-                var h2rect = new Rectangle(i * this.BarWidth - this.BarWidth / 2, (e.Line + 1) * this.BarSpacing, this.BarWidth, this.BarHeight);
+                var h2rect = new Rectangle(i * this.BarWidth - this.BarWidth / 2, this.HeaderHeight, this.BarWidth, this.BarHeight);
                 var column = new Rectangle(h2rect.Left, h2rect.Bottom - 3, this.BarWidth, this.Height);
                 if (TimeScaleDisplay == GanttChart.TimeScaleDisplay.DayOfWeek)
                 {
                     var h2 = Chart.ShortDays[current.DayOfWeek];    
                     var h2pos = _TextAlignCenterMiddle(graphics, h2rect, h2, e.Font);
-                    graphics.DrawString(h2, e.Font, e.FontColor, h2pos);
+                    graphics.DrawString(h2, e.Font, e.Format.Color, h2pos);
                     if (current.DayOfWeek == DayOfWeek.Sunday || current.DayOfWeek == DayOfWeek.Saturday)
                     {
-                        var pattern = new System.Drawing.Drawing2D.HatchBrush(System.Drawing.Drawing2D.HatchStyle.Percent20, Color.Gray, Color.Transparent);
+                        var pattern = new System.Drawing.Drawing2D.HatchBrush(System.Drawing.Drawing2D.HatchStyle.Percent20, e.Format.Border.Color, Color.Transparent);
                         graphics.FillRectangle(pattern, h2rect);
                         graphics.FillRectangle(pattern, column);
                     }
                     if (current.DayOfWeek == DayOfWeek.Sunday)
                     {
-                        var h1rect = new Rectangle(i * this.BarWidth - this.BarWidth / 2, 0, 7 * BarWidth, BarSpacing);
+                        var h1rect = new Rectangle(i * this.BarWidth - this.BarWidth / 2, 0, 7 * BarWidth, this.HeaderHeight);
                         var h1pos = _TextAlignLeftMiddle(graphics, h1rect, current.ToShortDateString(), e.Font, h2pos.X - h1rect.Left);
-                        graphics.DrawString(current.ToShortDateString(), e.Font, e.FontColor, h1pos);
-                        _DrawMarker(graphics, (h2rect.Left + h2rect.Right) / 2f, BarSpacing - 5f);
+                        graphics.DrawString(current.ToShortDateString(), e.Font, e.Format.Color, h1pos);
+                        _DrawMarker(graphics, (h2rect.Left + h2rect.Right) / 2f, this.HeaderHeight - 5f);
                     }
                 }
                 else if (TimeScaleDisplay == GanttChart.TimeScaleDisplay.DayOfMonth)
                 {
                     var h2 = current.Day.ToString();
                     var h2pos = _TextAlignCenterMiddle(graphics, h2rect, h2, e.Font);
-                    graphics.DrawString(h2, e.Font, e.FontColor, h2pos);
+                    graphics.DrawString(h2, e.Font, e.Format.Color, h2pos);
                     if (current.Day == 1)
                     {
                         var text = current.ToString("MMMM");
-                        var h1rect = new Rectangle(i * this.BarWidth - this.BarWidth / 2, 0, DateTime.DaysInMonth(current.Year, current.Month) * BarWidth, BarSpacing);
+                        var h1rect = new Rectangle(i * this.BarWidth - this.BarWidth / 2, 0, DateTime.DaysInMonth(current.Year, current.Month) * BarWidth, this.HeaderHeight);
                         var h1pos = _TextAlignCenterMiddle(graphics, h1rect, text, e.Font);
-                        graphics.DrawString(current.ToString("MMMM"), e.Font, e.FontColor, h1pos);
-                        graphics.DrawLine(new Pen(SystemColors.ActiveBorder), new Point(h1rect.Left, h1rect.Top), new Point(h1rect.Left, h1rect.Bottom));
+                        graphics.DrawString(current.ToString("MMMM"), e.Font, e.Format.Color, h1pos);
+                        graphics.DrawLine(e.Format.Border, new Point(h1rect.Left, h1rect.Top), new Point(h1rect.Left, h1rect.Bottom));
                     }
                 }
-                graphics.DrawLine(new Pen(SystemColors.ActiveBorder), new Point(column.Left, column.Top), new Point(column.Left, column.Bottom));
+                graphics.DrawLine(e.Format.Border, new Point(column.Left, column.Top), new Point(column.Left, column.Bottom));
             }
-
-            return e.Line + 2;
         }
 
-        private int _DrawHeader(Graphics graphics, int line)
+        private void _DrawHeader(Graphics graphics)
         {
-            var e = new ChartPaintEventArgs(this, line, graphics, this.ClientRectangle, this.Font, this.FontColor, this.TaskBorderColor, this.GridLineColor, this.TaskBackColor, this.TaskForeColor);
+            var e = new HeaderPaintEventArgs(graphics, this.ClientRectangle, this, this.Font, this.HeaderFormat);
             if(PaintHeader != null)
-            {
                 PaintHeader(this, e);
-            }
 
-            line = e.Line;
-            if (!e.Handled)
+            // Specify header elements
+            var h1rect = new Rectangle(0, 0, this.Width, this.HeaderHeight);
+            var h2rect = new Rectangle(0, this.HeaderHeight, this.Width, this.BarHeight);
+            var gradient = new System.Drawing.Drawing2D.LinearGradientBrush(h1rect, e.Format.GradientLight, e.Format.GradientDark, System.Drawing.Drawing2D.LinearGradientMode.Vertical);
+            // Draw header 1 bar
+            graphics.FillRectangle(gradient, h1rect);
+            graphics.DrawRectangle(e.Format.Border, h1rect);
+            // Draw header 2 bar
+            graphics.FillRectangle(gradient, h2rect);
+            graphics.DrawRectangle(e.Format.Border, h2rect);
+
+            if (_mProject.TimeScale == GanttChart.TimeScale.Week)
             {
-                // Specify header elements
-                var h1rect = new Rectangle(0, 0, this.Width, this.BarSpacing);
-                var h2rect = new Rectangle(0, BarSpacing, this.Width, this.BarHeight);
-                var gradient = new System.Drawing.Drawing2D.LinearGradientBrush(h1rect, SystemColors.ButtonHighlight, SystemColors.ButtonFace, System.Drawing.Drawing2D.LinearGradientMode.Vertical);
-                // Draw header 1 bar
-                graphics.FillRectangle(gradient, h1rect);
-                graphics.DrawRectangle(new Pen(SystemColors.ActiveBorder), h1rect);
-                // Draw header 2 bar
-                graphics.FillRectangle(gradient, h2rect);
-                graphics.DrawRectangle(new Pen(SystemColors.ActiveBorder), h2rect);
-
-                if (_mProject.TimeScale == GanttChart.TimeScale.Week)
-                {
-                    line = _DrawHeaderWeek(graphics, e);
-                }
-                else if (_mProject.TimeScale == GanttChart.TimeScale.Day)
-                {
-                    line = _DrawHeaderDay(graphics, e);
-                }
+                _DrawHeaderWeek(graphics, e);
             }
-
-            return line;
+            else if (_mProject.TimeScale == GanttChart.TimeScale.Day)
+            {
+                _DrawHeaderDay(graphics, e);
+            }
         }
 
         private void _DrawPredecessorLines(Graphics graphics)
@@ -738,51 +766,49 @@ namespace Braincase.GanttChart
             }
         }
 
-        private int _DrawTasks(Graphics graphics, IEnumerable<Task> tasks, int line)
+        private int _DrawTasks(Graphics graphics, IEnumerable<Task> tasks, int row)
         {
             // draw bars
             foreach (var task in tasks)
             {
-                var e = new TaskPaintEventArgs(task, this, line, graphics, this.ClientRectangle, this.Font, this.FontColor, this.TaskBorderColor, this.GridLineColor, this.TaskBackColor, this.TaskForeColor);
+                // Crtical Path
+                bool critical = _mProject.CriticalPaths.SelectMany<IEnumerable<Task>, IEnumerable<Task>>(x => x).Contains(task);
+                TaskPaintEventArgs e;
+                if (critical) e = new TaskPaintEventArgs(graphics, this.ClientRectangle, this, task, row, critical, this.Font, this.CriticalTaskFormat);
+                else e = new TaskPaintEventArgs(graphics, this.ClientRectangle, this, task, row, critical, this.Font, this.TaskFormat);
                 if (PaintTask != null) PaintTask(this, e);
                 _mTaskRects.Add(task, e.Rectangle); // collect hit areas
-                if (!e.IsHandled) // not handled then we paint it ourselves
+
+                var outline = e.Rectangle;
+                var fill = outline;
+                fill.Width = (int)(fill.Width * task.Complete);
+                graphics.FillRectangle(e.Format.BackFill, outline);
+                graphics.FillRectangle(e.Format.ForeFill, fill);
+                graphics.DrawRectangle(e.Format.Border, outline);
+                var size = graphics.MeasureString(task.Name, e.Font);
+                graphics.DrawString(task.Name, e.Font, e.Format.Color, new PointF(task.End * BarWidth, outline.Top + (this.BarHeight - size.Height) / 2));
+
+                // check if this is a parent task / group task, then draw the bracket
+                if (task.IsGroup)
                 {
-                    if (_mProject.CriticalPaths.SelectMany<IEnumerable<Task>, IEnumerable<Task>>(x => x).Contains(task))
-                    {
-                        e.TaskBackColor = Brushes.Crimson;
-                    }
-                    var outline = e.Rectangle;
-                    var fill = outline;
-                    fill.Width = (int)(fill.Width * task.Complete);
-                    graphics.FillRectangle(e.TaskBackColor, outline);
-                    graphics.FillRectangle(e.TaskForeColor, fill);
-                    graphics.DrawRectangle(e.TaskBorderColor, outline);
-                    var size = graphics.MeasureString(task.Name, e.Font);
-                    graphics.DrawString(task.Name, e.Font, e.FontColor, new PointF(task.End * BarWidth, outline.Top + (this.BarHeight - size.Height) / 2));
-                    
-                    // check if this is a parent task / group task, then draw the bracket
-                    if (task.IsGroup)
-                    {
-                        var rod = new Rectangle(task.Start * BarWidth, outline.Top, task.Duration * BarWidth, BarHeight / 2);
-                        graphics.FillRectangle(Brushes.Black, rod);
-                        // left bracket
-                        graphics.FillPolygon(Brushes.Black, new Point[] {
+                    var rod = new Rectangle(task.Start * BarWidth, outline.Top, task.Duration * BarWidth, BarHeight / 2);
+                    graphics.FillRectangle(Brushes.Black, rod);
+                    // left bracket
+                    graphics.FillPolygon(Brushes.Black, new Point[] {
                         new Point() { X = task.Start * BarWidth, Y = outline.Top },
                         new Point() { X = task.Start * BarWidth, Y = outline.Top + BarHeight },
                         new Point() { X = task.Start * BarWidth + BarWidth, Y = outline.Top } });
-                        // right bracket
-                        graphics.FillPolygon(Brushes.Black, new Point[] {
+                    // right bracket
+                    graphics.FillPolygon(Brushes.Black, new Point[] {
                         new Point() { X = task.End * BarWidth, Y = outline.Top },
                         new Point() { X = task.End * BarWidth, Y = outline.Top + BarHeight },
                         new Point() { X = task.End * BarWidth - BarWidth, Y = outline.Top } });
-                    }
                 }
 
-                line++;
+                row++;
             }
 
-            return line;
+            return row;
         }
 
         private PointF _TextAlignCenterMiddle(Graphics graphics, Rectangle rect, string text, Font font)
@@ -862,9 +888,54 @@ namespace Braincase.GanttChart
         #endregion Private Helper Variables
     }
 
+    public enum TimeScaleDisplay
+    {
+        DayOfWeek, DayOfMonth, WeekOfYear
+    }
+
+    public struct TaskFormat
+    {
+        /// <summary>
+        /// Get or set Task outline color
+        /// </summary>
+        public Pen Border { get; set; }
+
+        /// <summary>
+        /// Get or set Task background color
+        /// </summary>
+        public Brush BackFill { get; set; }
+
+        /// <summary>
+        /// Get or set Task foreground color
+        /// </summary>
+        public Brush ForeFill { get; set; }
+
+        /// <summary>
+        /// Get or set Task font color
+        /// </summary>
+        public Brush Color { get; set; }
+    }
+
+    public struct HeaderFormat
+    {
+        /// <summary>
+        /// Font color
+        /// </summary>
+        public Brush Color { get; set; }
+        /// <summary>
+        /// Border and line colors
+        /// </summary>
+        public Pen Border { get; set; }
+
+        public Color GradientLight { get; set; }
+
+        public Color GradientDark { get; set; }
+    }
+
     public class TaskMouseEventArgs : MouseEventArgs
     {
         public Task Task { get; private set; }
+
         public Rectangle Rectangle { get; private set; }
 
         public TaskMouseEventArgs(Task task, Rectangle rectangle, MouseButtons buttons, int clicks, int x, int y, int delta)
@@ -889,9 +960,9 @@ namespace Braincase.GanttChart
 
         public Rectangle TargetRect { get; private set; }
 
-        public int Line { get; private set; }
+        public int Row { get; private set; }
 
-        public TaskDragDropEventArgs(Point startLocation, Point prevLocation, Task source, Rectangle sourceRect, Task target, Rectangle targetRect, int line, MouseButtons buttons, int clicks, int x, int y, int delta)
+        public TaskDragDropEventArgs(Point startLocation, Point prevLocation, Task source, Rectangle sourceRect, Task target, Rectangle targetRect, int row, MouseButtons buttons, int clicks, int x, int y, int delta)
             : base(buttons, clicks, x, y, delta)
         {
             this.Source = source;
@@ -900,37 +971,34 @@ namespace Braincase.GanttChart
             this.TargetRect = targetRect;
             this.PreviousLocation = prevLocation;
             this.StartLocation = startLocation;
-            this.Line = line;
+            this.Row = row;
         }
     }
 
     public class ChartPaintEventArgs : PaintEventArgs
     {
         public Chart Chart { get; private set; }
-        public int Line { get; private set; }
-        public bool Handled { get; set; }
+
+        public ChartPaintEventArgs(Graphics graphics, Rectangle clipRect, Chart chart)
+            : base(graphics, clipRect)
+        {
+            this.Chart = chart;
+        }
+    }
+
+    public class HeaderPaintEventArgs : ChartPaintEventArgs
+    {
         public Font Font { get; set; }
-        public Brush FontColor { get; set; }
-        public Pen TaskBorderColor { get; set; }
-        public Pen GridLineColor { get; set; }
-        public Brush TaskBackColor { get; set; }
-        public Brush TaskForeColor { get; set; }
+        public HeaderFormat Format { get; set; }
 
         /// <summary>
         /// Get or set whether the task is already painted and can be skipped over by Chart
         /// </summary>
-        public ChartPaintEventArgs(Chart chart, int line, Graphics graphics, Rectangle clipRect, Font font, Brush fontColor, Pen outline, Pen gridLineColor, Brush background, Brush foreground)
-            : base(graphics, clipRect)
+        public HeaderPaintEventArgs(Graphics graphics, Rectangle clipRect, Chart chart, Font font, HeaderFormat format)
+            : base(graphics, clipRect, chart)
         {
-            this.Chart = chart;
-            this.Line = line;
-            this.Handled = false;
             this.Font = font;
-            this.FontColor = fontColor;
-            this.TaskBorderColor = outline;
-            this.GridLineColor = gridLineColor;
-            this.TaskBackColor = background;
-            this.TaskForeColor = foreground;
+            this.Format = format;  
         }
     }
 
@@ -941,19 +1009,31 @@ namespace Braincase.GanttChart
         {
             get
             {
-                return new Rectangle(this.Task.Start * this.Chart.BarWidth, this.Line * this.Chart.BarSpacing, this.Task.Duration * this.Chart.BarWidth, this.Chart.BarHeight);
+                return new Rectangle(this.Task.Start * this.Chart.BarWidth, this.Row * this.Chart.BarSpacing + this.Chart.BarSpacing + this.Chart.HeaderHeight, this.Task.Duration * this.Chart.BarWidth, this.Chart.BarHeight);
             }    
         }
+        public int Row { get; private set; }
+        public Font Font { get; set; }
+        public bool IsCritical { get; private set; }
+        public TaskFormat Format { get; set; }
 
-        /// <summary>
-        /// Get or set whether the task is already painted and can be skipped over by Chart
-        /// </summary>
-        public bool IsHandled { get; set; }
-
-        public TaskPaintEventArgs(Task task, Chart chart, int line, Graphics graphics, Rectangle clipRect, Font font, Brush fontColor, Pen outline, Pen gridLineColor, Brush background, Brush foreground) // need to create a paint event for each task for custom painting
-            : base(chart, line, graphics, clipRect, font, fontColor, outline, gridLineColor, background, foreground)
+        public TaskPaintEventArgs(Graphics graphics, Rectangle clipRect, Chart chart, Task task, int row, bool critical, Font font, TaskFormat format) // need to create a paint event for each task for custom painting
+            : base(graphics, clipRect, chart)
         {
-            Task = task;
+            this.Task = task;
+            this.Row = row;
+            this.Font = font;
+            this.Format = format;
+            this.IsCritical = critical;
+        }
+    }
+
+    public class PrecedentPaintEventArgs : ChartPaintEventArgs
+    {
+        public PrecedentPaintEventArgs()
+            : base(null, Rectangle.Empty, null)
+        {
+
         }
     }
 }
