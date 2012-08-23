@@ -11,9 +11,14 @@ namespace Braincase.GanttChart
 {
     public partial class ExampleFull : Form
     {
-        OverlayPainter painter = new OverlayPainter();
+        OverlayPainter _mPainter = new OverlayPainter();
 
         Project _mProject;
+
+        public class Resource
+        {
+            public string Name { get; set; }
+        }
 
         public ExampleFull()
         {
@@ -28,6 +33,11 @@ namespace Braincase.GanttChart
             var clothes = _mProject.CreateTask();
             var hair = _mProject.CreateTask();
             var pack = _mProject.CreateTask();
+
+            for (int i = 0; i < 100; i++)
+            {
+                _mProject.CreateTask();
+            }
 
             // Give each Task a name
             work.Name = "Prepare For Work";
@@ -63,18 +73,39 @@ namespace Braincase.GanttChart
             _mProject.Relationships.Add(pack, hair);
             _mProject.Relationships.Add(pack, clothes);
 
+            // Create and assign Resources.
+            // Resource is just custom user class. The API can accept any object as resource.
+            var jake = new Resource() { Name = "Jake" };
+            var peter = new Resource() { Name = "Peter" };
+            var john = new Resource() { Name = "John" };
+            var lucas = new Resource() { Name = "Lucas" };
+            var james = new Resource() { Name = "James" };
+            var mary = new Resource() { Name = "Mary" };
+            // Add some resources
+            _mProject.Resources.AssignResource(wake, jake);
+            _mProject.Resources.AssignResource(wake, peter);
+            _mProject.Resources.AssignResource(wake, john);
+            _mProject.Resources.AssignResource(teeth, jake);
+            _mProject.Resources.AssignResource(teeth, james);
+            _mProject.Resources.AssignResource(pack, james);
+            _mProject.Resources.AssignResource(pack, lucas);
+            _mProject.Resources.AssignResource(shower, mary);
+            _mProject.Resources.AssignResource(shower, lucas);
+            _mProject.Resources.AssignResource(shower, john);
+
             // Initialize the Chart with our Project
             _mChart.Init(_mProject);
             // Attach event listeners for events we are interested in
             _mChart.TaskMouseOver += new EventHandler<TaskMouseEventArgs>(_mChart_TaskMouseOver);
             _mChart.TaskMouseOut += new EventHandler<TaskMouseEventArgs>(_mChart_TaskMouseOut);
             _mChart.TaskSelected += new EventHandler<TaskMouseEventArgs>(_mChart_TaskSelected);
-            _mChart.PaintOverlay += painter.ChartOverlayPainter;
+            _mChart.PaintOverlay += _mPainter.ChartOverlayPainter;
             _mChart.AllowTaskDragDrop = true;
 
             // Set Time information
             _mProject.TimeScale = TimeScale.Day;
-            _mProject.Now = 15; // set the "Now" marker at 15 days after the Project.Start date (default DateTime.Now)
+            var span = DateTime.Today - _mProject.Start;
+            _mProject.Now = (int)Math.Round(span.TotalDays); // set the "Now" marker at the correct date
             _mChart.TimeScaleDisplay = TimeScaleDisplay.DayOfWeek; // Set the chart to display days of week in header
 
             // The parent container for Chart should have autoscroll and should invalidate chart during resize
@@ -85,26 +116,26 @@ namespace Braincase.GanttChart
 
         void _mChart_TaskSelected(object sender, TaskMouseEventArgs e)
         {
-            _mPropertyGrid.SelectedObjects = _mChart.SelectedTasks.ToArray();
+            _mTaskGrid.SelectedObjects = _mChart.SelectedTasks.ToArray();
+            _mResourceGrid.Items.Clear();
+            _mResourceGrid.Items.AddRange(_mProject.Resources.GetResources(e.Task).Select(x => new ListViewItem(((Resource)x).Name)).ToArray());
         }
 
         void _mChart_TaskMouseOut(object sender, TaskMouseEventArgs e)
         {
             lblStatus.Text = "";
+            _mPainter.HideToolTip();
+            _mChart.Invalidate();
         }
 
         void _mChart_TaskMouseOver(object sender, TaskMouseEventArgs e)
         {
+            _mPainter.ShowToolTip(e.Location, string.Join(", ", _mProject.Resources.GetResources(e.Task).Select(x => ((Resource)x).Name)));
             lblStatus.Text = string.Format("{0} to {1}", _mProject.GetDateTime(e.Task.Start).ToLongDateString(), _mProject.GetDateTime(e.Task.End).ToLongDateString());
+            _mChart.Invalidate();
         }
 
         #region Main Menu
-
-        private void _mDateTimePicker_ValueChanged(object sender, EventArgs e)
-        {
-            _mProject.Start = _mDateTimePicker.Value;
-            _mChart.Invalidate();
-        }
 
         private void mnuFileExit_Click(object sender, EventArgs e)
         {
@@ -174,12 +205,9 @@ namespace Braincase.GanttChart
             _mChart.Invalidate();
         }
 
-        #endregion Main Menu
-
-        #region Other UI
-
-        private void _mPropertyGrid_SelectedGridItemChanged(object sender, SelectedGridItemChangedEventArgs e)
+        private void mnuViewSlack_Click(object sender, EventArgs e)
         {
+            _mChart.ShowSlack = mnuViewSlack.Checked = !mnuViewSlack.Checked;
             _mChart.Invalidate();
         }
 
@@ -188,15 +216,57 @@ namespace Braincase.GanttChart
             _mChart.Draw(e.Graphics);
         }
 
-        #endregion Other UI   
+        #endregion Main Menu
+
+        #region Sidebar
+
+        private void _mDateTimePicker_ValueChanged(object sender, EventArgs e)
+        {
+            _mProject.Start = _mDateTimePicker.Value;
+            var span = DateTime.Today - _mProject.Start;
+            _mProject.Now = (int)Math.Round(span.TotalDays);
+            if (_mProject.TimeScale == TimeScale.Week) _mProject.Now = (_mProject.Now % 7) * 7;
+            _mChart.Invalidate();
+        }
+
+        private void _mPropertyGrid_SelectedGridItemChanged(object sender, SelectedGridItemChangedEventArgs e)
+        {
+            _mChart.Invalidate();
+        }
+
+        #endregion Sidebar
+
+        
     }
 
+    /// <summary>
+    /// An example of how to encapsulate a helper painter for painter additional features on Chart
+    /// </summary>
     public class OverlayPainter
     {
+        /// <summary>
+        /// Hook such a method to the chart paint event listeners
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         public void ChartOverlayPainter(object sender, ChartPaintEventArgs e)
         {
             var g = e.Graphics;
             var chart = e.Chart;
+            
+            // draw tool tip
+            var size = g.MeasureString(_mText, chart.Font).ToSize();
+            if (_mMouse != Point.Empty && _mText != string.Empty)
+            {
+                var point = _mMouse;
+                point.Y -= size.Height;
+                var tooltip = new Rectangle(_mMouse, size);
+                tooltip.Inflate(5, 5);
+                g.FillRectangle(Brushes.LightYellow, tooltip);
+                g.DrawString(_mText, chart.Font, Brushes.Black, _mMouse);
+            }
+
+            // draw mouse command instructions
             int row = 12;
             var color = chart.HeaderFormat.Color;
             g.DrawString("Left Click - Select task and display properties in PropertyGrid", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
@@ -212,14 +282,35 @@ namespace Braincase.GanttChart
             g.DrawString("ALT + Middle Click - Delete task", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
         }
 
+        #region Painter Helpers
+
         public void Clear()
         {
             DraggedRect = Rectangle.Empty;
             Line = int.MinValue;
+            HideToolTip();
         }
+
+        public void ShowToolTip(Point mouse, string text)
+        {
+            _mMouse = mouse;
+            _mText = text;
+        }
+
+        public void HideToolTip()
+        {
+            _mMouse = Point.Empty;
+            _mText = string.Empty;
+        }
+
+        Point _mMouse = Point.Empty;
+
+        string _mText = string.Empty;
 
         public Rectangle DraggedRect = Rectangle.Empty;
 
         public int Line = int.MinValue;
+
+        #endregion Painter Helpers
     }
 }

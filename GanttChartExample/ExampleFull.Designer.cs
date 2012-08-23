@@ -31,10 +31,12 @@
             this._mSplitter1 = new System.Windows.Forms.SplitContainer();
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
-            this._mPropertyGrid = new System.Windows.Forms.PropertyGrid();
+            this._mTaskGrid = new System.Windows.Forms.PropertyGrid();
             this.tabPage2 = new System.Windows.Forms.TabPage();
             this._mDateTimePicker = new System.Windows.Forms.DateTimePicker();
-            this._mChart = new Braincase.GanttChart.Chart();
+            this.tabPage3 = new System.Windows.Forms.TabPage();
+            this._mResourceGrid = new System.Windows.Forms.ListView();
+            this.colName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuFileNew = new System.Windows.Forms.ToolStripMenuItem();
@@ -57,6 +59,8 @@
             this.mnuHelpAbout = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.lblStatus = new System.Windows.Forms.ToolStripStatusLabel();
+            this._mChart = new Braincase.GanttChart.Chart();
+            this.mnuViewSlack = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this._mSplitter1)).BeginInit();
             this._mSplitter1.Panel1.SuspendLayout();
             this._mSplitter1.Panel2.SuspendLayout();
@@ -64,6 +68,7 @@
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
+            this.tabPage3.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -92,6 +97,7 @@
             // 
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
+            this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
@@ -101,7 +107,7 @@
             // 
             // tabPage1
             // 
-            this.tabPage1.Controls.Add(this._mPropertyGrid);
+            this.tabPage1.Controls.Add(this._mTaskGrid);
             this.tabPage1.Location = new System.Drawing.Point(4, 24);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
@@ -110,21 +116,21 @@
             this.tabPage1.Text = "Properties";
             this.tabPage1.UseVisualStyleBackColor = true;
             // 
-            // _mPropertyGrid
+            // _mTaskGrid
             // 
-            this._mPropertyGrid.Dock = System.Windows.Forms.DockStyle.Fill;
-            this._mPropertyGrid.Location = new System.Drawing.Point(3, 3);
-            this._mPropertyGrid.Name = "_mPropertyGrid";
-            this._mPropertyGrid.Size = new System.Drawing.Size(223, 630);
-            this._mPropertyGrid.TabIndex = 2;
+            this._mTaskGrid.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._mTaskGrid.Location = new System.Drawing.Point(3, 3);
+            this._mTaskGrid.Name = "_mTaskGrid";
+            this._mTaskGrid.Size = new System.Drawing.Size(223, 630);
+            this._mTaskGrid.TabIndex = 2;
             // 
             // tabPage2
             // 
             this.tabPage2.Controls.Add(this._mDateTimePicker);
-            this.tabPage2.Location = new System.Drawing.Point(4, 22);
+            this.tabPage2.Location = new System.Drawing.Point(4, 24);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(229, 638);
+            this.tabPage2.Size = new System.Drawing.Size(229, 636);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Project Start";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -138,18 +144,32 @@
             this._mDateTimePicker.TabIndex = 0;
             this._mDateTimePicker.ValueChanged += new System.EventHandler(this._mDateTimePicker_ValueChanged);
             // 
-            // _mChart
+            // tabPage3
             // 
-            this._mChart.AllowTaskDragDrop = false;
-            this._mChart.Dock = System.Windows.Forms.DockStyle.Fill;
-            this._mChart.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this._mChart.HeaderHeight = 32;
-            this._mChart.Location = new System.Drawing.Point(0, 0);
-            this._mChart.Name = "_mChart";
-            this._mChart.Padding = new System.Windows.Forms.Padding(5);
-            this._mChart.Size = new System.Drawing.Size(587, 664);
-            this._mChart.TabIndex = 4;
-            this._mChart.TimeScaleDisplay = Braincase.GanttChart.TimeScaleDisplay.DayOfMonth;
+            this.tabPage3.Controls.Add(this._mResourceGrid);
+            this.tabPage3.Location = new System.Drawing.Point(4, 24);
+            this.tabPage3.Name = "tabPage3";
+            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage3.Size = new System.Drawing.Size(229, 636);
+            this.tabPage3.TabIndex = 2;
+            this.tabPage3.Text = "Resources";
+            this.tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // _mResourceGrid
+            // 
+            this._mResourceGrid.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.colName});
+            this._mResourceGrid.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._mResourceGrid.Location = new System.Drawing.Point(3, 3);
+            this._mResourceGrid.Name = "_mResourceGrid";
+            this._mResourceGrid.Size = new System.Drawing.Size(223, 632);
+            this._mResourceGrid.TabIndex = 0;
+            this._mResourceGrid.UseCompatibleStateImageBehavior = false;
+            this._mResourceGrid.View = System.Windows.Forms.View.List;
+            // 
+            // colName
+            // 
+            this.colName.Text = "Name";
             // 
             // menuStrip1
             // 
@@ -225,7 +245,8 @@
             this.mnuViewDays,
             this.mnuViewWeek,
             this.toolStripMenuItem2,
-            this.mnuViewRelationships});
+            this.mnuViewRelationships,
+            this.mnuViewSlack});
             this.viewToolStripMenuItem.Name = "viewToolStripMenuItem";
             this.viewToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             this.viewToolStripMenuItem.Text = "View";
@@ -321,6 +342,26 @@
             this.lblStatus.Size = new System.Drawing.Size(814, 17);
             this.lblStatus.Spring = true;
             // 
+            // _mChart
+            // 
+            this._mChart.AllowTaskDragDrop = false;
+            this._mChart.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._mChart.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this._mChart.HeaderHeight = 32;
+            this._mChart.Location = new System.Drawing.Point(0, 0);
+            this._mChart.Name = "_mChart";
+            this._mChart.Padding = new System.Windows.Forms.Padding(5);
+            this._mChart.Size = new System.Drawing.Size(587, 664);
+            this._mChart.TabIndex = 4;
+            this._mChart.TimeScaleDisplay = Braincase.GanttChart.TimeScaleDisplay.DayOfMonth;
+            // 
+            // mnuViewSlack
+            // 
+            this.mnuViewSlack.Name = "mnuViewSlack";
+            this.mnuViewSlack.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewSlack.Text = "Slack";
+            this.mnuViewSlack.Click += new System.EventHandler(this.mnuViewSlack_Click);
+            // 
             // ExampleFull
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -339,6 +380,7 @@
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
             this.tabPage2.ResumeLayout(false);
+            this.tabPage3.ResumeLayout(false);
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.statusStrip1.ResumeLayout(false);
@@ -368,7 +410,7 @@
         private System.Windows.Forms.ToolStripMenuItem mnuViewWeek;
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabPage1;
-        private System.Windows.Forms.PropertyGrid _mPropertyGrid;
+        private System.Windows.Forms.PropertyGrid _mTaskGrid;
         private System.Windows.Forms.TabPage tabPage2;
         private System.Windows.Forms.DateTimePicker _mDateTimePicker;
         private System.Windows.Forms.StatusStrip statusStrip1;
@@ -379,6 +421,10 @@
         private System.Windows.Forms.ToolStripMenuItem mnuViewWeeksWeekOfYear;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem2;
         private System.Windows.Forms.ToolStripMenuItem mnuViewRelationships;
+        private System.Windows.Forms.TabPage tabPage3;
+        private System.Windows.Forms.ListView _mResourceGrid;
+        private System.Windows.Forms.ColumnHeader colName;
+        private System.Windows.Forms.ToolStripMenuItem mnuViewSlack;
 
     }
 }

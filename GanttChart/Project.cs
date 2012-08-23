@@ -230,6 +230,21 @@ namespace Braincase.GanttChart
             }
         }
 
+        public int Slack
+        {
+            get
+            {
+                if (!this.IsGroup && _mProject.Relationships.Dependants(this).FirstOrDefault() != null)
+                {
+                    return _mProject.Relationships.Dependants(this).Aggregate((x1, x2) => !x1.IsGroup && (x1.Start < x2.Start) ? x1 : x2).Start - this.End;
+                }
+                else
+                {
+                    return _mProject.Tasks.Aggregate((x1, x2) => !x1.IsGroup && (x1.End > x2.End) ? x1 : x2).End - this.End;
+                }
+            }
+        }
+
         private int _GetStart()
         {
             int start = 0;
@@ -339,6 +354,16 @@ namespace Braincase.GanttChart
             }
         }
 
+        /// <summary>
+        /// Enumerate through the dependant tasks that must occur after the specified task
+        /// </summary>
+        /// <param name="after"></param>
+        /// <returns></returns>
+        public IEnumerable<Task> Dependants(Task after)
+        {
+            return _mPrecedents.Where(x => x.Value.Contains(after)).Select(x => x.Key);
+        }
+
         public void Clear()
         {
             _mPrecedents.Clear();
@@ -354,13 +379,133 @@ namespace Braincase.GanttChart
         }
     }
 
+    public class ResourceManager
+    {
+        Dictionary<object, List<Task>> _mResourceToTasks = new Dictionary<object, List<Task>>();
+        Dictionary<Task, List<object>> _mTasksToResource = new Dictionary<Task, List<object>>();
+
+        /// <summary>
+        /// Assign a resource to a task
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="resource"></param>
+        public void AssignResource(Task task, object resource)
+        {
+            var tasks = _GetResourceTasks(resource);
+            var resources = _GetTaskResources(task);
+
+            tasks.Add(task);
+            resources.Add(resource);
+        }
+
+        /// <summary>
+        /// Unassign the specified resource from the specified task
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="resource"></param>
+        public void UnassignResource(Task task, object resource)
+        {
+            _GetTaskResources(task).Remove(resource);
+        }
+
+        /// <summary>
+        /// Unassign all resources from the specified task
+        /// </summary>
+        /// <param name="task"></param>
+        public void UnassignResource(Task task)
+        {
+            var resources = _GetTaskResources(task);
+            foreach (var r in resources)
+                _mResourceToTasks[r].Remove(task);
+            _mTasksToResource.Remove(task);
+        }
+
+        /// <summary>
+        /// Remove the specified resource from all tasks
+        /// </summary>
+        /// <param name="resource"></param>
+        public void Remove(object resource)
+        {
+            var tasks = _GetResourceTasks(resource);
+            foreach (var t in tasks)
+                _mTasksToResource[t].Remove(resource);
+
+            _mResourceToTasks.Remove(resource);
+        }
+
+        /// <summary>
+        /// Enumerate through the tasks that uses the specified resource
+        /// </summary>
+        /// <param name="resource"></param>
+        /// <returns></returns>
+        public IEnumerable<Task> GetTasks(object resource)
+        {
+            return _GetResourceTasks(resource).ToArray();
+        }
+
+        /// <summary>
+        /// Enumerate through the resources that the task uses
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
+        public IEnumerable<object> GetResources(Task task)
+        {
+            return _GetTaskResources(task).ToArray();
+        }
+
+        /// <summary>
+        /// Clear all task and resource data in the ResourceManager
+        /// </summary>
+        public void Clear()
+        {
+            _mResourceToTasks.Clear();
+            _mTasksToResource.Clear();
+        }
+
+        private List<Task> _GetResourceTasks(object resource)
+        {
+            List<Task> tasks;
+            if (!_mResourceToTasks.TryGetValue(resource, out tasks))
+                _mResourceToTasks[resource] = tasks = new List<Task>();
+
+            return tasks;
+        }
+
+        private List<object> _GetTaskResources(Task task)
+        {
+            List<object> resources;
+            if (!_mTasksToResource.TryGetValue(task, out resources))
+                _mTasksToResource[task] = resources = new List<object>();
+
+            return resources;
+        }
+    }
+
     public enum TimeScale
     {
         Day, Week
     }
 
+    public interface Object
+    {
+        string Name { get; set; }
+    }
+
     public class Project
     {
+        /// <summary>
+        /// Create a new Project
+        /// </summary>
+        public Project()
+        {
+            Tasks = new Task(this);
+            Relationships = new RelationshipManager();
+            Resources = new ResourceManager();
+            Now = 0;
+            Start = DateTime.Now;
+            TimeScale = GanttChart.TimeScale.Day;
+        }
+
         /// <summary>
         /// Get the Task tree
         /// </summary>
@@ -406,6 +551,7 @@ namespace Braincase.GanttChart
         {
             task.Leave();
             Relationships.Delete(task);
+            Resources.UnassignResource(task);
         }
 
         /// <summary>
@@ -451,6 +597,8 @@ namespace Braincase.GanttChart
         /// </summary>
         public RelationshipManager Relationships { get; private set; }
 
+        public ResourceManager Resources { get; private set; }
+
         /// <summary>
         /// Get or set the period we are at now
         /// </summary>
@@ -485,6 +633,9 @@ namespace Braincase.GanttChart
             return datetime;
         }
 
+        /// <summary>
+        /// Enumerate list of critical paths in Project
+        /// </summary>
         public IEnumerable<IEnumerable<Task>> CriticalPaths
         {
             get
@@ -494,22 +645,11 @@ namespace Braincase.GanttChart
                 foreach (var path in paths)
                 {
                     var list = new List<Task>() { path };
-                    ;
                     yield return list.Concat(Relationships.PrecedentTree(path));
                 }
             }
         }
 
-        /// <summary>
-        /// Create a new Project
-        /// </summary>
-        public Project()
-        {
-            Tasks = new Task(this);
-            Relationships = new RelationshipManager();
-            Now = 0;
-            Start = DateTime.Now;
-            TimeScale = GanttChart.TimeScale.Day;
-        }
+        
     }
 }
