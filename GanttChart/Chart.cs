@@ -23,7 +23,7 @@ namespace Braincase.GanttChart
             BarWidth = 20;
             TimeScaleDisplay = GanttChart.TimeScaleDisplay.DayOfWeek;
             AllowTaskDragDrop = true;
-            ShowRelationships = true;
+            ShowRelations = true;
             ShowSlack = false;
 
             // Formatting
@@ -31,13 +31,15 @@ namespace Braincase.GanttChart
                 Color = Brushes.Black,
                 Border = Pens.Maroon,
                 BackFill = Brushes.MediumSlateBlue,
-                ForeFill = Brushes.YellowGreen
+                ForeFill = Brushes.YellowGreen,
+                SlackFill = new System.Drawing.Drawing2D.HatchBrush(System.Drawing.Drawing2D.HatchStyle.LightDownwardDiagonal, Color.Blue, Color.Transparent)
             };
             CriticalTaskFormat = new GanttChart.TaskFormat() {
                 Color = Brushes.Black,
                 Border = Pens.Maroon,
                 BackFill = Brushes.Crimson,
-                ForeFill = Brushes.YellowGreen
+                ForeFill = Brushes.YellowGreen,
+                SlackFill = new System.Drawing.Drawing2D.HatchBrush(System.Drawing.Drawing2D.HatchStyle.LightDownwardDiagonal, Color.Red, Color.Transparent)
             };
             HeaderFormat = new GanttChart.HeaderFormat() {
                 Color = Brushes.Black,
@@ -72,6 +74,9 @@ namespace Braincase.GanttChart
             }
         }
 
+        /// <summary>
+        /// Get the Rectangle region on the chart that is currently visible
+        /// </summary>
         public Rectangle Viewport
         {
             get
@@ -119,19 +124,24 @@ namespace Braincase.GanttChart
         public int BarWidth { get; set; }
 
         /// <summary>
-        /// Format for Tasks
+        /// Get or set format for Tasks
         /// </summary>
         public TaskFormat TaskFormat { get; set;  }
 
         /// <summary>
-        /// Format for critical Tasks
+        /// Get or set format for critical Tasks
         /// </summary>
         public TaskFormat CriticalTaskFormat { get; set; }
 
         /// <summary>
-        /// Format for headers
+        /// Get or set format for headers
         /// </summary>
         public HeaderFormat HeaderFormat { get; set; }
+
+        /// <summary>
+        /// Get or set format for relations
+        /// </summary>
+        public RelationFormat RelationFormat { get; set; }
 
         /// <summary>
         /// Get or set whether dragging of Tasks is allowed. Set to false when not dragging to skip drag(drop) tracking.
@@ -139,9 +149,15 @@ namespace Braincase.GanttChart
         [DefaultValue(true)]
         public bool AllowTaskDragDrop { get; set; }
 
+        /// <summary>
+        /// Get or set whether to show relations
+        /// </summary>
         [DefaultValue(true)]
-        public bool ShowRelationships { get; set; }
+        public bool ShowRelations { get; set; }
 
+        /// <summary>
+        /// Get or set whether to show slack
+        /// </summary>
         [DefaultValue(false)]
         public bool ShowSlack { get; set; }
 
@@ -253,7 +269,7 @@ namespace Braincase.GanttChart
 
         public void Draw(Graphics graphics)
         {
-            this._Draw(graphics, Rectangle.Empty);
+            this._Draw(graphics, this.Viewport);
         }
 
         /// <summary>
@@ -275,7 +291,8 @@ namespace Braincase.GanttChart
                 row = this._DrawTasks(graphics, clipRect);
 
                 // draw predecessor arrows
-                if (this.ShowRelationships) this._DrawPredecessorLines(graphics);
+                if (this.ShowRelations)
+                    this._DrawPredecessorLines(graphics, clipRect);
             }
 
             // draw "Now" line
@@ -771,20 +788,58 @@ namespace Braincase.GanttChart
             }
         }
 
-        private void _DrawPredecessorLines(Graphics graphics)
+        private void _DrawPredecessorLines(Graphics graphics, Rectangle clipRect)
         {
-            foreach (var task in _mTaskRects.Keys)
+            RectangleF cliprectf = new RectangleF(clipRect.X, clipRect.Y, clipRect.Width, clipRect.Height);
+            foreach (var task in _mProject.Tasks)
             {
-                foreach(var predecessor in _mProject.Relationships[task])
+                var succ = task;
+                IEnumerable<Task> predecessors = _mProject.Relationships[succ];
+                while (succ.Parent != null && succ.Parent.IsCollapsed)
                 {
-                    if (_mTaskRects.ContainsKey(predecessor))
-                    {
-                        var prect = _mTaskRects[predecessor];
-                        var srect = _mTaskRects[task];
+                    succ = succ.Parent;
+                    predecessors = predecessors.Concat(_mProject.Relationships[succ]);
+                }
 
-                        graphics.DrawLine(Pens.Black, new PointF(prect.Right, prect.Top + prect.Height / 2.0f), new PointF(prect.Right + BarWidth / 2, prect.Top + prect.Height / 2.0f));
-                        graphics.DrawLine(Pens.Black, new PointF(prect.Right + BarWidth / 2, srect.Top + srect.Height / 2.0f), new PointF(prect.Right + BarWidth / 2, prect.Top + prect.Height / 2.0f));
-                        graphics.DrawLine(Pens.Black, new PointF(prect.Right + BarWidth / 2, srect.Top + srect.Height / 2.0f), new PointF(srect.Left, srect.Top + srect.Height / 2.0f));
+                if (_mTaskRects.ContainsKey(succ))
+                {
+                    foreach (var predecessor in predecessors)
+                    {
+                        var pred = predecessor;
+                        /* while (pred.Parent != null && pred.Parent.IsCollapsed)
+                            pred = pred.Parent; */
+
+                        if (_mTaskRects.ContainsKey(pred))
+                        {
+                            var prect = _mTaskRects[pred];
+                            var srect = _mTaskRects[succ];
+                            if (pred.End < succ.Start)
+                            {
+                                var p1 = new PointF(prect.Right, prect.Top + prect.Height / 2.0f);
+                                var p2 = new PointF(srect.Left - BarWidth / 2, prect.Top + prect.Height / 2.0f);
+                                var p3 = new PointF(srect.Left - BarWidth / 2, srect.Top + srect.Height / 2.0f);
+                                var p4 = new PointF(srect.Left, srect.Top + srect.Height / 2.0f);
+                                var size = new SizeF(Math.Abs(p4.X - p1.X), Math.Abs(p4.Y - p1.Y));
+                                var linerect = p1.Y < p4.Y ? new RectangleF(p1, size) : new RectangleF(new PointF(p1.X, p1.Y - size.Height), size);
+                                if (cliprectf.IntersectsWith(linerect))
+                                {
+                                    graphics.DrawLines(Pens.Black, new PointF[] { p1, p2, p3, p4 });
+                                }
+                            }
+                            // The logic is more complicated than I thought I got to go take a break now!!
+                            /*else
+                            {
+                                var p1 = new PointF(srect.Left - BarWidth / 2, prect.Bottom < srect.Bottom ? prect.Bottom : prect.Top);
+                                var p2 = new PointF(srect.Left - BarWidth / 2, srect.Top + BarHeight / 2.0f);
+                                var p3 = new PointF(srect.Left,  srect.Top + BarHeight / 2.0f);
+                                var size = new SizeF(Math.Abs(p1.X - p3.X), Math.Abs(p1.Y - p3.Y));
+                                var linerect = p1.Y < p3.Y ? new RectangleF(p1, size) : new RectangleF(p3, size);
+                                if (cliprectf.IntersectsWith(linerect))
+                                {
+                                    graphics.DrawLines(Pens.Black, new PointF[] { p1, p2, p3 });
+                                }
+                            }*/
+                        }
                     }
                 }
             }
@@ -805,15 +860,25 @@ namespace Braincase.GanttChart
                     else e = new TaskPaintEventArgs(graphics, clipRect, this, task, row, critical, this.Font, this.TaskFormat);
                     if (PaintTask != null) PaintTask(this, e);
 
-                    // draw task
+                    // draw task bar
                     var outline = _mTaskRects[task];
                     var fill = outline;
                     fill.Width = (int)(fill.Width * task.Complete);
                     graphics.FillRectangle(e.Format.BackFill, outline);
                     graphics.FillRectangle(e.Format.ForeFill, fill);
                     graphics.DrawRectangle(e.Format.Border, outline);
-                    var size = graphics.MeasureString(task.Name, e.Font);
-                    graphics.DrawString(task.Name, e.Font, e.Format.Color, new PointF(task.End * BarWidth, outline.Top + (this.BarHeight - size.Height) / 2));
+
+                    // draw slack
+                    if (this.ShowSlack && task.Complete < 1.0f)
+                    {
+                        var slackrect = _RowToSlackRect(row, task);
+                        graphics.FillRectangle(e.Format.SlackFill, slackrect);
+                    }
+
+                    // write text
+                    var txtpoint = _TextAlignLeftMiddle(graphics, outline, task.Name, e.Font);
+                    txtpoint.X += outline.Width;
+                    graphics.DrawString(task.Name, e.Font, e.Format.Color, txtpoint);
 
                     // check if this is a parent task / group task, then draw the bracket
                     if (task.IsGroup)
@@ -830,13 +895,6 @@ namespace Braincase.GanttChart
                         new Point() { X = task.End * BarWidth, Y = outline.Top },
                         new Point() { X = task.End * BarWidth, Y = outline.Top + BarHeight },
                         new Point() { X = task.End * BarWidth - BarWidth, Y = outline.Top } });
-                    }
-
-                    // draw slack
-                    if (this.ShowSlack)
-                    {
-                        var slackrect = _RowToSlackRect(row, task);
-                        graphics.FillRectangle(new System.Drawing.Drawing2D.HatchBrush(System.Drawing.Drawing2D.HatchStyle.LightDownwardDiagonal, Color.Blue, Color.Transparent), slackrect);
                     }
                 }
 
@@ -960,6 +1018,16 @@ namespace Braincase.GanttChart
         /// Get or set Task font color
         /// </summary>
         public Brush Color { get; set; }
+
+        /// <summary>
+        /// Get or set the brush for slack bars
+        /// </summary>
+        public Brush SlackFill { get; set; }
+    }
+
+    public struct RelationFormat
+    {
+        public Pen Line { get; set; }
     }
 
     public struct HeaderFormat
@@ -1074,12 +1142,20 @@ namespace Braincase.GanttChart
         }
     }
 
-    public class PrecedentPaintEventArgs : ChartPaintEventArgs
+    public class RelationPaintEventArgs : ChartPaintEventArgs
     {
-        public PrecedentPaintEventArgs()
-            : base(null, Rectangle.Empty, null)
-        {
+        public Task Before { get; private set; }
 
+        public Task After { get; private set; }
+
+        public RelationFormat Format { get; set; }
+
+        public RelationPaintEventArgs(Graphics graphics, Rectangle clipRect, Chart chart, Task before, Task after, RelationFormat format)
+            : base(graphics, clipRect, chart)
+        {
+            this.Before = before;
+            this.After = after;
+            this.Format = format;
         }
     }
 }

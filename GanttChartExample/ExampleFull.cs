@@ -34,11 +34,6 @@ namespace Braincase.GanttChart
             var hair = _mProject.CreateTask();
             var pack = _mProject.CreateTask();
 
-            for (int i = 0; i < 100; i++)
-            {
-                _mProject.CreateTask();
-            }
-
             // Give each Task a name
             work.Name = "Prepare For Work";
             wake.Name = "Wake Up";
@@ -201,7 +196,7 @@ namespace Braincase.GanttChart
 
         private void mnuViewRelationships_Click(object sender, EventArgs e)
         {
-            _mChart.ShowRelationships = mnuViewRelationships.Checked = !mnuViewRelationships.Checked;
+            _mChart.ShowRelations = mnuViewRelationships.Checked = !mnuViewRelationships.Checked;
             _mChart.Invalidate();
         }
 
@@ -235,8 +230,6 @@ namespace Braincase.GanttChart
         }
 
         #endregion Sidebar
-
-        
     }
 
     /// <summary>

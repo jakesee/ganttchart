@@ -15,7 +15,7 @@ namespace Braincase.GanttChart
 
         internal bool Add(T item)
         {
-            if (this.Ancestors.Contains(item))
+            if (item == this || this.Ancestors.Contains(item))
             {
                 return false;
             }
@@ -28,11 +28,13 @@ namespace Braincase.GanttChart
             }
         }
 
-        internal void Insert(int index, T item)
+        internal bool Insert(int index, T item)
         {
+            if (item == this) return false;
             if (item.Parent != null) item.Leave();
             item.Parent = this as T;
             mChildren.Insert(index, item);
+            return true;
         }
 
         internal void Leave()
@@ -145,9 +147,16 @@ namespace Braincase.GanttChart
         public Object UserState { get; set; }
 
         /// <summary>
-        /// Indicate whether this task is collapsed such that sub tasks are hidden from view
+        /// Indicate whether this task is collapsed such that sub tasks are hidden from view. Only groups can be collasped.
         /// </summary>
-        public bool IsCollapsed { get; set; }
+        public bool IsCollapsed { get {
+            return this.IsGroup && _mIsCollapsed;
+        } set{
+
+            if (this.IsGroup) _mIsCollapsed = value;
+            else _mIsCollapsed = false;
+        }
+        }
 
         /// <summary>
         /// Get or set the pecentage complete of this task, expressed in decimal between 0.0 and 1.0f.
@@ -236,7 +245,12 @@ namespace Braincase.GanttChart
             {
                 if (!this.IsGroup && _mProject.Relationships.Dependants(this).FirstOrDefault() != null)
                 {
-                    return _mProject.Relationships.Dependants(this).Aggregate((x1, x2) => !x1.IsGroup && (x1.Start < x2.Start) ? x1 : x2).Start - this.End;
+                    return _mProject.Relationships.Dependants(this).Aggregate((x1, x2) => !x1.IsGroup && (x1.Start < x2.Start) ? x1 : x2).Start - this.End - 1;
+                }
+                else if (this.IsGroup)
+                {
+                    var t = this.Aggregate((x1, x2) => x1.End + x1.Slack > x2.End + x2.Slack ? x1 : x2);
+                    return t.End + t.Slack - this.End;
                 }
                 else
                 {
@@ -253,7 +267,7 @@ namespace Braincase.GanttChart
             if (this.Count() > 0)
                 start = this.Min(x => x.Start);
             // A normal task without predecessor uses own start
-            else if (this._mProject.Relationships[this].Count() == 0)
+            else if (this._mProject.Relationships[this].FirstOrDefault() == null)
                  start = _mStart;
             // A normal task with predecessor starts after the predecessor ends after Delay.
             else
@@ -293,6 +307,8 @@ namespace Braincase.GanttChart
         private int _mStart = 0;
 
         private int _mDelay = 0;
+
+        private bool _mIsCollapsed = false;
 
         private Project _mProject = null;
     }
@@ -529,8 +545,8 @@ namespace Braincase.GanttChart
         /// <param name="member"></param>
         public void GroupTask(Task group, Task member)
         {
-            group.Add(member);
-            Relationships.Delete(group);
+            if(group.Add(member))
+                Relationships.Delete(group);
         }
 
         /// <summary>
@@ -584,7 +600,7 @@ namespace Braincase.GanttChart
             var dest = Tasks.ElementAtOrDefault(index);
 
             if (dest == null) Tasks.Add(task);
-            else
+            else if (!dest.Equals(task))
             {
                 var p = dest.Parent.IndexOf(dest);
                 if (offset <= 0) dest.Parent.Insert(p, task);

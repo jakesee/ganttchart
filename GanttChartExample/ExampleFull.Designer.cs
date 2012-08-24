@@ -37,6 +37,7 @@
             this.tabPage3 = new System.Windows.Forms.TabPage();
             this._mResourceGrid = new System.Windows.Forms.ListView();
             this.colName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this._mChart = new Braincase.GanttChart.Chart();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuFileNew = new System.Windows.Forms.ToolStripMenuItem();
@@ -55,12 +56,11 @@
             this.mnuViewWeeksWeekOfYear = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
             this.mnuViewRelationships = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuViewSlack = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuHelpAbout = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.lblStatus = new System.Windows.Forms.ToolStripStatusLabel();
-            this._mChart = new Braincase.GanttChart.Chart();
-            this.mnuViewSlack = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this._mSplitter1)).BeginInit();
             this._mSplitter1.Panel1.SuspendLayout();
             this._mSplitter1.Panel2.SuspendLayout();
@@ -127,10 +127,10 @@
             // tabPage2
             // 
             this.tabPage2.Controls.Add(this._mDateTimePicker);
-            this.tabPage2.Location = new System.Drawing.Point(4, 24);
+            this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(229, 636);
+            this.tabPage2.Size = new System.Drawing.Size(229, 638);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Project Start";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -147,10 +147,10 @@
             // tabPage3
             // 
             this.tabPage3.Controls.Add(this._mResourceGrid);
-            this.tabPage3.Location = new System.Drawing.Point(4, 24);
+            this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(229, 636);
+            this.tabPage3.Size = new System.Drawing.Size(229, 638);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Resources";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -170,6 +170,19 @@
             // colName
             // 
             this.colName.Text = "Name";
+            // 
+            // _mChart
+            // 
+            this._mChart.AllowTaskDragDrop = false;
+            this._mChart.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._mChart.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this._mChart.HeaderHeight = 32;
+            this._mChart.Location = new System.Drawing.Point(0, 0);
+            this._mChart.Name = "_mChart";
+            this._mChart.Padding = new System.Windows.Forms.Padding(5);
+            this._mChart.Size = new System.Drawing.Size(587, 664);
+            this._mChart.TabIndex = 4;
+            this._mChart.TimeScaleDisplay = Braincase.GanttChart.TimeScaleDisplay.DayOfMonth;
             // 
             // menuStrip1
             // 
@@ -257,7 +270,7 @@
             this.mnuViewDaysDayOfWeek,
             this.mnuViewDaysDayOfMonth});
             this.mnuViewDays.Name = "mnuViewDays";
-            this.mnuViewDays.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewDays.Size = new System.Drawing.Size(144, 22);
             this.mnuViewDays.Text = "Days";
             // 
             // mnuViewDaysDayOfWeek
@@ -280,7 +293,7 @@
             this.mnuViewWeeksDayOfMonth,
             this.mnuViewWeeksWeekOfYear});
             this.mnuViewWeek.Name = "mnuViewWeek";
-            this.mnuViewWeek.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewWeek.Size = new System.Drawing.Size(144, 22);
             this.mnuViewWeek.Text = "Weeks";
             // 
             // mnuViewWeeksDayOfMonth
@@ -300,16 +313,23 @@
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(149, 6);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(141, 6);
             // 
             // mnuViewRelationships
             // 
             this.mnuViewRelationships.Checked = true;
             this.mnuViewRelationships.CheckState = System.Windows.Forms.CheckState.Checked;
             this.mnuViewRelationships.Name = "mnuViewRelationships";
-            this.mnuViewRelationships.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewRelationships.Size = new System.Drawing.Size(144, 22);
             this.mnuViewRelationships.Text = "Relationships";
             this.mnuViewRelationships.Click += new System.EventHandler(this.mnuViewRelationships_Click);
+            // 
+            // mnuViewSlack
+            // 
+            this.mnuViewSlack.Name = "mnuViewSlack";
+            this.mnuViewSlack.Size = new System.Drawing.Size(144, 22);
+            this.mnuViewSlack.Text = "Slack";
+            this.mnuViewSlack.Click += new System.EventHandler(this.mnuViewSlack_Click);
             // 
             // helpToolStripMenuItem
             // 
@@ -341,26 +361,6 @@
             this.lblStatus.Name = "lblStatus";
             this.lblStatus.Size = new System.Drawing.Size(814, 17);
             this.lblStatus.Spring = true;
-            // 
-            // _mChart
-            // 
-            this._mChart.AllowTaskDragDrop = false;
-            this._mChart.Dock = System.Windows.Forms.DockStyle.Fill;
-            this._mChart.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this._mChart.HeaderHeight = 32;
-            this._mChart.Location = new System.Drawing.Point(0, 0);
-            this._mChart.Name = "_mChart";
-            this._mChart.Padding = new System.Windows.Forms.Padding(5);
-            this._mChart.Size = new System.Drawing.Size(587, 664);
-            this._mChart.TabIndex = 4;
-            this._mChart.TimeScaleDisplay = Braincase.GanttChart.TimeScaleDisplay.DayOfMonth;
-            // 
-            // mnuViewSlack
-            // 
-            this.mnuViewSlack.Name = "mnuViewSlack";
-            this.mnuViewSlack.Size = new System.Drawing.Size(152, 22);
-            this.mnuViewSlack.Text = "Slack";
-            this.mnuViewSlack.Click += new System.EventHandler(this.mnuViewSlack_Click);
             // 
             // ExampleFull
             // 
