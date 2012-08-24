@@ -321,7 +321,7 @@ namespace Braincase.GanttChart
         {
             if (before == after
                 || this.PrecedentTree(after).Contains(before)
-                || this.PrecedentTree(before).Contains(after)
+                || this[before].Contains(after)
                 || after.Count() > 0
                 || before.Count() > 0)
             {
@@ -378,6 +378,15 @@ namespace Braincase.GanttChart
         public IEnumerable<Task> Dependants(Task after)
         {
             return _mPrecedents.Where(x => x.Value.Contains(after)).Select(x => x.Key);
+        }
+
+        /// <summary>
+        /// Enumerate through each task that is a dependant of another task
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<Task> Dependants()
+        {
+            return _mPrecedents.Keys;
         }
 
         public void Clear()
@@ -467,6 +476,15 @@ namespace Braincase.GanttChart
         public IEnumerable<object> GetResources(Task task)
         {
             return _GetTaskResources(task).ToArray();
+        }
+
+        /// <summary>
+        /// Enumerate through all resources
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<object> GetResources()
+        {
+            return _mResourceToTasks.Keys;
         }
 
         /// <summary>

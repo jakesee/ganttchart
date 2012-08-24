@@ -25,6 +25,8 @@ namespace Braincase.GanttChart
             AllowTaskDragDrop = true;
             ShowRelations = true;
             ShowSlack = false;
+            AccumulateRelationsOnGroup = false;
+            ShowTaskLabels = true;
 
             // Formatting
             TaskFormat = new GanttChart.TaskFormat() {
@@ -156,6 +158,18 @@ namespace Braincase.GanttChart
         public bool ShowRelations { get; set; }
 
         /// <summary>
+        /// Get or set whether to show task labels
+        /// </summary>
+        [DefaultValue(true)]
+        public bool ShowTaskLabels { get; set; }
+
+        /// <summary>
+        /// Get or set whether to accumulate relations on group tasks and show relations even when group is collapsed. (Not working well; still improving on it)
+        /// </summary>
+        [DefaultValue(false)]
+        public bool AccumulateRelationsOnGroup { get; set; }
+
+        /// <summary>
         /// Get or set whether to show slack
         /// </summary>
         [DefaultValue(false)]
@@ -267,6 +281,10 @@ namespace Braincase.GanttChart
             _CalculateMeshAndResize();
         }
 
+        /// <summary>
+        /// Draw the items in the Viewport
+        /// </summary>
+        /// <param name="graphics"></param>
         public void Draw(Graphics graphics)
         {
             this._Draw(graphics, this.Viewport);
@@ -791,24 +809,34 @@ namespace Braincase.GanttChart
         private void _DrawPredecessorLines(Graphics graphics, Rectangle clipRect)
         {
             RectangleF cliprectf = new RectangleF(clipRect.X, clipRect.Y, clipRect.Width, clipRect.Height);
-            foreach (var task in _mProject.Tasks)
+            foreach (var task in _mProject.Relationships.Dependants())
             {
                 var succ = task;
                 IEnumerable<Task> predecessors = _mProject.Relationships[succ];
-                while (succ.Parent != null && succ.Parent.IsCollapsed)
+                // accumulate predecessors up the task groups until we reach the first visible task
+                // that we can "connect the lines" for relations
+                if (AccumulateRelationsOnGroup)
                 {
-                    succ = succ.Parent;
-                    predecessors = predecessors.Concat(_mProject.Relationships[succ]);
+                    while (succ.Parent != null && succ.Parent.IsCollapsed)
+                    {
+                        succ = succ.Parent;
+                        predecessors = predecessors.Concat(_mProject.Relationships[succ]);
+                    }
                 }
 
+                // check with _mTaskRects
                 if (_mTaskRects.ContainsKey(succ))
                 {
                     foreach (var predecessor in predecessors)
                     {
                         var pred = predecessor;
-                        /* while (pred.Parent != null && pred.Parent.IsCollapsed)
-                            pred = pred.Parent; */
+                        if (AccumulateRelationsOnGroup)
+                        {
+                            while (pred.Parent != null && pred.Parent.IsCollapsed)
+                                pred = pred.Parent;
+                        }
 
+                        // Note always true when accumulate; otherwise check with _mTaskRects
                         if (_mTaskRects.ContainsKey(pred))
                         {
                             var prect = _mTaskRects[pred];
@@ -827,7 +855,7 @@ namespace Braincase.GanttChart
                                 }
                             }
                             // The logic is more complicated than I thought I got to go take a break now!!
-                            /*else
+                            else
                             {
                                 var p1 = new PointF(srect.Left - BarWidth / 2, prect.Bottom < srect.Bottom ? prect.Bottom : prect.Top);
                                 var p2 = new PointF(srect.Left - BarWidth / 2, srect.Top + BarHeight / 2.0f);
@@ -838,7 +866,7 @@ namespace Braincase.GanttChart
                                 {
                                     graphics.DrawLines(Pens.Black, new PointF[] { p1, p2, p3 });
                                 }
-                            }*/
+                            }
                         }
                     }
                 }
@@ -848,53 +876,68 @@ namespace Braincase.GanttChart
         private int _DrawTasks(Graphics graphics, Rectangle clipRect)
         {
             // draw bars
+            var clipRectF = new RectangleF(clipRect.X, clipRect.Y, clipRect.Width, clipRect.Height);
             int row = 0;
+            var paths = _mProject.CriticalPaths.SelectMany<IEnumerable<Task>, IEnumerable<Task>>(x => x);
+            TaskPaintEventArgs e;
             foreach (var task in _mTaskRects.Keys)
             {
-                if (clipRect.IntersectsWith(_mTaskRects[task]))
+                // get the taskrect
+                var taskrect = _mTaskRects[task];
+
+                // only begin drawing when the taskrect is to the left of the clipRect's right edge
+                if (taskrect.Left <= clipRect.Right)
                 {
                     // Crtical Path
-                    bool critical = _mProject.CriticalPaths.SelectMany<IEnumerable<Task>, IEnumerable<Task>>(x => x).Contains(task);
-                    TaskPaintEventArgs e;
+                    bool critical = paths.Contains(task);
                     if (critical) e = new TaskPaintEventArgs(graphics, clipRect, this, task, row, critical, this.Font, this.CriticalTaskFormat);
                     else e = new TaskPaintEventArgs(graphics, clipRect, this, task, row, critical, this.Font, this.TaskFormat);
                     if (PaintTask != null) PaintTask(this, e);
 
                     // draw task bar
-                    var outline = _mTaskRects[task];
-                    var fill = outline;
-                    fill.Width = (int)(fill.Width * task.Complete);
-                    graphics.FillRectangle(e.Format.BackFill, outline);
-                    graphics.FillRectangle(e.Format.ForeFill, fill);
-                    graphics.DrawRectangle(e.Format.Border, outline);
+                    if (clipRect.IntersectsWith(taskrect))
+                    {
+                        var fill = taskrect;
+                        fill.Width = (int)(fill.Width * task.Complete);
+                        graphics.FillRectangle(e.Format.BackFill, taskrect);
+                        graphics.FillRectangle(e.Format.ForeFill, fill);
+                        graphics.DrawRectangle(e.Format.Border, taskrect);
+
+                        // check if this is a parent task / group task, then draw the bracket
+                        if (task.IsGroup)
+                        {
+                            var rod = new Rectangle(task.Start * BarWidth, taskrect.Top, task.Duration * BarWidth, BarHeight / 2);
+                            graphics.FillRectangle(Brushes.Black, rod);
+                            // left bracket
+                            graphics.FillPolygon(Brushes.Black, new Point[] {
+                        new Point() { X = task.Start * BarWidth, Y = taskrect.Top },
+                        new Point() { X = task.Start * BarWidth, Y = taskrect.Top + BarHeight },
+                        new Point() { X = task.Start * BarWidth + BarWidth, Y = taskrect.Top } });
+                            // right bracket
+                            graphics.FillPolygon(Brushes.Black, new Point[] {
+                        new Point() { X = task.End * BarWidth, Y = taskrect.Top },
+                        new Point() { X = task.End * BarWidth, Y = taskrect.Top + BarHeight },
+                        new Point() { X = task.End * BarWidth - BarWidth, Y = taskrect.Top } });
+                        }
+                    }
+
+                    // write text
+                    if (this.ShowTaskLabels && task.Name != string.Empty)
+                    {
+                        var txtrect = _TextAlignLeftMiddle(graphics, taskrect, task.Name, e.Font);
+                        txtrect.Offset(taskrect.Width, 0);
+                        if (clipRectF.IntersectsWith(txtrect))
+                        {
+                            graphics.DrawString(task.Name, e.Font, e.Format.Color, txtrect);
+                        }
+                    }
 
                     // draw slack
                     if (this.ShowSlack && task.Complete < 1.0f)
                     {
                         var slackrect = _RowToSlackRect(row, task);
-                        graphics.FillRectangle(e.Format.SlackFill, slackrect);
-                    }
-
-                    // write text
-                    var txtpoint = _TextAlignLeftMiddle(graphics, outline, task.Name, e.Font);
-                    txtpoint.X += outline.Width;
-                    graphics.DrawString(task.Name, e.Font, e.Format.Color, txtpoint);
-
-                    // check if this is a parent task / group task, then draw the bracket
-                    if (task.IsGroup)
-                    {
-                        var rod = new Rectangle(task.Start * BarWidth, outline.Top, task.Duration * BarWidth, BarHeight / 2);
-                        graphics.FillRectangle(Brushes.Black, rod);
-                        // left bracket
-                        graphics.FillPolygon(Brushes.Black, new Point[] {
-                        new Point() { X = task.Start * BarWidth, Y = outline.Top },
-                        new Point() { X = task.Start * BarWidth, Y = outline.Top + BarHeight },
-                        new Point() { X = task.Start * BarWidth + BarWidth, Y = outline.Top } });
-                        // right bracket
-                        graphics.FillPolygon(Brushes.Black, new Point[] {
-                        new Point() { X = task.End * BarWidth, Y = outline.Top },
-                        new Point() { X = task.End * BarWidth, Y = outline.Top + BarHeight },
-                        new Point() { X = task.End * BarWidth - BarWidth, Y = outline.Top } });
+                        if (clipRect.IntersectsWith(slackrect))
+                            graphics.FillRectangle(e.Format.SlackFill, slackrect);
                     }
                 }
 
@@ -904,16 +947,16 @@ namespace Braincase.GanttChart
             return row;
         }
 
-        private PointF _TextAlignCenterMiddle(Graphics graphics, Rectangle rect, string text, Font font)
+        private RectangleF _TextAlignCenterMiddle(Graphics graphics, Rectangle rect, string text, Font font)
         {
             var size = graphics.MeasureString(text, font);
-            return new PointF(rect.Left + (rect.Width - size.Width) / 2, rect.Top + (rect.Height - size.Height) / 2);
+            return new RectangleF(new PointF(rect.Left + (rect.Width - size.Width) / 2, rect.Top + (rect.Height - size.Height) / 2), size);
         }
 
-        private PointF _TextAlignLeftMiddle(Graphics graphics, Rectangle rect, string text, Font font, float leftMargin = 0.0f)
+        private RectangleF _TextAlignLeftMiddle(Graphics graphics, Rectangle rect, string text, Font font, float leftMargin = 0.0f)
         {
             var size = graphics.MeasureString(text, font);
-            return new PointF(rect.Left + leftMargin, rect.Top + (rect.Height - size.Height) / 2);
+            return new RectangleF(new PointF(rect.Left + leftMargin, rect.Top + (rect.Height - size.Height) / 2), size);
         }
 
         private Task _GetTaskUnderMouse(MouseEventArgs e)
@@ -944,6 +987,7 @@ namespace Braincase.GanttChart
                     var _end = task.End; if (_end > end) end = _end;
                     count++;   
                 }
+                count += 5;
                 this.Height = Math.Max(this.Parent.Height, ++count * this.BarSpacing + this.BarHeight);
                 this.Width = Math.Max(this.Parent.Width, end * this.BarWidth + 200);
             }
