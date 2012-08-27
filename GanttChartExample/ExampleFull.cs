@@ -61,12 +61,12 @@ namespace Braincase.GanttChart
             _mProject.GroupTask(work, clothes);
             _mProject.GroupTask(work, hair);
             _mProject.GroupTask(work, pack);
-            _mProject.Relationships.Add(teeth, wake);
-            _mProject.Relationships.Add(shower, wake);
-            _mProject.Relationships.Add(clothes, shower);
-            _mProject.Relationships.Add(hair, shower);
-            _mProject.Relationships.Add(pack, hair);
-            _mProject.Relationships.Add(pack, clothes);
+            _mProject.Relationships.Add(wake, teeth);
+            _mProject.Relationships.Add(wake, shower);
+            _mProject.Relationships.Add(shower, clothes);
+            _mProject.Relationships.Add(shower, hair);
+            _mProject.Relationships.Add(hair, pack);
+            _mProject.Relationships.Add(clothes, pack);
 
             // Create and assign Resources.
             // Resource is just custom user class. The API can accept any object as resource.
@@ -103,10 +103,9 @@ namespace Braincase.GanttChart
             _mProject.Now = (int)Math.Round(span.TotalDays); // set the "Now" marker at the correct date
             _mChart.TimeScaleDisplay = TimeScaleDisplay.DayOfWeek; // Set the chart to display days of week in header
 
-            // The parent container for Chart should have autoscroll and should invalidate chart during resize
+            // The parent container for Chart should have autoscroll
             // this will allow the UI user to scroll through the chart.
             _mSplitter1.Panel2.AutoScroll = true;
-            _mSplitter1.Panel2.Resize += (s, e) => _mChart.Invalidate();
         }
 
         void _mChart_TaskSelected(object sender, TaskMouseEventArgs e)

@@ -27,6 +27,7 @@ namespace Braincase.GanttChart
             ShowSlack = false;
             AccumulateRelationsOnGroup = false;
             ShowTaskLabels = true;
+            this.Dock = DockStyle.Fill;
 
             // Formatting
             TaskFormat = new GanttChart.TaskFormat() {
@@ -83,7 +84,9 @@ namespace Braincase.GanttChart
         {
             get
             {
-                return new Rectangle(-this.Location.X, -this.Location.Y, this.Parent.Width, this.Parent.Height);
+                var pHeight = this.Parent == null ? this.Width : this.Parent.Height;
+                var pWidth = this.Parent == null ? this.Height : this.Parent.Width;
+                return new Rectangle(-this.Location.X, -this.Location.Y, pWidth, pHeight);
             }
         }
 
@@ -287,6 +290,9 @@ namespace Braincase.GanttChart
         /// <param name="graphics"></param>
         public void Draw(Graphics graphics)
         {
+            if (graphics == null)
+                throw new ArgumentNullException("Graphics cannot be null");
+                
             this._Draw(graphics, this.Viewport);
         }
 
@@ -297,30 +303,37 @@ namespace Braincase.GanttChart
         private void _Draw(Graphics graphics, Rectangle clipRect)
         {
             graphics.Clear(this.BackColor);
-            _CalculateMeshAndResize(); // resize drawing area
-
-            // draw header -- hpoefully this can stay on top in the future
-            _DrawHeader(graphics, clipRect);
-
+            
             int row = 0;
             if (_mProject != null)
             {
+                _CalculateMeshAndResize(); // resize drawing area
+
+                // draw header -- hpoefully this can stay on top in the future
+                _DrawHeader(graphics, clipRect);
+
                 // draw bar charts
                 row = this._DrawTasks(graphics, clipRect);
 
                 // draw predecessor arrows
                 if (this.ShowRelations)
                     this._DrawPredecessorLines(graphics, clipRect);
+
+                // draw "Now" line
+                float xf = _mProject.Now * BarWidth;
+                var pen = new Pen(Color.Gray);
+                pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
+                graphics.DrawLine(pen, new PointF(xf, 0), new PointF(xf, this.Height));
+
+                // Paint overlays
+                OnPaintOverlay(new ChartPaintEventArgs(graphics, clipRect, this));
             }
-
-            // draw "Now" line
-            float xf = _mProject.Now * BarWidth;
-            var pen = new Pen(Color.Gray);
-            pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
-            graphics.DrawLine(pen, new PointF(xf, 0), new PointF(xf, this.Height));
-
-            // Paint overlays
-            OnPaintOverlay(new ChartPaintEventArgs(graphics, clipRect, this));
+            else
+            {
+                string msg = "No Project";
+                var rect = _TextAlignCenterMiddle(graphics, this.Viewport, msg, this.Font);
+                graphics.DrawString("No Projects Initialised", this.Font, Brushes.Black, new PointF(rect.Left, rect.Top));
+            }
 
             // flush
             graphics.Flush();
@@ -509,7 +522,7 @@ namespace Braincase.GanttChart
                     else
                     {
                         // displace horizontally
-                        if (_mProject.Relationships[e.Source].Count() == 0) e.Source.Start += delta;
+                        if (_mProject.Relationships.Precedents(e.Source).Count() == 0) e.Source.Start += delta;
                         else e.Source.Delay += delta;
                     }
                 }
@@ -517,7 +530,7 @@ namespace Braincase.GanttChart
                 {
                     if (Control.ModifierKeys.HasFlag(Keys.Shift))
                     {
-                        _mProject.Relationships.Add(e.Source, e.Target);
+                        _mProject.Relationships.Add(e.Target, e.Source);
                     }
                     else if (Control.ModifierKeys.HasFlag(Keys.Alt))
                     {
@@ -527,7 +540,7 @@ namespace Braincase.GanttChart
                         }
                         else
                         {
-                            _mProject.Relationships.Delete(e.Source, e.Target);
+                            _mProject.Relationships.Delete(e.Target, e.Source);
                         }
                     }
                     else
@@ -629,7 +642,8 @@ namespace Braincase.GanttChart
 
                 if (Row != int.MinValue)
                 {
-                    float y = e.Chart._RowToClientCoord(Row) - (e.Chart.BarSpacing - e.Chart.BarHeight) / 2.0f;
+                    // float y = e.Chart._RowToClientCoord(Row) - (e.Chart.BarSpacing - e.Chart.BarHeight) / 2.0f;
+                    float y = e.Chart._RowToClientCoord(Row) + e.Chart.BarHeight / 2.0f;
                     g.DrawLine(Pens.CornflowerBlue, new PointF(0, y), new PointF(chart.Width, y));
                 }
             }
@@ -812,7 +826,7 @@ namespace Braincase.GanttChart
             foreach (var task in _mProject.Relationships.Dependants())
             {
                 var succ = task;
-                IEnumerable<Task> predecessors = _mProject.Relationships[succ];
+                IEnumerable<Task> predecessors = _mProject.Relationships.Precedents(succ);
                 // accumulate predecessors up the task groups until we reach the first visible task
                 // that we can "connect the lines" for relations
                 if (AccumulateRelationsOnGroup)
@@ -820,7 +834,7 @@ namespace Braincase.GanttChart
                     while (succ.Parent != null && succ.Parent.IsCollapsed)
                     {
                         succ = succ.Parent;
-                        predecessors = predecessors.Concat(_mProject.Relationships[succ]);
+                        predecessors = predecessors.Concat(_mProject.Relationships.Precedents(succ));
                     }
                 }
 
@@ -976,6 +990,9 @@ namespace Braincase.GanttChart
             _mTaskRects.Clear();
 
             this.Dock = DockStyle.None;
+            var pHeight = this.Parent == null ? this.Width : this.Parent.Height;
+            var pWidth = this.Parent == null ? this.Height : this.Parent.Width;
+
             if (this.VisibleTasks.FirstOrDefault() != null)
             {
                 int end = -1;
@@ -988,13 +1005,13 @@ namespace Braincase.GanttChart
                     count++;   
                 }
                 count += 5;
-                this.Height = Math.Max(this.Parent.Height, ++count * this.BarSpacing + this.BarHeight);
-                this.Width = Math.Max(this.Parent.Width, end * this.BarWidth + 200);
+                this.Height = Math.Max(pHeight, count * this.BarSpacing + this.BarHeight);
+                this.Width = Math.Max(pWidth, end * this.BarWidth + 200);
             }
             else
             {
-                this.Height = this.Parent.Height;
-                this.Width = this.Parent.Width;
+                this.Height = pHeight;
+                this.Width = pWidth;
             }
         }
 
@@ -1188,17 +1205,17 @@ namespace Braincase.GanttChart
 
     public class RelationPaintEventArgs : ChartPaintEventArgs
     {
-        public Task Before { get; private set; }
+        public Task Precedent { get; private set; }
 
-        public Task After { get; private set; }
+        public Task Dependant { get; private set; }
 
         public RelationFormat Format { get; set; }
 
         public RelationPaintEventArgs(Graphics graphics, Rectangle clipRect, Chart chart, Task before, Task after, RelationFormat format)
             : base(graphics, clipRect, chart)
         {
-            this.Before = before;
-            this.After = after;
+            this.Precedent = before;
+            this.Dependant = after;
             this.Format = format;
         }
     }

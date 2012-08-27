@@ -5,6 +5,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GanttChart", "GanttChart\Ga
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GanttChartExample", "GanttChartExample\GanttChartExample.csproj", "{03AED807-CA2D-4823-B321-41C470174F0B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GanttChartTests", "GanttChartTests\GanttChartTests.csproj", "{D7593BAD-1B12-4FBE-B6C2-25E36B1D227C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -35,6 +37,16 @@ Global
 		{03AED807-CA2D-4823-B321-41C470174F0B}.Release|Mixed Platforms.Build.0 = Release|x86
 		{03AED807-CA2D-4823-B321-41C470174F0B}.Release|x86.ActiveCfg = Release|x86
 		{03AED807-CA2D-4823-B321-41C470174F0B}.Release|x86.Build.0 = Release|x86
+		{D7593BAD-1B12-4FBE-B6C2-25E36B1D227C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7593BAD-1B12-4FBE-B6C2-25E36B1D227C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7593BAD-1B12-4FBE-B6C2-25E36B1D227C}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{D7593BAD-1B12-4FBE-B6C2-25E36B1D227C}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{D7593BAD-1B12-4FBE-B6C2-25E36B1D227C}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D7593BAD-1B12-4FBE-B6C2-25E36B1D227C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7593BAD-1B12-4FBE-B6C2-25E36B1D227C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7593BAD-1B12-4FBE-B6C2-25E36B1D227C}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{D7593BAD-1B12-4FBE-B6C2-25E36B1D227C}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{D7593BAD-1B12-4FBE-B6C2-25E36B1D227C}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

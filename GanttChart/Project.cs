@@ -15,7 +15,7 @@ namespace Braincase.GanttChart
 
         internal bool Add(T item)
         {
-            if (item == this || this.Ancestors.Contains(item))
+            if (item == null || item == this || this.Ancestors.Contains(item))
             {
                 return false;
             }
@@ -267,11 +267,11 @@ namespace Braincase.GanttChart
             if (this.Count() > 0)
                 start = this.Min(x => x.Start);
             // A normal task without predecessor uses own start
-            else if (this._mProject.Relationships[this].FirstOrDefault() == null)
+            else if (this._mProject.Relationships.Precedents(this).FirstOrDefault() == null)
                  start = _mStart;
             // A normal task with predecessor starts after the predecessor ends after Delay.
             else
-                start = this._mProject.Relationships[this].Max(x => x.End) + this.Delay + 1;
+                start = this._mProject.Relationships.Precedents(this).Max(x => x.End) + this.Delay + 1;
 
             return start;
         }
@@ -317,44 +317,52 @@ namespace Braincase.GanttChart
     {
         Dictionary<Task, List<Task>> _mPrecedents = new Dictionary<Task, List<Task>>();
 
-        public void Add(Task before, Task after)
+        public void Add(Task precedent, Task dependant)
         {
-            if (before == after
-                || this.PrecedentTree(after).Contains(before)
-                || this[before].Contains(after)
-                || after.Count() > 0
-                || before.Count() > 0)
+            if (precedent == dependant
+                || precedent == null
+                || dependant == null
+                || this.PrecedentTree(precedent).Contains(dependant) // precedent cannot have dependant as an existing precedent
+                || (this._mPrecedents[dependant] != null && this._mPrecedents[dependant].Contains(precedent)) // precedent not current already precendent of dependant
+                || dependant.IsGroup
+                || precedent.IsGroup)
             {
                 // not allowed
             }
             else
             {
                 // Hard Adding
-                var precedents = _GetOrCreatePrecedentList(before);
-                precedents.Add(after);
+                var precedents = _GetOrCreatePrecedentList(dependant);
+                precedents.Add(precedent);
             }
         }
 
-        public void Delete(Task before, Task after)
+        internal void Add(Task dependant)
         {
-            _mPrecedents[before].Remove(after);
+            _GetOrCreatePrecedentList(dependant);
         }
 
-        public void Delete(Task beforeOrAfter)
+        public void Delete(Task precedent, Task dependant)
         {
-            _mPrecedents.Remove(beforeOrAfter);
-            var query = _mPrecedents.Where(x => x.Value.Contains(beforeOrAfter)).Select(x => x.Value);
-            foreach (var list in query) list.Remove(beforeOrAfter);
+            _mPrecedents[dependant].Remove(precedent);
         }
 
-        public IEnumerable<Task> this[Task before]
+        public void Delete(Task task)
         {
-            get { return _GetOrCreatePrecedentList(before).ToArray(); }
+            _mPrecedents.Remove(task);
+            var query = _mPrecedents.Where(x => x.Value.Contains(task)).Select(x => x.Value);
+            foreach (var list in query) list.Remove(task);
         }
 
-        public IEnumerable<Task> PrecedentTree(Task before)
+        public IEnumerable<Task> Precedents(Task dependant)
         {
-            var precedents = _GetOrCreatePrecedentList(before);
+            List<Task> precedents;
+            return _mPrecedents.TryGetValue(dependant, out precedents) ? precedents.ToArray() : null;
+        }
+
+        public IEnumerable<Task> PrecedentTree(Task dependant)
+        {
+            var precedents = _GetOrCreatePrecedentList(dependant);
 
             Stack<Task> destinations = new Stack<Task>();
             Task current;
@@ -364,20 +372,20 @@ namespace Braincase.GanttChart
                 while (destinations.Count > 0)
                 {
                     current = destinations.Pop();
-                    foreach(var pp in this[current]) destinations.Push(pp);
+                    foreach (var pp in this.Precedents(current)) destinations.Push(pp);
                     yield return current;
                 }
             }
         }
 
         /// <summary>
-        /// Enumerate through the dependant tasks that must occur after the specified task
+        /// Enumerate through the dependant of the specified task
         /// </summary>
-        /// <param name="after"></param>
+        /// <param name="precedent"></param>
         /// <returns></returns>
-        public IEnumerable<Task> Dependants(Task after)
+        public IEnumerable<Task> Dependants(Task precedent)
         {
-            return _mPrecedents.Where(x => x.Value.Contains(after)).Select(x => x.Key);
+            return _mPrecedents.Where(x => x.Value.Contains(precedent)).Select(x => x.Key);
         }
 
         /// <summary>
@@ -394,11 +402,11 @@ namespace Braincase.GanttChart
             _mPrecedents.Clear();
         }
 
-        private List<Task> _GetOrCreatePrecedentList(Task before)
+        private List<Task> _GetOrCreatePrecedentList(Task dependant)
         {
             List<Task> precedents;
-            if (!_mPrecedents.TryGetValue(before, out precedents) || precedents == null)
-                precedents = _mPrecedents[before] = new List<Task>();
+            if (!_mPrecedents.TryGetValue(dependant, out precedents) || precedents == null)
+                precedents = _mPrecedents[dependant] = new List<Task>();
 
             return precedents;
         }
@@ -410,17 +418,35 @@ namespace Braincase.GanttChart
         Dictionary<Task, List<object>> _mTasksToResource = new Dictionary<Task, List<object>>();
 
         /// <summary>
+        /// Create a resource list of the specified task
+        /// </summary>
+        /// <param name="task"></param>
+        internal void Add(Task task)
+        {
+            _GetOrCreateTaskResources(task);
+        }
+
+        internal void Delete(Task task)
+        {
+            this.UnassignResource(task);
+            _mTasksToResource.Remove(task);
+        }
+
+        /// <summary>
         /// Assign a resource to a task
         /// </summary>
         /// <param name="task"></param>
         /// <param name="resource"></param>
         public void AssignResource(Task task, object resource)
         {
-            var tasks = _GetResourceTasks(resource);
-            var resources = _GetTaskResources(task);
+            var tasks = _GetOrCreateResourceTasks(resource);
+            var resources = _GetOrCreateTaskResources(task);
 
-            tasks.Add(task);
-            resources.Add(resource);
+            if (!resources.Contains(resource))
+            {
+                tasks.Add(task);
+                resources.Add(resource);
+            }
         }
 
         /// <summary>
@@ -430,7 +456,8 @@ namespace Braincase.GanttChart
         /// <param name="resource"></param>
         public void UnassignResource(Task task, object resource)
         {
-            _GetTaskResources(task).Remove(resource);
+            _GetOrCreateTaskResources(task).Remove(resource);
+            _GetOrCreateResourceTasks(resource).Remove(task);
         }
 
         /// <summary>
@@ -439,10 +466,10 @@ namespace Braincase.GanttChart
         /// <param name="task"></param>
         public void UnassignResource(Task task)
         {
-            var resources = _GetTaskResources(task);
+            var resources = _GetOrCreateTaskResources(task);
             foreach (var r in resources)
                 _mResourceToTasks[r].Remove(task);
-            _mTasksToResource.Remove(task);
+            resources.Clear();
         }
 
         /// <summary>
@@ -451,7 +478,7 @@ namespace Braincase.GanttChart
         /// <param name="resource"></param>
         public void Remove(object resource)
         {
-            var tasks = _GetResourceTasks(resource);
+            var tasks = _GetOrCreateResourceTasks(resource);
             foreach (var t in tasks)
                 _mTasksToResource[t].Remove(resource);
 
@@ -465,7 +492,7 @@ namespace Braincase.GanttChart
         /// <returns></returns>
         public IEnumerable<Task> GetTasks(object resource)
         {
-            return _GetResourceTasks(resource).ToArray();
+            return _GetOrCreateResourceTasks(resource).ToArray();
         }
 
         /// <summary>
@@ -475,7 +502,8 @@ namespace Braincase.GanttChart
         /// <returns></returns>
         public IEnumerable<object> GetResources(Task task)
         {
-            return _GetTaskResources(task).ToArray();
+            List<object> resources;
+            return _mTasksToResource.TryGetValue(task, out resources) ? resources.ToArray() : null;
         }
 
         /// <summary>
@@ -496,7 +524,7 @@ namespace Braincase.GanttChart
             _mTasksToResource.Clear();
         }
 
-        private List<Task> _GetResourceTasks(object resource)
+        private List<Task> _GetOrCreateResourceTasks(object resource)
         {
             List<Task> tasks;
             if (!_mResourceToTasks.TryGetValue(resource, out tasks))
@@ -505,7 +533,7 @@ namespace Braincase.GanttChart
             return tasks;
         }
 
-        private List<object> _GetTaskResources(Task task)
+        private List<object> _GetOrCreateTaskResources(Task task)
         {
             List<object> resources;
             if (!_mTasksToResource.TryGetValue(task, out resources))
@@ -553,6 +581,8 @@ namespace Braincase.GanttChart
         {
             var task = new Task(this);
             Tasks.Add(task);
+            Relationships.Add(task);
+            Resources.Add(task);
             return task;
         }
 
@@ -563,7 +593,7 @@ namespace Braincase.GanttChart
         /// <param name="member"></param>
         public void GroupTask(Task group, Task member)
         {
-            if(group.Add(member))
+            if (group != null && group.Add(member))
                 Relationships.Delete(group);
         }
 
@@ -583,9 +613,22 @@ namespace Braincase.GanttChart
         /// <param name="task"></param>
         public void Remove(Task task)
         {
-            task.Leave();
-            Relationships.Delete(task);
-            Resources.UnassignResource(task);
+            if (task != null)
+            {
+                // If task is a group we need to pass the orphans to the grand parent
+                if (task.IsGroup)
+                {
+                    var parent = task.Parent;
+                    var index = parent.IndexOf(task);
+                    foreach (var child in task.Children)
+                        parent.Insert(index++, child);
+                }
+
+                task.Leave();
+                task.Clear();
+                Relationships.Delete(task);
+                Resources.Delete(task);
+            }
         }
 
         /// <summary>
@@ -611,18 +654,25 @@ namespace Braincase.GanttChart
         /// <param name="offset"></param>
         public void Move(Task task, int offset)
         {
-            int i = IndexOf(task);
-            int index = i + offset;
-            if(index < 0) offset = 0;
-            else if(index > Tasks.Count()) index = Tasks.Count();
-            var dest = Tasks.ElementAtOrDefault(index);
-
-            if (dest == null) Tasks.Add(task);
-            else if (!dest.Equals(task))
+            if (task != null && offset != 0)
             {
-                var p = dest.Parent.IndexOf(dest);
-                if (offset <= 0) dest.Parent.Insert(p, task);
-                else dest.Parent.Insert(Math.Max(0, p - 1), task);
+                int indexoftask = IndexOf(task);
+                int newindexoftask = indexoftask + offset;
+                if (newindexoftask < 0) newindexoftask = 0;
+                else if (newindexoftask > Tasks.Count()) newindexoftask = Tasks.Count();
+                var taskatnewindex = Tasks.ElementAtOrDefault(newindexoftask);
+
+                if (taskatnewindex == null)
+                {
+                    // adding to the end of the task list
+                    Tasks.Add(task);
+                }
+                else if (!taskatnewindex.Equals(task))
+                {
+                    var indexofdestinationtask = taskatnewindex.Parent.IndexOf(taskatnewindex);
+                    // if moving down, we need to move further down before swap places
+                    taskatnewindex.Parent.Insert(indexofdestinationtask, task);
+                }
             }
         }
 
