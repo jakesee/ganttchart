@@ -540,7 +540,7 @@ namespace Braincase.GanttChart
                         }
                         else
                         {
-                            _mProject.Relationships.Delete(e.Target, e.Source);
+                            _mProject.Relationships.Remove(e.Target, e.Source);
                         }
                     }
                     else
@@ -586,7 +586,7 @@ namespace Braincase.GanttChart
                     _mProject.Move(newtask, _mProject.IndexOf(e.Task) + 1 - _mProject.IndexOf(newtask));
                 }
                 else if (Control.ModifierKeys.HasFlag(Keys.Alt))
-                    _mProject.Remove(e.Task);
+                    _mProject.Delete(e.Task);
             }
             this.Invalidate();
         }

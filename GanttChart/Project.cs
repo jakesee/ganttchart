@@ -15,13 +15,13 @@ namespace Braincase.GanttChart
 
         internal bool Add(T item)
         {
-            if (item == null || item == this || this.Ancestors.Contains(item))
+            if (item == null || item == this || this.Ancestors.Contains(item) || item.Parent == this)
             {
                 return false;
             }
             else
             {
-                if (item.Parent != null) item.Leave();
+                item.Leave();
                 item.Parent = this as T;
                 mChildren.Add(item);
                 return true;
@@ -39,7 +39,11 @@ namespace Braincase.GanttChart
 
         internal void Leave()
         {
-            this.Parent.Remove(this as T);
+            if (this.Parent != null)
+            {
+                this.Parent.Remove(this as T);
+                this.Parent = null;
+            }
         }
 
         internal bool Remove(T item)
@@ -317,64 +321,119 @@ namespace Braincase.GanttChart
     {
         Dictionary<Task, List<Task>> _mPrecedents = new Dictionary<Task, List<Task>>();
 
+        /// <summary>
+        /// Create the precedent list for the specified dependant
+        /// </summary>
+        /// <param name="dependant"></param>
+        internal void Create(Task dependant)
+        {
+            _mPrecedents[dependant] = new List<Task>();
+        }
+
+        /// <summary>
+        /// Delete the precedent list for the specified dependant; subsequent attempt to get the list will give null
+        /// </summary>
+        /// <param name="dependant"></param>
+        internal void Delete(Task dependant)
+        {
+            _mPrecedents.Remove(dependant);
+            var query = _mPrecedents.Where(x => x.Value.Contains(dependant)).Select(x => x.Value);
+            foreach (var list in query) list.Remove(dependant);
+        }
+
+        /// <summary>
+        /// Add a relation between precedent and dependant, saving the relation is the precedent list for the dependant
+        /// </summary>
+        /// <param name="precedent"></param>
+        /// <param name="dependant"></param>
         public void Add(Task precedent, Task dependant)
         {
             if (precedent == dependant
                 || precedent == null
                 || dependant == null
-                || this.PrecedentTree(precedent).Contains(dependant) // precedent cannot have dependant as an existing precedent
-                || (this._mPrecedents[dependant] != null && this._mPrecedents[dependant].Contains(precedent)) // precedent not current already precendent of dependant
+                || precedent.IsGroup
                 || dependant.IsGroup
-                || precedent.IsGroup)
+                || (this._mPrecedents[dependant] != null && this._mPrecedents[dependant].Contains(precedent)) // precedent not current already precendent of dependant
+                || (this.PrecedentTree(precedent) != null && this.PrecedentTree(precedent).Contains(dependant)) // precedent cannot have dependant as an existing precedent
+                )
             {
                 // not allowed
             }
             else
             {
-                // Hard Adding
-                var precedents = _GetOrCreatePrecedentList(dependant);
-                precedents.Add(precedent);
+                // Bold assumption: the list must have been created the moment task is created.
+                _mPrecedents[dependant].Add(precedent);
             }
         }
 
-        internal void Add(Task dependant)
-        {
-            _GetOrCreatePrecedentList(dependant);
-        }
-
-        public void Delete(Task precedent, Task dependant)
+        /// <summary>
+        /// Remove the relation between precedent and dependant, from the dependant's precendent list
+        /// </summary>
+        /// <param name="precedent"></param>
+        /// <param name="dependant"></param>
+        public void Remove(Task precedent, Task dependant)
         {
             _mPrecedents[dependant].Remove(precedent);
         }
 
-        public void Delete(Task task)
+        /// <summary>
+        /// Remove all relations associated with the specified task
+        /// </summary>
+        /// <param name="dependant"></param>
+        public void Remove(Task task)
         {
-            _mPrecedents.Remove(task);
+            _mPrecedents[task].Clear();
             var query = _mPrecedents.Where(x => x.Value.Contains(task)).Select(x => x.Value);
             foreach (var list in query) list.Remove(task);
         }
 
+        /// <summary>
+        /// Get whether the specified task has any relations defined
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
+        public bool HasRelations(Task task)
+        {
+            return (_mPrecedents.ContainsKey(task) && _mPrecedents[task].Count > 0) || _mPrecedents.Any(x => x.Value.Contains(task));
+        }
+
+        /// <summary>
+        /// Enumerate through each direct precedent of the specified dependant
+        /// </summary>
+        /// <param name="dependant"></param>
+        /// <returns></returns>
         public IEnumerable<Task> Precedents(Task dependant)
         {
             List<Task> precedents;
             return _mPrecedents.TryGetValue(dependant, out precedents) ? precedents.ToArray() : null;
         }
 
+        /// <summary>
+        /// Enumerate through every precendent of the specified dependant
+        /// </summary>
+        /// <param name="dependant"></param>
+        /// <returns></returns>
         public IEnumerable<Task> PrecedentTree(Task dependant)
         {
-            var precedents = _GetOrCreatePrecedentList(dependant);
-
-            Stack<Task> destinations = new Stack<Task>();
-            Task current;
-            foreach (var p in precedents)
+            List<Task> precedents;
+            if (_mPrecedents.TryGetValue(dependant, out precedents))
             {
-                destinations.Push(p);
-                while (destinations.Count > 0)
+                Stack<Task> destinations = new Stack<Task>();
+                Task current;
+                foreach (var p in precedents)
                 {
-                    current = destinations.Pop();
-                    foreach (var pp in this.Precedents(current)) destinations.Push(pp);
-                    yield return current;
+                    destinations.Push(p);
+                    while (destinations.Count > 0)
+                    {
+                        current = destinations.Pop();
+                        foreach (var pp in this.Precedents(current)) destinations.Push(pp);
+                        yield return current;
+                    }
                 }
+            }
+            else
+            {
+                yield break;
             }
         }
 
@@ -396,20 +455,6 @@ namespace Braincase.GanttChart
         {
             return _mPrecedents.Keys;
         }
-
-        public void Clear()
-        {
-            _mPrecedents.Clear();
-        }
-
-        private List<Task> _GetOrCreatePrecedentList(Task dependant)
-        {
-            List<Task> precedents;
-            if (!_mPrecedents.TryGetValue(dependant, out precedents) || precedents == null)
-                precedents = _mPrecedents[dependant] = new List<Task>();
-
-            return precedents;
-        }
     }
 
     public class ResourceManager
@@ -418,14 +463,18 @@ namespace Braincase.GanttChart
         Dictionary<Task, List<object>> _mTasksToResource = new Dictionary<Task, List<object>>();
 
         /// <summary>
-        /// Create a resource list of the specified task
+        /// Create a resource list for the specified task
         /// </summary>
         /// <param name="task"></param>
-        internal void Add(Task task)
+        internal void Create(Task task)
         {
             _GetOrCreateTaskResources(task);
         }
 
+        /// <summary>
+        /// Delete the resource list from the ResourceManager; Will return null when on next get attempt
+        /// </summary>
+        /// <param name="task"></param>
         internal void Delete(Task task)
         {
             this.UnassignResource(task);
@@ -473,10 +522,10 @@ namespace Braincase.GanttChart
         }
 
         /// <summary>
-        /// Remove the specified resource from all tasks
+        /// Delete the task lists for the specified resource
         /// </summary>
         /// <param name="resource"></param>
-        public void Remove(object resource)
+        public void Delete(object resource)
         {
             var tasks = _GetOrCreateResourceTasks(resource);
             foreach (var t in tasks)
@@ -581,8 +630,8 @@ namespace Braincase.GanttChart
         {
             var task = new Task(this);
             Tasks.Add(task);
-            Relationships.Add(task);
-            Resources.Add(task);
+            Relationships.Create(task);
+            Resources.Create(task);
             return task;
         }
 
@@ -593,8 +642,8 @@ namespace Braincase.GanttChart
         /// <param name="member"></param>
         public void GroupTask(Task group, Task member)
         {
-            if (group != null && group.Add(member))
-                Relationships.Delete(group);
+            if (group != null && !Relationships.HasRelations(group))
+                group.Add(member);
         }
 
         /// <summary>
@@ -611,7 +660,7 @@ namespace Braincase.GanttChart
         /// Remove task from this Project
         /// </summary>
         /// <param name="task"></param>
-        public void Remove(Task task)
+        public void Delete(Task task)
         {
             if (task != null)
             {
@@ -681,6 +730,9 @@ namespace Braincase.GanttChart
         /// </summary>
         public RelationshipManager Relationships { get; private set; }
 
+        /// <summary>
+        /// Get the ResourceManager
+        /// </summary>
         public ResourceManager Resources { get; private set; }
 
         /// <summary>
