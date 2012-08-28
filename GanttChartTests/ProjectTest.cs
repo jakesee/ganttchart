@@ -22,18 +22,18 @@ namespace GanttChartTests
             // create second task, remove first task
             var second = project.CreateTask();
             second.Name = "Apple Jack";
-            project.Remove(first);
+            project.Delete(first);
             var firstordefault = project.Tasks.FirstOrDefault();
             Assert.IsTrue(firstordefault != null);
             Assert.IsTrue(firstordefault.Name == "Apple Jack");
             Assert.IsTrue(firstordefault.Equals(second));
 
             // remove a task that is already removed
-            project.Remove(first);
+            project.Delete(first);
             Assert.IsTrue(project.Tasks.Count() == 1);
 
             // remove a null task
-            project.Remove(null);
+            project.Delete(null);
             Assert.IsTrue(project.Tasks.Count() == 1);
         }
 
@@ -53,14 +53,12 @@ namespace GanttChartTests
             Assert.IsTrue(one.Parent.Equals(group1));
             Assert.IsTrue(two.Parent.Equals(group1));
             
-
             // delete group task
-            project.Remove(group1);
+            project.Delete(group1);
             Assert.IsTrue(project.Tasks.Count() == 2);
             Assert.IsTrue(group1.Children.Count() == 0);
             Assert.IsTrue(one.Parent.Equals(project.Tasks));
-            Assert.IsTrue(two.Parent.Equals(project.Tasks));
-            
+            Assert.IsTrue(two.Parent.Equals(project.Tasks));   
         }
 
         [TestMethod]
@@ -320,24 +318,32 @@ namespace GanttChartTests
 
             // put null task into group
             project.GroupTask(group1, null);
+            Assert.IsTrue(!group1.IsGroup);
+            Assert.IsTrue(!group2.IsGroup);
             Assert.IsTrue(group1.Children.Count() == 0);
             Assert.IsTrue(group2.Children.Count() == 0);
             Assert.IsTrue(project.Tasks.Children.Count() == 3);
 
             // put task into null group
             project.GroupTask(null, one);
+            Assert.IsTrue(!group1.IsGroup);
+            Assert.IsTrue(!group2.IsGroup);
             Assert.IsTrue(group1.Children.Count() == 0);
             Assert.IsTrue(group2.Children.Count() == 0);
             Assert.IsTrue(project.Tasks.Children.Count() == 3);
 
             // group self
             project.GroupTask(group1, group1);
+            Assert.IsTrue(!group1.IsGroup);
+            Assert.IsTrue(!group2.IsGroup);
             Assert.IsTrue(group1.Children.Count() == 0);
             Assert.IsTrue(group2.Children.Count() == 0);
             Assert.IsTrue(project.Tasks.Children.Count() == 3);
 
             // grouping
             project.GroupTask(group1, one);
+            Assert.IsTrue(group1.IsGroup);
+            Assert.IsTrue(!group2.IsGroup);
             Assert.IsTrue(one.Parent.Equals(group1));
             Assert.IsTrue(group1.Children.Count() == 1);
             Assert.IsTrue(group2.Children.Count() == 0);
@@ -396,7 +402,7 @@ namespace GanttChartTests
             Assert.IsTrue(one.Parent.Equals(project.Tasks));
             Assert.IsTrue(group1.Children.Count() == 1);
             Assert.IsTrue(group2.Children.Count() == 0);
-            Assert.IsTrue(project.Tasks.Children.Count() == 2);
+            Assert.IsTrue(project.Tasks.Children.Count() == 2, string.Format("{0} != {1}", 2, project.Tasks.Children.Count()));
         }
 
         [TestMethod]
@@ -478,7 +484,7 @@ namespace GanttChartTests
             Assert.IsTrue(project.Relationships.Precedents(one) != null);
             Assert.IsTrue(project.Relationships.Precedents(one).Count() == 0);
 
-            project.Remove(one);
+            project.Delete(one);
             Assert.IsTrue(project.IndexOf(one) == -1);
             Assert.IsTrue(project.Relationships.Precedents(one) == null);
 
@@ -521,7 +527,7 @@ namespace GanttChartTests
             Assert.IsTrue(project.Relationships.PrecedentTree(three).Count() == 0);
 
             // Remove relation
-            project.Relationships.Delete(one, two);
+            project.Relationships.Remove(one, two);
             Assert.IsTrue(project.Relationships.Dependants(one).Count() == 0);
             Assert.IsTrue(project.Relationships.Dependants(two).Count() == 0);
             Assert.IsTrue(project.Relationships.Dependants(three).Count() == 0);
@@ -530,7 +536,7 @@ namespace GanttChartTests
             Assert.IsTrue(project.Relationships.PrecedentTree(three).Count() == 0);
 
             // remove non-existing relation
-            project.Relationships.Delete(one, two);
+            project.Relationships.Remove(one, two);
             Assert.IsTrue(project.Relationships.Dependants(one).Count() == 0);
             Assert.IsTrue(project.Relationships.Dependants(two).Count() == 0);
             Assert.IsTrue(project.Relationships.Dependants(three).Count() == 0);
@@ -560,7 +566,7 @@ namespace GanttChartTests
             Assert.IsTrue(project.Relationships.PrecedentTree(three).Count() == 2);
 
             // delete all relation
-            project.Relationships.Delete(one);
+            project.Relationships.Remove(one);
             Assert.IsTrue(project.Relationships.Dependants(one).Count() == 0);
             Assert.IsTrue(project.Relationships.Dependants(two).Count() == 1);
             Assert.IsTrue(project.Relationships.Dependants(three).Count() == 0);
@@ -578,7 +584,7 @@ namespace GanttChartTests
             Assert.IsTrue(project.Relationships.PrecedentTree(three).Count() == 1);
 
             // multi precedents
-            project.Relationships.Delete(two, three);
+            project.Relationships.Remove(two, three);
             project.Relationships.Add(three, one);
             Assert.IsTrue(project.Relationships.Dependants(one).Count() == 0);
             Assert.IsTrue(project.Relationships.Dependants(two).Count() == 1);
@@ -597,7 +603,7 @@ namespace GanttChartTests
             Assert.IsTrue(project.Resources.GetResources(one) != null);
             Assert.IsTrue(project.Resources.GetResources(one).Count() == 0);
 
-            project.Remove(one);
+            project.Delete(one);
             Assert.IsTrue(project.IndexOf(one) == -1);
             Assert.IsTrue(project.Resources.GetResources(one) == null);
 
@@ -698,6 +704,55 @@ namespace GanttChartTests
             Assert.IsTrue(project.Resources.GetTasks(r1).Count() == 0);
             Assert.IsTrue(project.Resources.GetTasks(r2).Count() == 1);
             Assert.IsTrue(project.Resources.GetTasks(r3).Count() == 1);
+        }
+
+        [TestMethod]
+        public void ManageConcurrentGroupAndRelation()
+        {
+            var project = new Project();
+            var group = project.CreateTask();
+            var one = project.CreateTask();
+            var two = project.CreateTask();
+
+            // confirm initialization
+            Assert.IsTrue(!group.IsGroup);
+            Assert.IsTrue(one.Parent.Equals(project.Tasks));
+
+            // make a group
+            project.GroupTask(group, one);
+            Assert.IsTrue(group.IsGroup);
+            Assert.IsTrue(one.Parent.Equals(group));
+
+            // set a relationship
+            project.Relationships.Add(one, two);
+            Assert.IsTrue(group.IsGroup);
+            Assert.IsTrue(one.Parent.Equals(group));
+            Assert.IsTrue(project.Relationships.Precedents(two).Count() == 1);
+            Assert.IsTrue(project.Relationships.Precedents(two).Contains(one));
+
+            // make group related to two (not allowed)
+            project.Relationships.Add(group, two);
+            Assert.IsTrue(group.IsGroup);
+            Assert.IsTrue(one.Parent.Equals(group));
+            Assert.IsTrue(project.Relationships.Precedents(two).Count() == 1);
+            Assert.IsTrue(project.Relationships.Precedents(two).Contains(one));
+            Assert.IsTrue(project.Relationships.Precedents(group).Count() == 0);
+
+            // make two related to group (not allowed, since either is group)
+            project.Relationships.Add(two, group);
+            Assert.IsTrue(group.IsGroup);
+            Assert.IsTrue(one.Parent.Equals(group));
+            Assert.IsTrue(project.Relationships.Precedents(two).Count() == 1);
+            Assert.IsTrue(project.Relationships.Precedents(two).Contains(one));
+            Assert.IsTrue(project.Relationships.Precedents(group).Count() == 0);
+
+            // make group subtask of two (not allowed)
+            project.GroupTask(two, group);
+            Assert.IsTrue(group.IsGroup);
+            Assert.IsTrue(one.Parent.Equals(group));
+            Assert.IsTrue(project.Relationships.Precedents(two).Count() == 1);
+            Assert.IsTrue(project.Relationships.Precedents(two).Contains(one));
+            Assert.IsTrue(project.Relationships.Precedents(group).Count() == 0);
         }
     }
 }

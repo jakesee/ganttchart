@@ -141,12 +141,18 @@ namespace Braincase.GanttChart
             using (var dialog = new PrintDialog())
             {
                 dialog.Document = new System.Drawing.Printing.PrintDocument();
+                dialog.Document.BeginPrint += new System.Drawing.Printing.PrintEventHandler(Document_BeginPrint);
                 dialog.Document.PrintPage += new System.Drawing.Printing.PrintPageEventHandler(doc_PrintPage);
                 if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 {
                     dialog.Document.Print();
                 }
             }
+        }
+
+        void Document_BeginPrint(object sender, System.Drawing.Printing.PrintEventArgs e)
+        {
+            
         }
 
         private void mnuViewDaysDayOfWeek_Click(object sender, EventArgs e)
