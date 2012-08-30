@@ -5,6 +5,7 @@ using System.Text;
 
 namespace Braincase.GanttChart
 {
+    [Serializable]
     public class Task
     {
         public Task()
@@ -24,7 +25,7 @@ namespace Braincase.GanttChart
         /// <summary>
         /// Indicate whether this task is collapsed such that sub tasks are hidden from view. Only groups can be collasped.
         /// </summary>
-        public bool IsCollapsed { get; internal set; }
+        public bool IsCollapsed { get; set; }
 
         /// <summary>
         /// Get or set the pecentage complete of this task, expressed in float between 0.0 and 1.0f.
@@ -118,6 +119,12 @@ namespace Braincase.GanttChart
         IEnumerable<T> TasksOf(R resource);
     }
 
+    [Serializable]
+    public class ProjectManager : ProjectManager<Task, object>
+    {
+    }
+
+    [Serializable]
     public class ProjectManager<T, R> : IProjectManager<T, R>
         where T : Task
         where R : class
@@ -421,8 +428,8 @@ namespace Braincase.GanttChart
             List<T> list;
             if (_mTaskGroups.TryGetValue(task, out list))
             {
-                foreach (var item in list)
-                    yield return item;
+                var iter = list.GetEnumerator();
+                while (iter.MoveNext()) yield return iter.Current;
             }
         }
 
@@ -473,14 +480,14 @@ namespace Braincase.GanttChart
             HashSet<T> list;
             if (_mDependents.TryGetValue(task, out list))
             {
-                foreach (var item in list)
-                    yield return item;
+                var iter = list.GetEnumerator();
+                while (iter.MoveNext()) yield return iter.Current;
             }
         }
 
         public IEnumerable<T> Precedents
         {
-            get { foreach(var item in _mDependents.Where(x => _mDependents[x.Key].Count > 0).Select(x => x.Key)) yield return item; }
+            get { return _mDependents.Where(x => _mDependents[x.Key].Count > 0).Select(x => x.Key); }
         }
 
         /// <summary>
@@ -525,10 +532,6 @@ namespace Braincase.GanttChart
         {
             if (_mRegister.Contains(task))
             {
-                /*
-                var kvp = _mTaskGroups.FirstOrDefault(x => x.Value.Contains(task));
-                return kvp.Equals(default(KeyValuePair<T, List<T>>)) ? null : kvp.Key;
-                 */
                 return _mParentOfChild[task];
             }
             else

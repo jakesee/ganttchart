@@ -694,7 +694,7 @@ namespace Braincase.GanttChart
             graphics.DrawPolygon(new Pen(SystemColors.ButtonShadow), marker);
         }
 
-        private void _DrawHeaderWeek(Graphics graphics, HeaderPaintEventArgs e, Rectangle H1RECT, Rectangle H2RECT)
+        private void _DrawHeaderWeek(Graphics graphics, HeaderPaintEventArgs e, Rectangle clipRect, Rectangle H1RECT, Rectangle H2RECT)
         {
             var max = this.Width / this.BarWidth;
             var start = _mProject.Start.AddDays(-(int)_mProject.Start.DayOfWeek);
@@ -742,7 +742,7 @@ namespace Braincase.GanttChart
             }
         }
 
-        private void _DrawHeaderDay(Graphics graphics, HeaderPaintEventArgs e, Rectangle H1RECT, Rectangle H2RECT)
+        private void _DrawHeaderDay(Graphics graphics, HeaderPaintEventArgs e, Rectangle clipRect, Rectangle H1RECT, Rectangle H2RECT)
         {
             var max = this.Width / this.BarWidth;
             DateTime current;
@@ -751,9 +751,10 @@ namespace Braincase.GanttChart
                 current = _mProject.Start.AddDays(i);
                 var h2rect = new Rectangle(i * this.BarWidth - this.BarWidth / 2, H2RECT.Top, this.BarWidth, this.BarHeight);
                 var column = new Rectangle(h2rect.Left, h2rect.Bottom - 3, this.BarWidth, this.Height);
+               
                 if (TimeScaleDisplay == GanttChart.TimeScaleDisplay.DayOfWeek)
                 {
-                    var h2 = Chart.ShortDays[current.DayOfWeek];    
+                    var h2 = Chart.ShortDays[current.DayOfWeek];
                     var h2pos = _TextAlignCenterMiddle(graphics, h2rect, h2, e.Font);
                     graphics.DrawString(h2, e.Font, e.Format.Color, h2pos);
                     if (current.DayOfWeek == DayOfWeek.Sunday || current.DayOfWeek == DayOfWeek.Saturday)
@@ -785,6 +786,7 @@ namespace Braincase.GanttChart
                     }
                 }
                 graphics.DrawLine(e.Format.Border, new Point(column.Left, column.Top), new Point(column.Left, column.Bottom));
+                
             }
         }
 
@@ -807,11 +809,11 @@ namespace Braincase.GanttChart
 
             if (_mProject.TimeScale == GanttChart.TimeScale.Week)
             {
-                _DrawHeaderWeek(graphics, e, h1rect, h2rect);
+                _DrawHeaderWeek(graphics, e, clipRect, h1rect, h2rect);
             }
             else if (_mProject.TimeScale == GanttChart.TimeScale.Day)
             {
-                _DrawHeaderDay(graphics, e, h1rect, h2rect);
+                _DrawHeaderDay(graphics, e, clipRect, h1rect, h2rect);
             }
         }
 
@@ -890,27 +892,31 @@ namespace Braincase.GanttChart
                         {
                             var rod = new Rectangle(task.Start * BarWidth, taskrect.Top, task.Duration * BarWidth, BarHeight / 2);
                             graphics.FillRectangle(Brushes.Black, rod);
-                            // left bracket
-                            graphics.FillPolygon(Brushes.Black, new Point[] {
+
+                            if (!task.IsCollapsed)
+                            {
+                                // left bracket
+                                graphics.FillPolygon(Brushes.Black, new Point[] {
                                 new Point() { X = task.Start * BarWidth, Y = taskrect.Top },
                                 new Point() { X = task.Start * BarWidth, Y = taskrect.Top + BarHeight },
                                 new Point() { X = task.Start * BarWidth + BarWidth, Y = taskrect.Top } });
-                            // right bracket
-                            graphics.FillPolygon(Brushes.Black, new Point[] {
+                                // right bracket
+                                graphics.FillPolygon(Brushes.Black, new Point[] {
                                 new Point() { X = task.End * BarWidth, Y = taskrect.Top },
                                 new Point() { X = task.End * BarWidth, Y = taskrect.Top + BarHeight },
                                 new Point() { X = task.End * BarWidth - BarWidth, Y = taskrect.Top } });
+                            }
                         }
                     }
 
                     // write text
                     if (this.ShowTaskLabels && task.Name != string.Empty)
                     {
-                        var txtrect = _TextAlignLeftMiddle(graphics, taskrect, task.ToString(), e.Font);
+                        var txtrect = _TextAlignLeftMiddle(graphics, taskrect, task.Name, e.Font);
                         txtrect.Offset(taskrect.Width, 0);
                         if (clipRectF.IntersectsWith(txtrect))
                         {
-                            graphics.DrawString(task.ToString(), e.Font, e.Format.Color, txtrect);
+                            graphics.DrawString(task.Name, e.Font, e.Format.Color, txtrect);
                         }
                     }
 
