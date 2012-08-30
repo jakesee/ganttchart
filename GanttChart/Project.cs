@@ -5,184 +5,16 @@ using System.Text;
 
 namespace Braincase.GanttChart
 {
-    /// <summary>
-    /// Generic rooted DFS tree where all nodes are unique references and no circular referencing allowed.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    public class Tree<T> : IEnumerable<T> where T : Tree<T>
+    public class Task
     {
-        protected List<T> mChildren = new List<T>();
-
-        internal bool Add(T item)
-        {
-            if (item == null || item == this || this.Ancestors.Contains(item) || item.Parent == this)
-            {
-                return false;
-            }
-            else
-            {
-                item.Leave();
-                item.Parent = this as T;
-                mChildren.Add(item);
-                return true;
-            }
-        }
-
-        internal bool Insert(int index, T item)
-        {
-            if (item == this) return false;
-            if (item.Parent != null) item.Leave();
-            item.Parent = this as T;
-            mChildren.Insert(index, item);
-            return true;
-        }
-
-        internal void Leave()
-        {
-            if (this.Parent != null)
-            {
-                this.Parent.Remove(this as T);
-                this.Parent = null;
-            }
-        }
-
-        internal bool Remove(T item)
-        {
-            return mChildren.Remove(item);
-        }
-
-        internal void Clear()
-        {
-            mChildren.Clear();
-        }
-
-        internal int IndexOf(T item)
-        {
-            return mChildren.IndexOf(item);
-        }
-
-        /// <summary>
-        /// Get the parent node
-        /// </summary>
-        public T Parent { get; private set; }
-
-        /// <summary>
-        /// Get the root node
-        /// </summary>
-        public T Root
-        {
-            get
-            {
-                return Ancestors.Last();
-            }
-        }
-
-        /// <summary>
-        /// Eumerate up the tree through all the parents
-        /// </summary>
-        public IEnumerable<T> Ancestors
-        {
-            get
-            {
-                T parent = this.Parent;
-                while (parent != null)
-                {
-                    yield return parent;
-                    parent = parent.Parent;
-                }
-            }
-        }
-
-        /// <summary>
-        /// Enumerate direct children nodes
-        /// </summary>
-        public IEnumerable<T> Children
-        {
-            get
-            {
-                return mChildren.ToArray();
-            }
-        }
-
-        /// <summary>
-        /// Enumerator down the tree through all decendants
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerator<T> GetEnumerator()
-        {
-            Stack<T> destinations = new Stack<T>();
-            T current;
-            foreach (var child in mChildren)
-            {
-                destinations.Push(child);
-
-                while (destinations.Count > 0)
-                {
-                    current = destinations.Pop();
-                    var tempstack = new Stack<T>();
-                    foreach (var dest in current.mChildren) tempstack.Push(dest);
-                    tempstack.ToList().ForEach(x => destinations.Push(x));
-                    yield return current;
-                }
-            }
-        }
-
-        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-        {
-            return this.GetEnumerator();
-        }
-    }
-
-    public class Task : Tree<Task>
-    {
-        internal Task(Project project)
+        public Task()
         {
             Complete = 0.0f;
             Start = 0;
+            End = 1;
             Duration = 1;
-            Delay = 0;
-            IsCollapsed = false;
-            _mProject = project;
+            Slack = 0;
         }
-
-        /// <summary>
-        /// Custom user state for storing additional information regarding the task
-        /// </summary>
-        public Object UserState { get; set; }
-
-        /// <summary>
-        /// Indicate whether this task is collapsed such that sub tasks are hidden from view. Only groups can be collasped.
-        /// </summary>
-        public bool IsCollapsed { get {
-            return this.IsGroup && _mIsCollapsed;
-        } set{
-
-            if (this.IsGroup) _mIsCollapsed = value;
-            else _mIsCollapsed = false;
-        }
-        }
-
-        /// <summary>
-        /// Get or set the pecentage complete of this task, expressed in decimal between 0.0 and 1.0f.
-        /// </summary>
-        public float Complete
-        {
-            get
-            {
-                return _GetComplete();
-            }
-            set
-            {
-                _mComplete = value;
-                if (_mComplete < 0) _mComplete = 0;
-                else if (_mComplete > 1) _mComplete = 1;
-            }
-        }
-
-        /// <summary>
-        /// Get whether this Task is a task group with sub tasks.
-        /// </summary>
-        public bool IsGroup { get { return this.mChildren.Count > 0; } }
 
         /// <summary>
         /// Get or set the Name of this Task
@@ -190,405 +22,42 @@ namespace Braincase.GanttChart
         public string Name { get; set; }
 
         /// <summary>
-        /// Get or set the number of period after the end of all precedent Tasks, on which this Task will begin.
+        /// Indicate whether this task is collapsed such that sub tasks are hidden from view. Only groups can be collasped.
         /// </summary>
-        public int Delay { 
-            get { return _mDelay; } 
-            set
-            { 
-                _mDelay = value;
-                if (_mDelay < 0) _mDelay = 0;
-            } 
-        }
+        public bool IsCollapsed { get; internal set; }
+
+        /// <summary>
+        /// Get or set the pecentage complete of this task, expressed in float between 0.0 and 1.0f.
+        /// </summary>
+        public float Complete { get; internal set; }
         
         /// <summary>
-        /// Get or set the number of period after which this Task will begin in the absence of any precedent Tasks
+        /// Get the start time of this Task relative to the project start
         /// </summary>
-        public int Start
-        {
-            get
-            {
-                return _GetStart();
-            }
-            set
-            {
-                _mStart = value;
-                if (_mStart < 0) _mStart = 0;
-            }
-        }
-
-        public int End
-        {
-            get
-            {
-                return this.Start + this.Duration;
-            }
-            set
-            {
-                _mDuration = value - this.Start;
-                if (_mDuration < 1) _mDuration = 1;
-            }   
-        }
-
-        public int Duration
-        {
-            get
-            {
-                return _GetDuration();
-            }
-            set
-            {
-                _mDuration = value;
-                if (_mDuration < 1) _mDuration = 1;
-            }
-        }
-
-        public int Slack
-        {
-            get
-            {
-                if (!this.IsGroup && _mProject.Relationships.Dependants(this).FirstOrDefault() != null)
-                {
-                    return _mProject.Relationships.Dependants(this).Aggregate((x1, x2) => !x1.IsGroup && (x1.Start < x2.Start) ? x1 : x2).Start - this.End - 1;
-                }
-                else if (this.IsGroup)
-                {
-                    var t = this.Aggregate((x1, x2) => x1.End + x1.Slack > x2.End + x2.Slack ? x1 : x2);
-                    return t.End + t.Slack - this.End;
-                }
-                else
-                {
-                    return _mProject.Tasks.Aggregate((x1, x2) => !x1.IsGroup && (x1.End > x2.End) ? x1 : x2).End - this.End;
-                }
-            }
-        }
-
-        private int _GetStart()
-        {
-            int start = 0;
-
-            // A task group, does not have its own start, uses the ealiest start in subtask.
-            if (this.Count() > 0)
-                start = this.Min(x => x.Start);
-            // A normal task without predecessor uses own start
-            else if (this._mProject.Relationships.Precedents(this).FirstOrDefault() == null)
-                 start = _mStart;
-            // A normal task with predecessor starts after the predecessor ends after Delay.
-            else
-                start = this._mProject.Relationships.Precedents(this).Max(x => x.End) + this.Delay + 1;
-
-            return start;
-        }
-
-        private float _GetComplete()
-        {
-            if (this.Count() > 0)
-            {
-                return this.Sum(x => x.Complete * x.Duration) / this.Sum(x => x.Duration);
-            }
-            else
-            {
-                return _mComplete;
-            }
-        }
-        
-        private int _GetDuration()
-        {
-            if (this.Count() > 0)
-            {
-                return this.Max(x => x.End) - this.Min(x => x.Start);
-            }
-            else
-            {
-                return _mDuration;
-            }
-        }
-
-        private float _mComplete = 0.0f;
-
-        private int _mDuration = 0;
-
-        private int _mStart = 0;
-
-        private int _mDelay = 0;
-
-        private bool _mIsCollapsed = false;
-
-        private Project _mProject = null;
-    }
-
-    public class RelationshipManager
-    {
-        Dictionary<Task, List<Task>> _mPrecedents = new Dictionary<Task, List<Task>>();
+        public int Start { get; internal set; }
 
         /// <summary>
-        /// Create the precedent list for the specified dependant
+        /// Get the end time of this Task relative to the project start
         /// </summary>
-        /// <param name="dependant"></param>
-        internal void Create(Task dependant)
-        {
-            _mPrecedents[dependant] = new List<Task>();
-        }
+        public int End { get; internal set; }
 
         /// <summary>
-        /// Delete the precedent list for the specified dependant; subsequent attempt to get the list will give null
+        /// Get the duration of this Task
         /// </summary>
-        /// <param name="dependant"></param>
-        internal void Delete(Task dependant)
-        {
-            _mPrecedents.Remove(dependant);
-            var query = _mPrecedents.Where(x => x.Value.Contains(dependant)).Select(x => x.Value);
-            foreach (var list in query) list.Remove(dependant);
-        }
+        public int Duration { get; internal set; }
 
         /// <summary>
-        /// Add a relation between precedent and dependant, saving the relation is the precedent list for the dependant
+        /// Get the amount of slack (free float)
         /// </summary>
-        /// <param name="precedent"></param>
-        /// <param name="dependant"></param>
-        public void Add(Task precedent, Task dependant)
-        {
-            if (precedent == dependant
-                || precedent == null
-                || dependant == null
-                || precedent.IsGroup
-                || dependant.IsGroup
-                || (this._mPrecedents[dependant] != null && this._mPrecedents[dependant].Contains(precedent)) // precedent not current already precendent of dependant
-                || (this.PrecedentTree(precedent) != null && this.PrecedentTree(precedent).Contains(dependant)) // precedent cannot have dependant as an existing precedent
-                )
-            {
-                // not allowed
-            }
-            else
-            {
-                // Bold assumption: the list must have been created the moment task is created.
-                _mPrecedents[dependant].Add(precedent);
-            }
-        }
+        public int Slack { get; internal set; }
 
         /// <summary>
-        /// Remove the relation between precedent and dependant, from the dependant's precendent list
-        /// </summary>
-        /// <param name="precedent"></param>
-        /// <param name="dependant"></param>
-        public void Remove(Task precedent, Task dependant)
-        {
-            _mPrecedents[dependant].Remove(precedent);
-        }
-
-        /// <summary>
-        /// Remove all relations associated with the specified task
-        /// </summary>
-        /// <param name="dependant"></param>
-        public void Remove(Task task)
-        {
-            _mPrecedents[task].Clear();
-            var query = _mPrecedents.Where(x => x.Value.Contains(task)).Select(x => x.Value);
-            foreach (var list in query) list.Remove(task);
-        }
-
-        /// <summary>
-        /// Get whether the specified task has any relations defined
-        /// </summary>
-        /// <param name="task"></param>
-        /// <returns></returns>
-        public bool HasRelations(Task task)
-        {
-            return (_mPrecedents.ContainsKey(task) && _mPrecedents[task].Count > 0) || _mPrecedents.Any(x => x.Value.Contains(task));
-        }
-
-        /// <summary>
-        /// Enumerate through each direct precedent of the specified dependant
-        /// </summary>
-        /// <param name="dependant"></param>
-        /// <returns></returns>
-        public IEnumerable<Task> Precedents(Task dependant)
-        {
-            List<Task> precedents;
-            return _mPrecedents.TryGetValue(dependant, out precedents) ? precedents.ToArray() : null;
-        }
-
-        /// <summary>
-        /// Enumerate through every precendent of the specified dependant
-        /// </summary>
-        /// <param name="dependant"></param>
-        /// <returns></returns>
-        public IEnumerable<Task> PrecedentTree(Task dependant)
-        {
-            List<Task> precedents;
-            if (_mPrecedents.TryGetValue(dependant, out precedents))
-            {
-                Stack<Task> destinations = new Stack<Task>();
-                Task current;
-                foreach (var p in precedents)
-                {
-                    destinations.Push(p);
-                    while (destinations.Count > 0)
-                    {
-                        current = destinations.Pop();
-                        foreach (var pp in this.Precedents(current)) destinations.Push(pp);
-                        yield return current;
-                    }
-                }
-            }
-            else
-            {
-                yield break;
-            }
-        }
-
-        /// <summary>
-        /// Enumerate through the dependant of the specified task
-        /// </summary>
-        /// <param name="precedent"></param>
-        /// <returns></returns>
-        public IEnumerable<Task> Dependants(Task precedent)
-        {
-            return _mPrecedents.Where(x => x.Value.Contains(precedent)).Select(x => x.Key);
-        }
-
-        /// <summary>
-        /// Enumerate through each task that is a dependant of another task
+        /// Convert this Task to a descriptive string
         /// </summary>
         /// <returns></returns>
-        public IEnumerable<Task> Dependants()
+        public override string ToString()
         {
-            return _mPrecedents.Keys;
-        }
-    }
-
-    public class ResourceManager
-    {
-        Dictionary<object, List<Task>> _mResourceToTasks = new Dictionary<object, List<Task>>();
-        Dictionary<Task, List<object>> _mTasksToResource = new Dictionary<Task, List<object>>();
-
-        /// <summary>
-        /// Create a resource list for the specified task
-        /// </summary>
-        /// <param name="task"></param>
-        internal void Create(Task task)
-        {
-            _GetOrCreateTaskResources(task);
-        }
-
-        /// <summary>
-        /// Delete the resource list from the ResourceManager; Will return null when on next get attempt
-        /// </summary>
-        /// <param name="task"></param>
-        internal void Delete(Task task)
-        {
-            this.UnassignResource(task);
-            _mTasksToResource.Remove(task);
-        }
-
-        /// <summary>
-        /// Assign a resource to a task
-        /// </summary>
-        /// <param name="task"></param>
-        /// <param name="resource"></param>
-        public void AssignResource(Task task, object resource)
-        {
-            var tasks = _GetOrCreateResourceTasks(resource);
-            var resources = _GetOrCreateTaskResources(task);
-
-            if (!resources.Contains(resource))
-            {
-                tasks.Add(task);
-                resources.Add(resource);
-            }
-        }
-
-        /// <summary>
-        /// Unassign the specified resource from the specified task
-        /// </summary>
-        /// <param name="task"></param>
-        /// <param name="resource"></param>
-        public void UnassignResource(Task task, object resource)
-        {
-            _GetOrCreateTaskResources(task).Remove(resource);
-            _GetOrCreateResourceTasks(resource).Remove(task);
-        }
-
-        /// <summary>
-        /// Unassign all resources from the specified task
-        /// </summary>
-        /// <param name="task"></param>
-        public void UnassignResource(Task task)
-        {
-            var resources = _GetOrCreateTaskResources(task);
-            foreach (var r in resources)
-                _mResourceToTasks[r].Remove(task);
-            resources.Clear();
-        }
-
-        /// <summary>
-        /// Delete the task lists for the specified resource
-        /// </summary>
-        /// <param name="resource"></param>
-        public void Delete(object resource)
-        {
-            var tasks = _GetOrCreateResourceTasks(resource);
-            foreach (var t in tasks)
-                _mTasksToResource[t].Remove(resource);
-
-            _mResourceToTasks.Remove(resource);
-        }
-
-        /// <summary>
-        /// Enumerate through the tasks that uses the specified resource
-        /// </summary>
-        /// <param name="resource"></param>
-        /// <returns></returns>
-        public IEnumerable<Task> GetTasks(object resource)
-        {
-            return _GetOrCreateResourceTasks(resource).ToArray();
-        }
-
-        /// <summary>
-        /// Enumerate through the resources that the task uses
-        /// </summary>
-        /// <param name="task"></param>
-        /// <returns></returns>
-        public IEnumerable<object> GetResources(Task task)
-        {
-            List<object> resources;
-            return _mTasksToResource.TryGetValue(task, out resources) ? resources.ToArray() : null;
-        }
-
-        /// <summary>
-        /// Enumerate through all resources
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerable<object> GetResources()
-        {
-            return _mResourceToTasks.Keys;
-        }
-
-        /// <summary>
-        /// Clear all task and resource data in the ResourceManager
-        /// </summary>
-        public void Clear()
-        {
-            _mResourceToTasks.Clear();
-            _mTasksToResource.Clear();
-        }
-
-        private List<Task> _GetOrCreateResourceTasks(object resource)
-        {
-            List<Task> tasks;
-            if (!_mResourceToTasks.TryGetValue(resource, out tasks))
-                _mResourceToTasks[resource] = tasks = new List<Task>();
-
-            return tasks;
-        }
-
-        private List<object> _GetOrCreateTaskResources(Task task)
-        {
-            List<object> resources;
-            if (!_mTasksToResource.TryGetValue(task, out resources))
-                _mTasksToResource[task] = resources = new List<object>();
-
-            return resources;
+            return string.Format("[Name = {0}, Start = {1}, End = {2}, Duration = {3}, Complete = {4}]", Name, Start, End, Duration, Complete);
         }
     }
 
@@ -597,159 +66,90 @@ namespace Braincase.GanttChart
         Day, Week
     }
 
-    public interface Object
+    public interface IProjectManager<T, R>
+        where T : Task
+        where R : class
     {
-        string Name { get; set; }
+        // Relating to all the Tasks
+        void Add(T task);
+        void Delete(T task);
+        void Group(T group, T member);
+        void Ungroup(T group, T member);
+        void Ungroup(T group);
+        void Move(T task, int offset);
+        void Relate(T precedent, T dependant);
+        void Unrelate(T precedent, T dependant);
+        void Unrelate(T precedent);
+        IEnumerable<T> Precedents { get; }
+        IEnumerable<T> Tasks { get; }
+
+        // set schedules and timelines
+        void SetStart(T task, int start);
+        void SetEnd(T task, int end);
+        void SetDuration(T task, int duration);
+        void SetComplete(T task, float complete);
+        void SetCollapse(T task, bool collasped);
+        int Now { get; }
+
+        // Relating to single Tasks
+        int IndexOf(T task);
+        IEnumerable<T> AncestorsOf(T task);
+        IEnumerable<T> DecendantsOf(T task);
+        IEnumerable<T> ChildrenOf(T task);
+        IEnumerable<T> PrecedentsOf(T task);
+        IEnumerable<T> DependantsOf(T task);
+        IEnumerable<T> DirectPrecedentsOf(T task);
+        IEnumerable<T> DirectDependantsOf(T task);
+        IEnumerable<IEnumerable<T>> CriticalPaths { get; }
+        T ParentOf(T task);
+
+        // Queries
+        bool IsGroup(T task);
+        bool IsMember(T task);
+        bool HasRelations(T task);
+
+        // Resources
+        void Assign(T task, R resource);
+        void Unassign(T task, R resource);
+        void Unassign(T task);
+        void Unassign(R resource);
+        IEnumerable<R> Resources { get; }
+        IEnumerable<R> ResourcesOf(T task);
+        IEnumerable<T> TasksOf(R resource);
     }
 
-    public class Project
+    public class ProjectManager<T, R> : IProjectManager<T, R>
+        where T : Task
+        where R : class
     {
+        HashSet<T> _mRegister = new HashSet<T>();
+        List<T> _mRootTasks = new List<T>();
+        Dictionary<T, List<T>> _mTaskGroups = new Dictionary<T, List<T>>();
+        Dictionary<T, HashSet<T>> _mDependents = new Dictionary<T, HashSet<T>>();
+        Dictionary<T, HashSet<R>> _mResources = new Dictionary<T, HashSet<R>>();
+        Dictionary<T, T> _mParentOfChild = new Dictionary<T, T>();
+
         /// <summary>
         /// Create a new Project
         /// </summary>
-        public Project()
+        public ProjectManager()
         {
-            Tasks = new Task(this);
-            Relationships = new RelationshipManager();
-            Resources = new ResourceManager();
             Now = 0;
             Start = DateTime.Now;
             TimeScale = GanttChart.TimeScale.Day;
         }
-
-        /// <summary>
-        /// Get the Task tree
-        /// </summary>
-        public Task Tasks { get; private set; }
-
-        /// <summary>
-        /// Create a new Task for this Project and add it to the Task tree
-        /// </summary>
-        /// <returns></returns>
-        public Task CreateTask()
-        {
-            var task = new Task(this);
-            Tasks.Add(task);
-            Relationships.Create(task);
-            Resources.Create(task);
-            return task;
-        }
-
-        /// <summary>
-        /// Add the member Task to the group Task
-        /// </summary>
-        /// <param name="group"></param>
-        /// <param name="member"></param>
-        public void GroupTask(Task group, Task member)
-        {
-            if (group != null && !Relationships.HasRelations(group))
-                group.Add(member);
-        }
-
-        /// <summary>
-        /// Remove the member task from its group
-        /// </summary>
-        /// <param name="member"></param>
-        public void UngroupTask(Task member)
-        {
-            member.Leave();
-            Tasks.Add(member);
-        }
-
-        /// <summary>
-        /// Remove task from this Project
-        /// </summary>
-        /// <param name="task"></param>
-        public void Delete(Task task)
-        {
-            if (task != null)
-            {
-                // If task is a group we need to pass the orphans to the grand parent
-                if (task.IsGroup)
-                {
-                    var parent = task.Parent;
-                    var index = parent.IndexOf(task);
-                    foreach (var child in task.Children)
-                        parent.Insert(index++, child);
-                }
-
-                task.Leave();
-                task.Clear();
-                Relationships.Delete(task);
-                Resources.Delete(task);
-            }
-        }
-
-        /// <summary>
-        /// Get the zero-based index of the task in this Project
-        /// </summary>
-        /// <param name="task"></param>
-        /// <returns></returns>
-        public int IndexOf(Task task)
-        {
-            int i = 0;
-            foreach (var x in Tasks)
-            {
-                if (x.Equals(task)) return i;
-                i++;
-            }
-            return -1;
-        }
-
-        /// <summary>
-        /// Re-position the task by offset amount of places
-        /// </summary>
-        /// <param name="task"></param>
-        /// <param name="offset"></param>
-        public void Move(Task task, int offset)
-        {
-            if (task != null && offset != 0)
-            {
-                int indexoftask = IndexOf(task);
-                int newindexoftask = indexoftask + offset;
-                if (newindexoftask < 0) newindexoftask = 0;
-                else if (newindexoftask > Tasks.Count()) newindexoftask = Tasks.Count();
-                var taskatnewindex = Tasks.ElementAtOrDefault(newindexoftask);
-
-                if (taskatnewindex == null)
-                {
-                    // adding to the end of the task list
-                    Tasks.Add(task);
-                }
-                else if (!taskatnewindex.Equals(task))
-                {
-                    var indexofdestinationtask = taskatnewindex.Parent.IndexOf(taskatnewindex);
-                    // if moving down, we need to move further down before swap places
-                    taskatnewindex.Parent.Insert(indexofdestinationtask, task);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Get the PrecedentManager
-        /// </summary>
-        public RelationshipManager Relationships { get; private set; }
-
-        /// <summary>
-        /// Get the ResourceManager
-        /// </summary>
-        public ResourceManager Resources { get; private set; }
-
         /// <summary>
         /// Get or set the period we are at now
         /// </summary>
         public int Now { get; set; }
-
         /// <summary>
         /// Get or set the starting date for this project
         /// </summary>
         public DateTime Start { get; set; }
-
         /// <summary>
         /// Get or set the time scale on this project. Each period on the task represents one unit of TimeScale.
         /// </summary>
         public TimeScale TimeScale { get; set; }
-
         /// <summary>
         /// Get the date after the specified period based on TimeScale
         /// </summary>
@@ -762,7 +162,7 @@ namespace Braincase.GanttChart
             {
                 datetime = this.Start.AddDays(period);
             }
-            else if(this.TimeScale == TimeScale.Week)
+            else if (this.TimeScale == TimeScale.Week)
             {
                 datetime = this.Start.AddDays(period * 7 - (int)this.Start.DayOfWeek);
             }
@@ -770,22 +170,682 @@ namespace Braincase.GanttChart
         }
 
         /// <summary>
-        /// Enumerate list of critical paths in Project
+        /// Create a new T for this Project and add it to the T tree
         /// </summary>
-        public IEnumerable<IEnumerable<Task>> CriticalPaths
+        /// <returns></returns>
+        public void Add(T task)
         {
-            get
+            if (!this._mRegister.Contains(task))
             {
-                int max = Tasks.Max(x => x.End);
-                var paths = Tasks.Where(x => x.End == max);
-                foreach (var path in paths)
+                _mRegister.Add(task);
+                _mRootTasks.Add(task);
+                _mTaskGroups[task] = new List<T>();
+                _mDependents[task] = new HashSet<T>();
+                _mResources[task] = new HashSet<R>();
+                _mParentOfChild[task] = null;
+            }
+        }
+
+        /// <summary>
+        /// Remove task from this Project
+        /// </summary>
+        /// <param name="task"></param>
+        public void Delete(T task)
+        {
+            if (task != null)
+            {
+                // Check if is group so can ungroup the task
+                if (this.IsGroup(task))
+                    this.Ungroup(task);
+
+                // Really delete all references
+                _mRootTasks.Remove(task);
+                _mTaskGroups.Remove(task);
+                _mDependents.Remove(task);
+                _mResources.Remove(task);
+                _mParentOfChild.Remove(task);
+                foreach (var g in _mTaskGroups) g.Value.Remove(task); // optimised: no need to check for contains
+                foreach (var g in _mDependents) g.Value.Remove(task);
+                _mRegister.Remove(task);
+            }
+        }
+
+        /// <summary>
+        /// Add the member T to the group T
+        /// </summary>
+        /// <param name="group"></param>
+        /// <param name="member"></param>
+        public void Group(T group, T member)
+        {
+            if (group != null
+                && member != null
+                && !group.Equals(member)
+                && _mRegister.Contains(group)
+                && _mRegister.Contains(member)
+                && !this.DecendantsOf(member).Contains(group)
+                && !this.HasRelations(group))
+            {
+                _LeaveParent(member);
+                _mTaskGroups[group].Add(member);
+                _mParentOfChild[member] = group;
+
+                _RecalculateAncestorsSchedule();
+                _RecalculateSlack();
+            }
+        }
+
+        /// <summary>
+        /// Remove the member task from its group
+        /// </summary>
+        /// <param name="member"></param>
+        public void Ungroup(T group, T member)
+        {
+            if (group != null
+                && member != null
+                && _mRegister.Contains(group)
+                && _mRegister.Contains(group)
+                && this.IsGroup(group))
+            {
+                _mRootTasks.Add(member);
+                _mTaskGroups[group].Remove(member);
+                _mParentOfChild[member] = null;
+            }
+        }
+
+        public void Ungroup(T group)
+        {
+            List<T> list;
+            if (group != null
+                //&& _mRegister.Contains(group)
+                && _mTaskGroups.TryGetValue(group, out list))
+            {
+                var newgroup = this.ParentOf(group);
+                if (newgroup == null)
                 {
-                    var list = new List<Task>() { path };
-                    yield return list.Concat(Relationships.PrecedentTree(path));
+                    foreach (var member in list)
+                    {
+                        _mRootTasks.Add(member);
+                        _mParentOfChild[member] = null;
+                    }
+                }
+                else
+                {
+                    foreach (var member in list)
+                    {
+                        _mTaskGroups[newgroup].Add(member);
+                        _mParentOfChild[member] = null;
+                    }
+                }
+
+                list.Clear();
+            }
+        }
+        
+        /// <summary>
+        /// Get the zero-based index of the task in this Project
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
+        public int IndexOf(T task)
+        {
+            if (_mRegister.Contains(task))
+            {
+                int i = 0;
+                foreach (var x in Tasks)
+                {
+                    if (x.Equals(task)) return i;
+                    i++;
+                }
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// Re-position the task by offset amount of places
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="offset"></param>
+        public void Move(T task, int offset)
+        {
+            if (task != null && _mRegister.Contains(task) && offset != 0)
+            {
+                int indexoftask = IndexOf(task);
+                if (indexoftask > -1)
+                {
+                    int newindexoftask = indexoftask + offset;
+                    // check for out of index bounds
+                    if (newindexoftask < 0) newindexoftask = 0;
+                    else if (newindexoftask > Tasks.Count()) newindexoftask = Tasks.Count();
+                    // get the index of the task that will be displaced
+                    var displacedtask = Tasks.ElementAtOrDefault(newindexoftask);
+
+                    if (displacedtask == null)
+                    {
+                        // adding to the end of the task list
+                        _LeaveParent(task);
+                        _mRootTasks.Add(task);
+                    }
+                    else if (!displacedtask.Equals(task))
+                    {
+                        int indexofdestinationtask;
+                        var displacedtaskparent = this.ParentOf(displacedtask);
+                        if (displacedtaskparent == null) // displacedtask is in root
+                        {
+                            indexofdestinationtask = _mRootTasks.IndexOf(displacedtask);
+                            _LeaveParent(task);
+                            _mRootTasks.Insert(indexofdestinationtask, task);
+                        }
+                        else if (!displacedtaskparent.Equals(task)) // displaced task is not under the moving task
+                        {
+                            var memberlist = _mTaskGroups[displacedtaskparent];
+                            indexofdestinationtask = memberlist.IndexOf(displacedtask);
+                            _LeaveParent(task);
+                            memberlist.Insert(indexofdestinationtask, task);
+                            _mParentOfChild[task] = displacedtaskparent;
+                        }
+                    }
+                    else // displacedtask == task, no need to move    
+                    {
+
+                    }
                 }
             }
         }
 
-        
+        /// <summary>
+        /// Get the T tree
+        /// </summary>
+        public IEnumerable<T> Tasks
+        {
+            get
+            {
+                var stack = new Stack<T>(1024);
+                var rstack = new Stack<T>(30);
+                foreach (var task in _mRootTasks)
+                {
+                    stack.Push(task);
+                    while (stack.Count > 0)
+                    {
+                        var visited = stack.Pop();
+                        yield return visited;
+                        foreach (var member in _mTaskGroups[visited])
+                            rstack.Push(member);
+
+                        while (rstack.Count > 0) stack.Push(rstack.Pop());
+                    }
+                }
+            }
+        }
+
+        public IEnumerable<T> AncestorsOf(T task)
+        {
+            T parent = ParentOf(task);
+            while (parent != null)
+            {
+                yield return parent;
+                parent = ParentOf(parent);
+            }
+        }
+
+        public IEnumerable<T> DecendantsOf(T task)
+        {
+            if(_mRegister.Contains(task))
+            {
+                Stack<T> stack = new Stack<T>(20);
+                Stack<T> rstack = new Stack<T>(10);
+                foreach (var child in _mTaskGroups[task])
+                {
+                    stack.Push(child);
+                    while (stack.Count > 0)
+                    {
+                        var visitedchild = stack.Pop();
+                        yield return visitedchild;
+
+                        // push the grandchild
+                        rstack.Clear();
+                        foreach (var grandchild in _mTaskGroups[visitedchild])
+                            rstack.Push(grandchild);
+
+                        // put in the right visiting order
+                        while (rstack.Count > 0)
+                            stack.Push(rstack.Pop());
+                    }
+                }
+            }
+        }
+
+        public IEnumerable<T> ChildrenOf(T task)
+        {
+            if (task == null) yield break;
+
+            List<T> list;
+            if (_mTaskGroups.TryGetValue(task, out list))
+            {
+                foreach (var item in list)
+                    yield return item;
+            }
+        }
+
+        public IEnumerable<T> PrecedentsOf(T task)
+        {
+            if (_mRegister.Contains(task))
+            {
+                var stack = new Stack<T>(20);
+                foreach (var p in DirectPrecedentsOf(task))
+                {
+                    stack.Push(p);
+                    while (stack.Count > 0)
+                    {
+                        var visited = stack.Pop();
+                        yield return visited;
+                        foreach (var grandp in DirectPrecedentsOf(visited))
+                            stack.Push(grandp);
+                    }
+                }
+            }
+        }
+
+        public IEnumerable<T> DependantsOf(T task)
+        {
+            var stack = new Stack<T>(20);
+            foreach (var d in _mDependents[task])
+            {
+                stack.Push(d);
+                while (stack.Count > 0)
+                {
+                    var visited = stack.Pop();
+                    yield return visited;
+                    foreach (var grandd in _mDependents[visited])
+                        stack.Push(grandd);
+                }
+            }
+        }
+
+        public IEnumerable<T> DirectPrecedentsOf(T task)
+        {
+            return _mDependents.Where(x => x.Value.Contains(task)).Select(x => x.Key);
+        }
+
+        public IEnumerable<T> DirectDependantsOf(T task)
+        {
+            if (task == null) yield break;
+
+            HashSet<T> list;
+            if (_mDependents.TryGetValue(task, out list))
+            {
+                foreach (var item in list)
+                    yield return item;
+            }
+        }
+
+        public IEnumerable<T> Precedents
+        {
+            get { foreach(var item in _mDependents.Where(x => _mDependents[x.Key].Count > 0).Select(x => x.Key)) yield return item; }
+        }
+
+        /// <summary>
+        /// Enumerate list of critical paths in Project
+        /// </summary>
+        public IEnumerable<IEnumerable<T>> CriticalPaths
+        {
+            get
+            {
+                Dictionary<int, List<T>> endtimelookp = new Dictionary<int, List<T>>(1024);
+                List<T> list;
+                var max_end = int.MinValue;
+                foreach (var task in this.Tasks)
+                {
+                    if (!endtimelookp.TryGetValue(task.End, out list))
+                        endtimelookp[task.End] = new List<T>(10);
+                    endtimelookp[task.End].Add(task);
+
+                    if(task.End > max_end) max_end = task.End;
+                }
+
+                if (max_end != int.MinValue)
+                {
+                    foreach (var task in endtimelookp[max_end])
+                    {
+                        yield return new T[] { task }.Concat(PrecedentsOf(task));
+                    }
+                }
+
+                /*
+                var max = this.Tasks.Max(x => x.End);
+                var paths = this.Tasks.Where(x => x.End == max);
+                foreach (var task in paths)
+                {
+                    yield return new T[] { task }.Concat(PrecedentsOf(task));
+                }
+                 */
+            }
+        }
+
+        public T ParentOf(T task)
+        {
+            if (_mRegister.Contains(task))
+            {
+                /*
+                var kvp = _mTaskGroups.FirstOrDefault(x => x.Value.Contains(task));
+                return kvp.Equals(default(KeyValuePair<T, List<T>>)) ? null : kvp.Key;
+                 */
+                return _mParentOfChild[task];
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public bool IsGroup(T task)
+        {
+            List<T> list;
+            if (_mTaskGroups.TryGetValue(task, out list))
+                return list.Count > 0;
+            else
+                return false;
+        }
+
+        public bool IsMember(T task)
+        {
+            return this.ParentOf(task) != null;
+        }
+
+        public bool HasRelations(T task)
+        {
+            if (_mRegister.Contains(task))
+            {
+                return _mDependents[task].Count > 0 || DirectPrecedentsOf(task).FirstOrDefault() != null;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        public void Relate(T precedent, T dependant)
+        {
+            if (_mRegister.Contains(precedent)
+                && _mRegister.Contains(dependant)
+                && !this.DependantsOf(dependant).Contains(precedent)
+                && !this.IsGroup(precedent)
+                && !this.IsGroup(dependant))
+            {
+                _mDependents[precedent].Add(dependant);
+
+                _RecalculateDependantsOf(precedent);
+                _RecalculateAncestorsSchedule();
+                _RecalculateSlack();
+            }
+        }
+
+        public void Unrelate(T precedent, T dependant)
+        {
+            if (_mRegister.Contains(precedent) && _mRegister.Contains(dependant))
+            {
+                _mDependents[precedent].Remove(dependant);
+
+                _RecalculateSlack();
+            }
+        }
+
+        public void Unrelate(T precedent)
+        {
+            if (_mRegister.Contains(precedent))
+            {
+                _mDependents[precedent].Clear();
+
+                _RecalculateSlack();
+            }
+        }
+
+        public void Assign(T task, R resource)
+        {
+            if (_mRegister.Contains(task) && !_mResources[task].Contains(resource))
+                _mResources[task].Add(resource);
+        }
+
+        public void Unassign(T task, R resource)
+        {
+            _mResources[task].Remove(resource);
+        }
+
+        public void Unassign(T task)
+        {
+            if(_mRegister.Contains(task))
+                _mResources[task].Clear();
+        }
+
+        public void Unassign(R resource)
+        {
+            foreach (var r in _mResources.Where(x => x.Value.Contains(resource)))
+                r.Value.Remove(resource);
+        }
+
+        public IEnumerable<R> Resources
+        {
+            get
+            {
+                return _mResources.SelectMany(x => x.Value).Distinct();
+            }
+        }
+
+        public IEnumerable<R> ResourcesOf(T task)
+        {
+            if (task == null || !_mRegister.Contains(task))
+                yield break;
+
+            HashSet<R> list;
+            if (_mResources.TryGetValue(task, out list))
+            {
+                foreach (var item in list)
+                    yield return item;
+            }
+        }
+
+        public IEnumerable<T> TasksOf(R resource)
+        {
+            return _mResources.Where(x => x.Value.Contains(resource)).Select(x => x.Key);
+        }
+
+        /// <summary>
+        /// Set the start value. Affects group start/end and dependants start time.
+        /// </summary>
+        /// <param name="value"></param>
+        public void SetStart(T task, int value)
+        {
+            if (_mRegister.Contains(task) && value != task.Start && !this.IsGroup(task))
+            {
+                _SetStartHelper(task, value);
+
+                _RecalculateAncestorsSchedule();
+                _RecalculateSlack();
+            }
+        }
+
+        /// <summary>
+        /// Set the end time. Affects group end and dependants start time.
+        /// </summary>
+        /// <param name="value"></param>
+        public void SetEnd(T task, int value)
+        {
+            if (_mRegister.Contains(task) && value != task.End && !this.IsGroup(task))
+            {
+                this._SetEndHelper(task, value);
+
+                _RecalculateAncestorsSchedule();
+                _RecalculateSlack();
+            }
+        }
+
+        public void SetDuration(T task, int duration)
+        {
+            this.SetEnd(task, task.Start + duration);
+        }
+
+        public void SetComplete(T task, float value)
+        {
+            if (_mRegister.Contains(task) && value != task.Complete && !this.IsGroup(task))
+            {
+                _SetCompleteHelper(task, value);
+
+                _RecalculateComplete();
+            }
+        }
+
+        public void SetCollapse(T task, bool collasped)
+        {
+            if (_mRegister.Contains(task) && this.IsGroup(task))
+            {
+                task.IsCollapsed = collasped;
+            }
+        }
+
+        private void _LeaveParent(T task)
+        {
+            var parent = this.ParentOf(task);
+            if (parent == null)
+                _mRootTasks.Remove(task);
+            else
+            {
+                _mTaskGroups[parent].Remove(task);
+                _mParentOfChild[task] = null;
+            }
+        }
+
+        private void _SetStartHelper(T task, int value)
+        {
+            if (task.Start != value)
+            {
+                // check out of bounds
+                if (value < 0) value = 0;
+                if (this.DirectPrecedentsOf(task).Any())
+                {
+                    var max_end = this.DirectPrecedentsOf(task).Max(x => x.End);
+                    if (value <= max_end) value = max_end + 1;
+                }
+
+                // cache value
+                task.Duration = task.End - task.Start;
+                task.Start = value;
+
+
+                // affect self
+                task.End = task.Start + task.Duration;
+
+                _RecalculateDependantsOf(task);
+            }
+        }
+
+        private void _SetEndHelper(T task, int value)
+        {
+            if (task.End != value)
+            {
+                // cache value
+                task.End = value;
+                
+                // check bounds
+                if (task.End <= task.Start) task.End = task.Start + 1;
+                task.Duration = task.End - task.Start;
+
+                _RecalculateDependantsOf(task);
+            }
+        }
+
+        private void _SetCompleteHelper(T task, float value)
+        {
+            if (task.Complete != value)
+            {
+                if (value > 1) value = 1;
+                else if (value < 0) value = 0;
+                task.Complete = value;
+            }
+        }
+
+        private void _RecalculateComplete()
+        {
+            Stack<T> groups = new Stack<T>();
+            foreach (var task in _mRootTasks.Where(x => this.IsGroup(x)))
+            {
+                _RecalculateCompletedHelper(task);
+            }
+        }
+
+        private float _RecalculateCompletedHelper(T group)
+        {
+            float t_complete = 0;
+            int t_duration = 0;
+            foreach (var member in this.ChildrenOf(group))
+            {
+                t_duration += member.Duration;
+                if (this.IsGroup(member)) t_complete += _RecalculateCompletedHelper(member) * member.Duration;
+                else t_complete += member.Complete * member.Duration;
+            }
+
+            group.Complete = t_complete / t_duration;
+
+            return group.Complete;
+        }
+
+        private void _RecalculateDependantsOf(T precedent)
+        {
+            // affect decendants
+            foreach (var dependant in this.DirectDependantsOf(precedent))
+            {
+                if (dependant.Start <= precedent.End)
+                    this._SetStartHelper(dependant, precedent.End + 1);
+            }
+        }
+
+        private void _RecalculateAncestorsSchedule()
+        {
+            // affects parent group
+            foreach(var group in _mRootTasks.Where(x => this.IsGroup(x)))
+            {
+                _RecalculateAncestorsScheduleHelper(group);
+            }
+        }
+
+        private void _RecalculateAncestorsScheduleHelper(T group)
+        {
+            float t_complete = 0;
+            int t_duration = 0;
+            var start = int.MaxValue;
+            var end = int.MinValue;
+            foreach (var member in this.ChildrenOf(group))
+            {
+                if (this.IsGroup(member))
+                    _RecalculateAncestorsScheduleHelper(member);
+
+                t_duration += member.Duration;
+                t_complete += member.Complete * member.Duration;
+                if (member.Start < start) start = member.Start;
+                if (member.End > end) end = member.End;
+            }
+
+            this._SetStartHelper(group, start);
+            this._SetEndHelper(group, end);
+            this._SetCompleteHelper(group, t_complete / t_duration);
+        }
+
+        private void _RecalculateSlack()
+        {
+            var max_end = this.Tasks.Max(x => x.End);
+            foreach (var task in this.Tasks)
+            {
+                // affects slack for current task
+                if (this.DirectDependantsOf(task).Any())
+                {
+                    // slack until the earliest dependant needs to start
+                    var min = this.DirectDependantsOf(task).Min(x => x.Start);
+                    task.Slack = min - task.End - 1;
+                }
+                else
+                {
+                    // no dependants, so we have all the time until the last task ends
+                    task.Slack = max_end - task.End;
+                }
+            }
+        }
     }
 }

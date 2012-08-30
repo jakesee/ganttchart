@@ -70,8 +70,8 @@ namespace GanttChartTests
             form.Controls.Add(chart);
 
             // init chart
-            Project project = new Project();
-            chart.Init(project);
+            var manager = new ProjectManager<Task, object>();
+            chart.Init(manager);
         }
 
         /// <summary>
@@ -81,8 +81,8 @@ namespace GanttChartTests
         public void DeferredAddChartToForm()
         {
             Chart chart = new Chart();
-            Project project = new Project();
-            chart.Init(project);
+            var manager = new ProjectManager<Task, object>();
+            chart.Init(manager);
 
             // deferred add to form
             Form form = new Form();

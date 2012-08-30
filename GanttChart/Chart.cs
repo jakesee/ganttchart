@@ -28,6 +28,7 @@ namespace Braincase.GanttChart
             AccumulateRelationsOnGroup = false;
             ShowTaskLabels = true;
             this.Dock = DockStyle.Fill;
+            this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.OptimizedDoubleBuffer | ControlStyles.UserPaint, true);
 
             // Formatting
             TaskFormat = new GanttChart.TaskFormat() {
@@ -87,20 +88,6 @@ namespace Braincase.GanttChart
                 var pHeight = this.Parent == null ? this.Width : this.Parent.Height;
                 var pWidth = this.Parent == null ? this.Height : this.Parent.Width;
                 return new Rectangle(-this.Location.X, -this.Location.Y, pWidth, pHeight);
-            }
-        }
-
-        /// <summary>
-        /// Get visible tasks currently drawn on the chart
-        /// </summary>
-        public IEnumerable<Task> VisibleTasks
-        {
-            get
-            {
-                if(_mProject != null)
-                    return _mProject.Tasks.Where(x => !x.Ancestors.Any(a => a.IsCollapsed));
-                else 
-                    return new Task[0];
             }
         }
 
@@ -277,11 +264,11 @@ namespace Braincase.GanttChart
         /// Initialize this Chart with a Project
         /// </summary>
         /// <param name="project"></param>
-        public void Init(Project project)
+        public void Init(ProjectManager<Task, object> project)
         {
             _mProject = project;
             this.DoubleBuffered = true;
-            _CalculateMeshAndResize();
+            _CalculateModels();
         }
 
         /// <summary>
@@ -307,7 +294,7 @@ namespace Braincase.GanttChart
             int row = 0;
             if (_mProject != null)
             {
-                _CalculateMeshAndResize(); // resize drawing area
+                _CalculateModels(); // resize drawing area
 
                 // draw header -- hpoefully this can stay on top in the future
                 _DrawHeader(graphics, clipRect);
@@ -347,6 +334,11 @@ namespace Braincase.GanttChart
                 this._Draw(e.Graphics, e.ClipRectangle);
 
             base.OnPaint(e);
+        }
+
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            // base.OnPaintBackground(e); // Disallow
         }
 
         protected override void OnMouseMove(MouseEventArgs e)
@@ -465,7 +457,8 @@ namespace Braincase.GanttChart
             // Default drag behaviors **********************************
             if (e.Button == System.Windows.Forms.MouseButtons.Middle)
             {
-                e.Source.Complete += (float)(e.X - e.PreviousLocation.X) / (e.Source.Duration * this.BarWidth);
+                var complete = e.Source.Complete + (float)(e.X - e.PreviousLocation.X) / (e.Source.Duration * this.BarWidth);
+                _mProject.SetComplete(e.Source, complete);
             }
             else if (e.Button == System.Windows.Forms.MouseButtons.Right)
             {
@@ -522,36 +515,37 @@ namespace Braincase.GanttChart
                     else
                     {
                         // displace horizontally
-                        if (_mProject.Relationships.Precedents(e.Source).Count() == 0) e.Source.Start += delta;
-                        else e.Source.Delay += delta;
+                        var start = e.Source.Start + delta;
+                        _mProject.SetStart(e.Source, start);
                     }
                 }
                 else // have drop target
                 {
                     if (Control.ModifierKeys.HasFlag(Keys.Shift))
                     {
-                        _mProject.Relationships.Add(e.Target, e.Source);
+                        _mProject.Relate(e.Target, e.Source);
                     }
                     else if (Control.ModifierKeys.HasFlag(Keys.Alt))
                     {
-                        if (e.Source.Parent == e.Target)
+                        if (_mProject.ParentOf(e.Source) == e.Target)
                         {
-                            _mProject.UngroupTask(e.Source);
+                            _mProject.Ungroup(e.Source);
                         }
                         else
                         {
-                            _mProject.Relationships.Remove(e.Target, e.Source);
+                            _mProject.Unrelate(e.Target, e.Source);
                         }
                     }
                     else
                     {
-                        _mProject.GroupTask(e.Target, e.Source);
+                        _mProject.Group(e.Target, e.Source);
                     }
                 }
             }
             else if (e.Button == System.Windows.Forms.MouseButtons.Right)
             {
-                e.Source.Duration += delta;
+                var duration = e.Source.Duration + delta;
+                _mProject.SetDuration(e.Source, duration);
             }
 
             _mPainter.Clear();
@@ -580,9 +574,10 @@ namespace Braincase.GanttChart
             {
                 if (ModifierKeys.HasFlag(Keys.Shift))
                 {
-                    var newtask = _mProject.CreateTask();
-                    newtask.Start = e.Task.Start;
-                    newtask.Duration = 5;
+                    var newtask = new Task();
+                    _mProject.Add(newtask);
+                    _mProject.SetStart(newtask, e.Task.Start);
+                    _mProject.SetDuration(newtask, 5);
                     _mProject.Move(newtask, _mProject.IndexOf(e.Task) + 1 - _mProject.IndexOf(newtask));
                 }
                 else if (Control.ModifierKeys.HasFlag(Keys.Alt))
@@ -823,39 +818,24 @@ namespace Braincase.GanttChart
         private void _DrawPredecessorLines(Graphics graphics, Rectangle clipRect)
         {
             RectangleF cliprectf = new RectangleF(clipRect.X, clipRect.Y, clipRect.Width, clipRect.Height);
-            foreach (var task in _mProject.Relationships.Dependants())
+            foreach (var p in _mProject.Precedents)
             {
-                var succ = task;
-                IEnumerable<Task> predecessors = _mProject.Relationships.Precedents(succ);
-                // accumulate predecessors up the task groups until we reach the first visible task
-                // that we can "connect the lines" for relations
-                if (AccumulateRelationsOnGroup)
-                {
-                    while (succ.Parent != null && succ.Parent.IsCollapsed)
-                    {
-                        succ = succ.Parent;
-                        predecessors = predecessors.Concat(_mProject.Relationships.Precedents(succ));
-                    }
-                }
+                var precedent = p;
+                IEnumerable<Task> dependants = _mProject.DirectDependantsOf(precedent);
 
-                // check with _mTaskRects
-                if (_mTaskRects.ContainsKey(succ))
+                // check with _mTaskRects that the precedent was drawn; this is needed to connect the lines
+                if (_mTaskRects.ContainsKey(precedent))
                 {
-                    foreach (var predecessor in predecessors)
+                    foreach (var d in dependants)
                     {
-                        var pred = predecessor;
-                        if (AccumulateRelationsOnGroup)
-                        {
-                            while (pred.Parent != null && pred.Parent.IsCollapsed)
-                                pred = pred.Parent;
-                        }
+                        var dependant = d;
 
-                        // Note always true when accumulate; otherwise check with _mTaskRects
-                        if (_mTaskRects.ContainsKey(pred))
+                        // check with _mTaskRects that the dependant was drawn; this is needed to connect the lines
+                        if (_mTaskRects.ContainsKey(dependant))
                         {
-                            var prect = _mTaskRects[pred];
-                            var srect = _mTaskRects[succ];
-                            if (pred.End < succ.Start)
+                            var prect = _mTaskRects[precedent];
+                            var srect = _mTaskRects[dependant];
+                            if (precedent.End <= dependant.Start)
                             {
                                 var p1 = new PointF(prect.Right, prect.Top + prect.Height / 2.0f);
                                 var p2 = new PointF(srect.Left - BarWidth / 2, prect.Top + prect.Height / 2.0f);
@@ -866,19 +846,6 @@ namespace Braincase.GanttChart
                                 if (cliprectf.IntersectsWith(linerect))
                                 {
                                     graphics.DrawLines(Pens.Black, new PointF[] { p1, p2, p3, p4 });
-                                }
-                            }
-                            // The logic is more complicated than I thought I got to go take a break now!!
-                            else
-                            {
-                                var p1 = new PointF(srect.Left - BarWidth / 2, prect.Bottom < srect.Bottom ? prect.Bottom : prect.Top);
-                                var p2 = new PointF(srect.Left - BarWidth / 2, srect.Top + BarHeight / 2.0f);
-                                var p3 = new PointF(srect.Left,  srect.Top + BarHeight / 2.0f);
-                                var size = new SizeF(Math.Abs(p1.X - p3.X), Math.Abs(p1.Y - p3.Y));
-                                var linerect = p1.Y < p3.Y ? new RectangleF(p1, size) : new RectangleF(p3, size);
-                                if (cliprectf.IntersectsWith(linerect))
-                                {
-                                    graphics.DrawLines(Pens.Black, new PointF[] { p1, p2, p3 });
                                 }
                             }
                         }
@@ -892,7 +859,8 @@ namespace Braincase.GanttChart
             // draw bars
             var clipRectF = new RectangleF(clipRect.X, clipRect.Y, clipRect.Width, clipRect.Height);
             int row = 0;
-            var paths = _mProject.CriticalPaths.SelectMany<IEnumerable<Task>, IEnumerable<Task>>(x => x);
+            var crit_task_set = new HashSet<Task>(_mProject.CriticalPaths.SelectMany(x => x));
+            // var crit_task_set = _mProject.CriticalPaths.SelectMany(x => x);
             TaskPaintEventArgs e;
             foreach (var task in _mTaskRects.Keys)
             {
@@ -903,7 +871,7 @@ namespace Braincase.GanttChart
                 if (taskrect.Left <= clipRect.Right)
                 {
                     // Crtical Path
-                    bool critical = paths.Contains(task);
+                    bool critical = crit_task_set.Contains(task);
                     if (critical) e = new TaskPaintEventArgs(graphics, clipRect, this, task, row, critical, this.Font, this.CriticalTaskFormat);
                     else e = new TaskPaintEventArgs(graphics, clipRect, this, task, row, critical, this.Font, this.TaskFormat);
                     if (PaintTask != null) PaintTask(this, e);
@@ -918,31 +886,31 @@ namespace Braincase.GanttChart
                         graphics.DrawRectangle(e.Format.Border, taskrect);
 
                         // check if this is a parent task / group task, then draw the bracket
-                        if (task.IsGroup)
+                        if (_mProject.IsGroup(task))
                         {
                             var rod = new Rectangle(task.Start * BarWidth, taskrect.Top, task.Duration * BarWidth, BarHeight / 2);
                             graphics.FillRectangle(Brushes.Black, rod);
                             // left bracket
                             graphics.FillPolygon(Brushes.Black, new Point[] {
-                        new Point() { X = task.Start * BarWidth, Y = taskrect.Top },
-                        new Point() { X = task.Start * BarWidth, Y = taskrect.Top + BarHeight },
-                        new Point() { X = task.Start * BarWidth + BarWidth, Y = taskrect.Top } });
+                                new Point() { X = task.Start * BarWidth, Y = taskrect.Top },
+                                new Point() { X = task.Start * BarWidth, Y = taskrect.Top + BarHeight },
+                                new Point() { X = task.Start * BarWidth + BarWidth, Y = taskrect.Top } });
                             // right bracket
                             graphics.FillPolygon(Brushes.Black, new Point[] {
-                        new Point() { X = task.End * BarWidth, Y = taskrect.Top },
-                        new Point() { X = task.End * BarWidth, Y = taskrect.Top + BarHeight },
-                        new Point() { X = task.End * BarWidth - BarWidth, Y = taskrect.Top } });
+                                new Point() { X = task.End * BarWidth, Y = taskrect.Top },
+                                new Point() { X = task.End * BarWidth, Y = taskrect.Top + BarHeight },
+                                new Point() { X = task.End * BarWidth - BarWidth, Y = taskrect.Top } });
                         }
                     }
 
                     // write text
                     if (this.ShowTaskLabels && task.Name != string.Empty)
                     {
-                        var txtrect = _TextAlignLeftMiddle(graphics, taskrect, task.Name, e.Font);
+                        var txtrect = _TextAlignLeftMiddle(graphics, taskrect, task.ToString(), e.Font);
                         txtrect.Offset(taskrect.Width, 0);
                         if (clipRectF.IntersectsWith(txtrect))
                         {
-                            graphics.DrawString(task.Name, e.Font, e.Format.Color, txtrect);
+                            graphics.DrawString(task.ToString(), e.Font, e.Format.Color, txtrect);
                         }
                     }
 
@@ -984,31 +952,37 @@ namespace Braincase.GanttChart
             return null;
         }
 
-        private void _CalculateMeshAndResize()
+        private void _CalculateModels()
         {
-            // Clear Meshes
+            // Clear Models
             _mTaskRects.Clear();
 
             this.Dock = DockStyle.None;
             var pHeight = this.Parent == null ? this.Width : this.Parent.Height;
             var pWidth = this.Parent == null ? this.Height : this.Parent.Width;
 
-            if (this.VisibleTasks.FirstOrDefault() != null)
+            // loop over the tasks and pick up items
+            int end = int.MinValue;
+            int count = 0;
+            foreach (var task in _mProject.Tasks)
             {
-                int end = -1;
-                int count = 0;
-                foreach (var task in VisibleTasks)
+                if (!_mProject.AncestorsOf(task).Any(x => x.IsCollapsed))
                 {
                     var rect = new Rectangle(task.Start * this.BarWidth, count * this.BarSpacing + this.BarSpacing + this.HeaderHeight, task.Duration * this.BarWidth, this.BarHeight);
+                    if (task.End > end) end = task.End;
+
+                    // store models
                     _mTaskRects.Add(task, rect);
-                    var _end = task.End; if (_end > end) end = _end;
-                    count++;   
+
+                    count++;
                 }
-                count += 5;
-                this.Height = Math.Max(pHeight, count * this.BarSpacing + this.BarHeight);
-                this.Width = Math.Max(pWidth, end * this.BarWidth + 200);
             }
-            else
+            count += 5;
+            this.Height = Math.Max(pHeight, count * this.BarSpacing + this.BarHeight);
+            this.Width = Math.Max(pWidth, end * this.BarWidth + 200);
+
+            // see if we found any tasks with Task.End
+            if(end == int.MinValue)
             {
                 this.Height = pHeight;
                 this.Width = pWidth;
@@ -1043,7 +1017,7 @@ namespace Braincase.GanttChart
             new PointF(-4f, 4)
         };
 
-        Project _mProject = null; // The project to be visualised / rendered as a Gantt Chart
+        ProjectManager<Task, object> _mProject = null; // The project to be visualised / rendered as a Gantt Chart
         Task _mDragSource = null; // The dragged source Task
         Point _mDragLastLocation = Point.Empty; // Record the dragging mouse offset
         Point _mDragStartLocation = Point.Empty;

@@ -13,7 +13,7 @@ namespace Braincase.GanttChart
     {
         OverlayPainter _mPainter = new OverlayPainter();
 
-        Project _mProject;
+        ProjectManager<Task, object> _mProject;
 
         public class Resource
         {
@@ -25,14 +25,28 @@ namespace Braincase.GanttChart
             InitializeComponent();
 
             // Create a Project and some Tasks
-            _mProject = new Project();
-            var work = _mProject.CreateTask();
-            var wake = _mProject.CreateTask();
-            var teeth = _mProject.CreateTask();
-            var shower = _mProject.CreateTask();
-            var clothes = _mProject.CreateTask();
-            var hair = _mProject.CreateTask();
-            var pack = _mProject.CreateTask();
+            _mProject = new ProjectManager<Task, object>();
+            var work = new Task();
+            var wake = new Task();
+            var teeth = new Task();
+            var shower = new Task();
+            var clothes = new Task();
+            var hair = new Task();
+            var pack = new Task();
+
+            _mProject.Add(work);
+            _mProject.Add(wake);
+            _mProject.Add(teeth);
+            _mProject.Add(shower);
+            _mProject.Add(clothes);
+            _mProject.Add(hair);
+            _mProject.Add(pack);
+
+            // Create 1000 tasks for stress testing
+            for (int i = 0; i < 1000; i++)
+            {
+                _mProject.Add(new Task() { Name = string.Format("New Task {0}", i.ToString()) });
+            }
 
             // Give each Task a name
             work.Name = "Prepare For Work";
@@ -43,30 +57,30 @@ namespace Braincase.GanttChart
             hair.Name = "Style Hair";
             pack.Name = "Pack Suitcase";
             // Set task durations
-            wake.Duration = 3;
-            teeth.Duration = 5;
-            shower.Duration = 7;
-            clothes.Duration = 4;
-            hair.Duration = 3;
-            pack.Duration = 5;
+            _mProject.SetDuration(wake, 3);
+            _mProject.SetDuration(teeth, 5);
+            _mProject.SetDuration(shower, 7);
+            _mProject.SetDuration(clothes, 4);
+            _mProject.SetDuration(hair, 3);
+            _mProject.SetDuration(pack, 5);
             // Set task complete status
-            wake.Complete = 0.9f;
-            teeth.Complete = 0.5f;
-            shower.Complete = 0.4f;
+            _mProject.SetComplete(wake, 0.9f);
+            _mProject.SetComplete(teeth, 0.5f);
+            _mProject.SetComplete(shower, 0.4f);
 
             // Give the Tasks some organisation, setting group and precedents
-            _mProject.GroupTask(work, wake);
-            _mProject.GroupTask(work, teeth);
-            _mProject.GroupTask(work, shower);
-            _mProject.GroupTask(work, clothes);
-            _mProject.GroupTask(work, hair);
-            _mProject.GroupTask(work, pack);
-            _mProject.Relationships.Add(wake, teeth);
-            _mProject.Relationships.Add(wake, shower);
-            _mProject.Relationships.Add(shower, clothes);
-            _mProject.Relationships.Add(shower, hair);
-            _mProject.Relationships.Add(hair, pack);
-            _mProject.Relationships.Add(clothes, pack);
+            _mProject.Group(work, wake);
+            _mProject.Group(work, teeth);
+            _mProject.Group(work, shower);
+            _mProject.Group(work, clothes);
+            _mProject.Group(work, hair);
+            _mProject.Group(work, pack);
+            _mProject.Relate(wake, teeth);
+            _mProject.Relate(wake, shower);
+            _mProject.Relate(shower, clothes);
+            _mProject.Relate(shower, hair);
+            _mProject.Relate(hair, pack);
+            _mProject.Relate(clothes, pack);
 
             // Create and assign Resources.
             // Resource is just custom user class. The API can accept any object as resource.
@@ -77,16 +91,16 @@ namespace Braincase.GanttChart
             var james = new Resource() { Name = "James" };
             var mary = new Resource() { Name = "Mary" };
             // Add some resources
-            _mProject.Resources.AssignResource(wake, jake);
-            _mProject.Resources.AssignResource(wake, peter);
-            _mProject.Resources.AssignResource(wake, john);
-            _mProject.Resources.AssignResource(teeth, jake);
-            _mProject.Resources.AssignResource(teeth, james);
-            _mProject.Resources.AssignResource(pack, james);
-            _mProject.Resources.AssignResource(pack, lucas);
-            _mProject.Resources.AssignResource(shower, mary);
-            _mProject.Resources.AssignResource(shower, lucas);
-            _mProject.Resources.AssignResource(shower, john);
+            _mProject.Assign(wake, jake);
+            _mProject.Assign(wake, peter);
+            _mProject.Assign(wake, john);
+            _mProject.Assign(teeth, jake);
+            _mProject.Assign(teeth, james);
+            _mProject.Assign(pack, james);
+            _mProject.Assign(pack, lucas);
+            _mProject.Assign(shower, mary);
+            _mProject.Assign(shower, lucas);
+            _mProject.Assign(shower, john);
 
             // Initialize the Chart with our Project
             _mChart.Init(_mProject);
@@ -112,7 +126,7 @@ namespace Braincase.GanttChart
         {
             _mTaskGrid.SelectedObjects = _mChart.SelectedTasks.ToArray();
             _mResourceGrid.Items.Clear();
-            _mResourceGrid.Items.AddRange(_mProject.Resources.GetResources(e.Task).Select(x => new ListViewItem(((Resource)x).Name)).ToArray());
+            _mResourceGrid.Items.AddRange(_mProject.ResourcesOf(e.Task).Select(x => new ListViewItem(((Resource)x).Name)).ToArray());
         }
 
         void _mChart_TaskMouseOut(object sender, TaskMouseEventArgs e)
@@ -124,7 +138,7 @@ namespace Braincase.GanttChart
 
         void _mChart_TaskMouseOver(object sender, TaskMouseEventArgs e)
         {
-            _mPainter.ShowToolTip(e.Location, string.Join(", ", _mProject.Resources.GetResources(e.Task).Select(x => ((Resource)x).Name)));
+            _mPainter.ShowToolTip(e.Location, string.Join(", ", _mProject.ResourcesOf(e.Task).Select(x => ((Resource)x).Name)));
             lblStatus.Text = string.Format("{0} to {1}", _mProject.GetDateTime(e.Task.Start).ToLongDateString(), _mProject.GetDateTime(e.Task.End).ToLongDateString());
             _mChart.Invalidate();
         }
@@ -186,8 +200,8 @@ namespace Braincase.GanttChart
         private void mnuFileNew_Click(object sender, EventArgs e)
         {
             // start a new Project and init the chart with the project
-            _mProject = new Project();
-            _mProject.CreateTask().Name = "New Task";
+            _mProject = new ProjectManager<Task, object>();
+            _mProject.Add(new Task() { Name = "New Task" });
             _mChart.Init(_mProject);
         }
 

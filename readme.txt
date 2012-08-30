@@ -1,3 +1,10 @@
+30 Aug 2012 v1.1.0.0
+- Completely improved the underlying engine to cache task schedules
+- Runs many times faster then previous version
+- New interfaces for more more flexibility and customisation
+- Various default UI behavior changes to cater for more intuitive usage.
+- Includes 68 unit tests.
+
 29 Aug 2012 v1.0.0.2
 - Fix an exception while grouping tasks with relations.
 - Grouping is now disallowed when involved task have relations. User must explicitly remove relations before grouping.

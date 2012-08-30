@@ -11,14 +11,14 @@ namespace Braincase.GanttChart
 {
     public partial class ExampleSimple : Form
     {
-        Project _mProject;
+        ProjectManager<Task, object> _mProject;
 
         public ExampleSimple()
         {
             InitializeComponent();
 
-            _mProject = new Project();
-            _mProject.CreateTask();
+            _mProject = new ProjectManager<Task, object>();
+            _mProject.Add(new Task() { Name = "New Task" });
             _mChart.Init(_mProject);
 
             this.AutoScroll = true;

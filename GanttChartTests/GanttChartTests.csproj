@@ -55,6 +55,7 @@
     <Compile Include="ChartTest.cs" />
     <Compile Include="ProjectTest.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TaskTest.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\GanttChart\GanttChart.csproj">
