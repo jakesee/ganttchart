@@ -50,6 +50,7 @@
     <Compile Include="Chart.Designer.cs">
       <DependentUpon>Chart.cs</DependentUpon>
     </Compile>
+    <Compile Include="Viewport.cs" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Chart.resx">

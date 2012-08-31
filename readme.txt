@@ -1,3 +1,12 @@
+31 Aug 2012 v1.1.0.1
+- Rewrite entire drawing routine to overcome Winforms control size limits
+- Improved drawing speed and culling
+- Header now stays on top of view area
+- Added Chart.ScrollTo date/time and task
+- Added billboard overlay drawing and examples
+- Added feature to set tooltip on tasks
+- Added DataGridView binding example
+
 30 Aug 2012 v1.1.0.0
 - Completely improved the underlying engine to cache task schedules
 - Runs many times faster then previous version

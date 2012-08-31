@@ -101,9 +101,14 @@ namespace Braincase.GanttChart
             _mChart.TaskMouseOver += new EventHandler<TaskMouseEventArgs>(_mChart_TaskMouseOver);
             _mChart.TaskMouseOut += new EventHandler<TaskMouseEventArgs>(_mChart_TaskMouseOut);
             _mChart.TaskSelected += new EventHandler<TaskMouseEventArgs>(_mChart_TaskSelected);
-            _mChart.MouseMove += (s, e) => this.Text = e.Location.ToString();
             _mChart.PaintOverlay += _mPainter.ChartOverlayPainter;
             _mChart.AllowTaskDragDrop = true;
+
+            // set some tooltips to show the resources in each task
+            _mChart.SetToolTip(wake, string.Join(", ", _mManager.ResourcesOf(wake).Select(x => (x as MyResource).Name)));
+            _mChart.SetToolTip(teeth, string.Join(", ", _mManager.ResourcesOf(teeth).Select(x => (x as MyResource).Name)));
+            _mChart.SetToolTip(pack, string.Join(", ", _mManager.ResourcesOf(pack).Select(x => (x as MyResource).Name)));
+            _mChart.SetToolTip(shower, string.Join(", ", _mManager.ResourcesOf(shower).Select(x => (x as MyResource).Name)));
 
             // Set Time information
             _mManager.TimeScale = TimeScale.Day;
@@ -114,6 +119,9 @@ namespace Braincase.GanttChart
             // The parent container for Chart should have autoscroll
             // this will allow the UI user to scroll through the chart.
             _mSplitter1.Panel2.AutoScroll = true;
+
+            // TaskGridView
+            TaskGridView.DataSource = new BindingSource(_mManager.Tasks, null);
         }
 
         void _mChart_TaskSelected(object sender, TaskMouseEventArgs e)
@@ -126,13 +134,11 @@ namespace Braincase.GanttChart
         void _mChart_TaskMouseOut(object sender, TaskMouseEventArgs e)
         {
             lblStatus.Text = "";
-            _mPainter.HideToolTip();
             _mChart.Invalidate();
         }
 
         void _mChart_TaskMouseOver(object sender, TaskMouseEventArgs e)
         {
-            _mPainter.ShowToolTip(e.Location, string.Join(", ", _mManager.ResourcesOf(e.Task).Select(x => (x as MyResource).Name)));
             lblStatus.Text = string.Format("{0} to {1}", _mManager.GetDateTime(e.Task.Start).ToLongDateString(), _mManager.GetDateTime(e.Task.End).ToLongDateString());
             _mChart.Invalidate();
         }
@@ -221,7 +227,7 @@ namespace Braincase.GanttChart
 
         void doc_PrintPage(object sender, System.Drawing.Printing.PrintPageEventArgs e)
         {
-            _mChart.Draw(e.Graphics);
+            _mChart.Print(e.Graphics);
         }
 
         #endregion Main Menu
@@ -230,7 +236,7 @@ namespace Braincase.GanttChart
 
         private void _mDateTimePicker_ValueChanged(object sender, EventArgs e)
         {
-            _mManager.Start = _mDateTimePicker.Value;
+            _mManager.Start = _mStartDatePicker.Value;
             var span = DateTime.Today - _mManager.Start;
             _mManager.Now = (int)Math.Round(span.TotalDays);
             if (_mManager.TimeScale == TimeScale.Week) _mManager.Now = (_mManager.Now % 7) * 7;
@@ -243,6 +249,28 @@ namespace Braincase.GanttChart
         }
 
         #endregion Sidebar
+
+        private void _mNowDatePicker_ValueChanged(object sender, EventArgs e)
+        {
+            TimeSpan span = _mNowDatePicker.Value - _mStartDatePicker.Value;
+            _mManager.Now = span.Days;
+            _mChart.Invalidate();
+        }
+
+        private void _mScrollDatePicker_ValueChanged(object sender, EventArgs e)
+        {
+            _mChart.ScrollTo(_mScrollDatePicker.Value);
+            _mChart.Invalidate();
+        }
+
+        private void TaskGridView_SelectionChanged(object sender, EventArgs e)
+        {
+            if (TaskGridView.SelectedRows.Count > 0)
+            {
+                var task = TaskGridView.SelectedRows[0].DataBoundItem as Task;
+                _mChart.ScrollTo(task);
+            }
+        }
     }
 
     #region overlay painter
@@ -261,64 +289,44 @@ namespace Braincase.GanttChart
             var g = e.Graphics;
             var chart = e.Chart;
 
-            // draw tool tip
-            var size = g.MeasureString(_mText, chart.Font).ToSize();
-            if (_mMouse != Point.Empty && _mText != string.Empty)
-            {
-                var point = _mMouse;
-                point.Y -= size.Height;
-                var tooltip = new Rectangle(_mMouse, size);
-                tooltip.Inflate(5, 5);
-                g.FillRectangle(Brushes.LightYellow, tooltip);
-                g.DrawString(_mText, chart.Font, Brushes.Black, _mMouse);
-            }
+            // Demo: Static billboards begin -----------------------------------
+            // Demonstrate how to draw static billboards
+            // "push matrix" -- save our transformation matrix
+            e.Chart.BeginBillboardMode(e.Graphics);
 
             // draw mouse command instructions
-            int row = 12;
+
+
+            int margin = 260;
+            int left = 20;
             var color = chart.HeaderFormat.Color;
-            g.DrawString("Left Click - Select task and display properties in PropertyGrid", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
-            g.DrawString("Left Mouse Drag - Change task starting point", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
-            g.DrawString("Right Mouse Drag - Change task duration", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
-            g.DrawString("Middle Mouse Drag - Change task complete percentage", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
-            g.DrawString("Left Doubleclick - Toggle collaspe on task group", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
-            g.DrawString("Left Mouse Dragdrop onto another task - Group drag task under drop task", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
-            g.DrawString("SHIFT + Left Mouse Dragdrop onto another task - Make drop task precedent of drag task", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
-            g.DrawString("ALT + Left Dragdrop onto another task - Ungroup drag task from drop task / Remove drop task from drag task precedent list", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
-            g.DrawString("SHIFT + Left Mouse Dragdrop - Order tasks", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
-            g.DrawString("SHIFT + Middle Click - Create new task", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
-            g.DrawString("ALT + Middle Click - Delete task", chart.Font, color, new PointF(10, chart.Height - row-- * chart.BarSpacing / 2));
+            StringBuilder builder = new StringBuilder();
+            builder.AppendLine("THIS IS DRAWN BY A CUSTOM OVERLAY PAINTER TO SHOW DEFAULT MOUSE COMMANDS.");
+            builder.AppendLine("*******************************************************************************************************");
+            builder.AppendLine("Left Click - Select task and display properties in PropertyGrid");
+            builder.AppendLine("Left Mouse Drag - Change task starting point");
+            builder.AppendLine("Right Mouse Drag - Change task duration");
+            builder.AppendLine("Middle Mouse Drag - Change task complete percentage");
+            builder.AppendLine("Left Doubleclick - Toggle collaspe on task group");
+            builder.AppendLine("Left Mouse Dragdrop onto another task - Group drag task under drop task");
+            builder.AppendLine("SHIFT + Left Mouse Dragdrop onto another task - Make drop task precedent of drag task");
+            builder.AppendLine("ALT + Left Dragdrop onto another task - Ungroup drag task from drop task / Remove drop task from drag task precedent list");
+            builder.AppendLine("SHIFT + Left Mouse Dragdrop - Order tasks");
+            builder.AppendLine("SHIFT + Middle Click - Create new task");
+            builder.AppendLine("ALT + Middle Click - Delete task");
+            builder.AppendLine("Left Doubleclick - Toggle collaspe on task group");
+            var size = g.MeasureString(builder.ToString(), e.Chart.Font);
+            var background = new Rectangle(left, chart.Height - margin, (int)size.Width, (int)size.Height);
+            background.Inflate(10, 10);
+            g.FillRectangle(new System.Drawing.Drawing2D.LinearGradientBrush(background, Color.LightYellow, Color.Transparent, System.Drawing.Drawing2D.LinearGradientMode.Vertical), background);
+            g.DrawRectangle(Pens.Brown, background);
+            g.DrawString(builder.ToString(), chart.Font, color, new PointF(left, chart.Height - margin));
+
+            
+            // "pop matrix" -- restore the previous matrix
+            e.Chart.EndBillboardMode(e.Graphics);
+            // Demo: Static billboards end -----------------------------------
         }
-
-        #region Painter Helpers
-
-        public void Clear()
-        {
-            DraggedRect = Rectangle.Empty;
-            Line = int.MinValue;
-            HideToolTip();
-        }
-
-        public void ShowToolTip(Point mouse, string text)
-        {
-            _mMouse = mouse;
-            _mText = text;
-        }
-
-        public void HideToolTip()
-        {
-            _mMouse = Point.Empty;
-            _mText = string.Empty;
-        }
-
-        Point _mMouse = Point.Empty;
-
-        string _mText = string.Empty;
-
-        public Rectangle DraggedRect = Rectangle.Empty;
-
-        public int Line = int.MinValue;
-
-        #endregion Painter Helpers
     }
     #endregion overlay painter
 

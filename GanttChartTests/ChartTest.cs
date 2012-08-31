@@ -99,7 +99,7 @@ namespace GanttChartTests
             Form form = new Form();
 
             // manual draw
-            chart.Draw(form.CreateGraphics());
+            chart.Print(form.CreateGraphics());
 
             // autodraw
             chart.Invalidate();
@@ -114,7 +114,7 @@ namespace GanttChartTests
         {
             Chart chart = new Chart(); // TODO: Initialize to an appropriate value
             Graphics graphics = null; // TODO: Initialize to an appropriate value
-            chart.Draw(graphics);
+            chart.Print(graphics);
         }
     }
 }
