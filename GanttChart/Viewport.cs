@@ -8,10 +8,131 @@ using System.Drawing.Drawing2D;
 
 namespace Braincase.GanttChart
 {
+    interface IViewport
+    {
+        Matrix Projection { get; }
+        Rectangle Rectangle { get; }
+        void Resize();
+        Point ViewToWorldCoord(Point screencoord);
+        PointF ViewToWorldCoord(PointF screencoord);
+        int WorldHeight { get; set; }
+        PointF WorldToViewCoord(PointF worldcoord);
+        int WorldWidth { get; set; }
+        int X { get; set; }
+        int Y { get; set; }
+    }
+
+    /// <summary>
+    /// Viewport for printing to file
+    /// </summary>
+    public class PrintViewport : IViewport
+    {
+        public PrintViewport(Graphics graphics,
+            int worldWidth, int worldHeight,
+            int deviceWidth, int deviceHeight,
+            int marginLeft, int marginTop)
+        {
+            _mWorldWidth = worldWidth;
+            _mWorldHeight = worldHeight;
+
+            _mDeviceWidth = deviceWidth;
+            _mDeviceHeight = deviceHeight;
+
+            _mMarginTop = marginTop;
+            _mMarginLeft = marginLeft;
+        }
+
+        /// <summary>
+        /// Get or set viewport X world coordinate
+        /// </summary>
+        public int X { get; set; }
+
+        /// <summary>
+        /// Get or set viewport Y world coordinate
+        /// </summary>
+        public int Y { get; set; }
+
+        /// <summary>
+        /// Get or set width of the world
+        /// </summary>
+        public int WorldWidth { get; set; }
+
+        /// <summary>
+        /// Get or set height of the world
+        /// </summary>
+        public int WorldHeight { get; set; }
+
+        /// <summary>
+        /// Get the projection matrix for transforming models into viewport
+        /// </summary>
+        public Matrix Projection
+        {
+            get
+            {
+                _mMatrix = new Matrix();
+                _mMatrix.Translate(-this.X + (float)this._mMarginLeft, -this.Y + this._mMarginTop);
+                return _mMatrix;
+            }
+        }
+
+        /// <summary>
+        /// Get the rectangle bounds of the viewport in world coordinate
+        /// </summary>
+        public Rectangle Rectangle
+        {
+            get { return new Rectangle(this.X, this.Y, _mDeviceWidth, _mDeviceHeight); }
+        }
+
+        /// <summary>
+        /// Resize the viewport, recalculating and correcting dimensions
+        /// </summary>
+        public void Resize()
+        {
+            
+            
+        }
+
+        /// <summary>
+        /// Convert view coordinates to world coordinate
+        /// </summary>
+        /// <param name="screencoord"></param>
+        /// <returns></returns>
+        public Point ViewToWorldCoord(Point screencoord)
+        {
+            return new Point(screencoord.X + X, screencoord.Y + Y);
+        }
+
+        /// <summary>
+        /// Convert view coordinates to world coordinate
+        /// </summary>
+        /// <param name="screencoord"></param>
+        /// <returns></returns>
+        public PointF ViewToWorldCoord(PointF screencoord)
+        {
+            return new PointF(screencoord.X + X, screencoord.Y + Y);
+        }
+
+        /// <summary>
+        /// Convert world coordinates to view coordinate
+        /// </summary>
+        /// <param name="worldcoord"></param>
+        /// <returns></returns>
+        public PointF WorldToViewCoord(PointF worldcoord)
+        {
+            return new PointF(worldcoord.X - X, worldcoord.Y - Y);
+        }
+
+        Rectangle _mRectangle = Rectangle.Empty;
+        Matrix _mMatrix = new Matrix();
+        int _mDeviceWidth, _mDeviceHeight;
+        int _mWorldHeight, _mWorldWidth;
+        int _mMarginLeft, _mMarginTop;
+    }
+
     /// <summary>
     /// A Viewport that is placed over a world coordinate system and provides methods to transform between world and view coordinates
     /// </summary>
-    public class Viewport
+    public class Viewport : IViewport
     {
         /// <summary>
         /// Construct a Viewport
@@ -217,19 +338,6 @@ namespace Braincase.GanttChart
                 }
             }
         }
-
-        /// <summary>
-        /// Get the X world coordinate of the right end of the Viewport
-        /// </summary>
-        public int Right
-        {
-            get { return _mRectangle.Right; }
-        }
-
-        /// <summary>
-        /// Get the Y world coordinate of the bottom of the Viewport
-        /// </summary>
-        public int Bottom { get { return _mRectangle.Bottom; } }
 
         private void _RecalculateRectangle()
         {

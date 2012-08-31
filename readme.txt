@@ -1,3 +1,8 @@
+1 Sep 2012
+- Added Chart.Print
+- Added example to show how to use PrintDocument.BeginPrint and EndPrint to handle custom drawing.
+- Fixed issue in the timeline date now example where the date for ProjectManager.Now is not shown correctly on the chart.
+
 31 Aug 2012 v1.1.0.1
 - Rewrite entire drawing routine to overcome Winforms control size limits
 - Improved drawing speed and culling

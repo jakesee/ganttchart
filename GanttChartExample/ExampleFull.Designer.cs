@@ -44,6 +44,7 @@
             this.colName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.tabPage4 = new System.Windows.Forms.TabPage();
             this.TaskGridView = new System.Windows.Forms.DataGridView();
+            this.label1 = new System.Windows.Forms.Label();
             this._mChart = new Braincase.GanttChart.Chart();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -68,7 +69,6 @@
             this.mnuHelpAbout = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.lblStatus = new System.Windows.Forms.ToolStripStatusLabel();
-            this.label1 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this._mSplitter1)).BeginInit();
             this._mSplitter1.Panel1.SuspendLayout();
             this._mSplitter1.Panel2.SuspendLayout();
@@ -143,10 +143,10 @@
             this.tabPage2.Controls.Add(this.groupBox3);
             this.tabPage2.Controls.Add(this.groupBox2);
             this.tabPage2.Controls.Add(this.groupBox1);
-            this.tabPage2.Location = new System.Drawing.Point(4, 24);
+            this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(229, 636);
+            this.tabPage2.Size = new System.Drawing.Size(229, 638);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Timeline";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -214,10 +214,10 @@
             // tabPage3
             // 
             this.tabPage3.Controls.Add(this._mResourceGrid);
-            this.tabPage3.Location = new System.Drawing.Point(4, 24);
+            this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(229, 636);
+            this.tabPage3.Size = new System.Drawing.Size(229, 638);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Resources";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -229,7 +229,7 @@
             this._mResourceGrid.Dock = System.Windows.Forms.DockStyle.Fill;
             this._mResourceGrid.Location = new System.Drawing.Point(3, 3);
             this._mResourceGrid.Name = "_mResourceGrid";
-            this._mResourceGrid.Size = new System.Drawing.Size(223, 630);
+            this._mResourceGrid.Size = new System.Drawing.Size(223, 632);
             this._mResourceGrid.TabIndex = 0;
             this._mResourceGrid.UseCompatibleStateImageBehavior = false;
             this._mResourceGrid.View = System.Windows.Forms.View.List;
@@ -242,10 +242,10 @@
             // 
             this.tabPage4.Controls.Add(this.TaskGridView);
             this.tabPage4.Controls.Add(this.label1);
-            this.tabPage4.Location = new System.Drawing.Point(4, 24);
+            this.tabPage4.Location = new System.Drawing.Point(4, 22);
             this.tabPage4.Name = "tabPage4";
             this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage4.Size = new System.Drawing.Size(229, 636);
+            this.tabPage4.Size = new System.Drawing.Size(229, 638);
             this.tabPage4.TabIndex = 3;
             this.tabPage4.Text = "Task List";
             this.tabPage4.UseVisualStyleBackColor = true;
@@ -254,11 +254,21 @@
             // 
             this.TaskGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.TaskGridView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.TaskGridView.Location = new System.Drawing.Point(3, 18);
+            this.TaskGridView.Location = new System.Drawing.Point(3, 16);
             this.TaskGridView.Name = "TaskGridView";
-            this.TaskGridView.Size = new System.Drawing.Size(223, 615);
+            this.TaskGridView.Size = new System.Drawing.Size(223, 619);
             this.TaskGridView.TabIndex = 0;
             this.TaskGridView.SelectionChanged += new System.EventHandler(this.TaskGridView_SelectionChanged);
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Dock = System.Windows.Forms.DockStyle.Top;
+            this.label1.Location = new System.Drawing.Point(3, 3);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(153, 15);
+            this.label1.TabIndex = 1;
+            this.label1.Text = "Select a row to scroll to task";
             // 
             // _mChart
             // 
@@ -302,42 +312,42 @@
             // mnuFileNew
             // 
             this.mnuFileNew.Name = "mnuFileNew";
-            this.mnuFileNew.Size = new System.Drawing.Size(108, 22);
+            this.mnuFileNew.Size = new System.Drawing.Size(152, 22);
             this.mnuFileNew.Text = "New";
             this.mnuFileNew.Click += new System.EventHandler(this.mnuFileNew_Click);
             // 
             // toolStripMenuItem3
             // 
             this.toolStripMenuItem3.Name = "toolStripMenuItem3";
-            this.toolStripMenuItem3.Size = new System.Drawing.Size(105, 6);
+            this.toolStripMenuItem3.Size = new System.Drawing.Size(149, 6);
             // 
             // saveToolStripMenuItem
             // 
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(108, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.saveToolStripMenuItem.Text = "Save";
             // 
             // toolStripMenuItem4
             // 
             this.toolStripMenuItem4.Name = "toolStripMenuItem4";
-            this.toolStripMenuItem4.Size = new System.Drawing.Size(105, 6);
+            this.toolStripMenuItem4.Size = new System.Drawing.Size(149, 6);
             // 
             // mnuFilePrint
             // 
             this.mnuFilePrint.Name = "mnuFilePrint";
-            this.mnuFilePrint.Size = new System.Drawing.Size(108, 22);
+            this.mnuFilePrint.Size = new System.Drawing.Size(152, 22);
             this.mnuFilePrint.Text = "Print...";
             this.mnuFilePrint.Click += new System.EventHandler(this.mnuFilePrint_Click);
             // 
             // toolStripMenuItem1
             // 
             this.toolStripMenuItem1.Name = "toolStripMenuItem1";
-            this.toolStripMenuItem1.Size = new System.Drawing.Size(105, 6);
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(149, 6);
             // 
             // mnuFileExit
             // 
             this.mnuFileExit.Name = "mnuFileExit";
-            this.mnuFileExit.Size = new System.Drawing.Size(108, 22);
+            this.mnuFileExit.Size = new System.Drawing.Size(152, 22);
             this.mnuFileExit.Text = "Exit";
             this.mnuFileExit.Click += new System.EventHandler(this.mnuFileExit_Click);
             // 
@@ -450,16 +460,6 @@
             this.lblStatus.Name = "lblStatus";
             this.lblStatus.Size = new System.Drawing.Size(814, 17);
             this.lblStatus.Spring = true;
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Dock = System.Windows.Forms.DockStyle.Top;
-            this.label1.Location = new System.Drawing.Point(3, 3);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(153, 15);
-            this.label1.TabIndex = 1;
-            this.label1.Text = "Select a row to scroll to task";
             // 
             // ExampleFull
             // 

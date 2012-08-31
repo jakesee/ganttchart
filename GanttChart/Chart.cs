@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Windows.Forms;
 using System.Drawing.Drawing2D;
+using System.Drawing.Printing;
 
 namespace Braincase.GanttChart
 {
@@ -27,8 +28,9 @@ namespace Braincase.GanttChart
             BarHeight = 20;
             BarWidth = 20;
             this.DoubleBuffered = true;
-            _mViewport = new Viewport(this);
-            _mViewport.WheelDelta = BarSpacing;
+            var viewport = new Viewport(this);
+            viewport.WheelDelta = BarSpacing;
+            _mViewport = viewport;
             TimeScaleDisplay = GanttChart.TimeScaleDisplay.DayOfWeek;
             AllowTaskDragDrop = true;
             ShowRelations = true;
@@ -259,11 +261,6 @@ namespace Braincase.GanttChart
         }
 
         /// <summary>
-        /// Get the Viewport overlooking the chart world area
-        /// </summary>
-        public Viewport Viewport { get { return _mViewport; } }
-
-        /// <summary>
         /// Initialize this Chart with a Project
         /// </summary>
         /// <param name="project"></param>
@@ -277,12 +274,70 @@ namespace Braincase.GanttChart
         /// Draw the items in the Viewport
         /// </summary>
         /// <param name="graphics"></param>
+        [Obsolete("This method is superceded by Print(Document document)")]
         public void Print(Graphics graphics)
         {
             if (graphics == null)
                 throw new ArgumentNullException("Graphics cannot be null");
 
             throw new NotImplementedException("Can't print yet");
+        }
+
+        /// <summary>
+        /// Print the Chart to the specified PrintDocument.
+        /// </summary>
+        /// <param name="document"></param>
+        public void Print(PrintDocument document)
+        {
+            // save a copy of the current viewport and swap it with PrintViewport
+            var viewport = _mViewport;
+
+            int x = 0; // viewport x, y coords
+            int y = 0;
+            int pageCount = 0;
+     
+            document.PrintPage += (s, e) =>
+            {
+                e.HasMorePages = false;
+                pageCount++;
+                
+                // create a PrintViewport to navigate the world
+                var printViewport = new PrintViewport(e.Graphics,
+                    viewport.WorldWidth, viewport.WorldHeight,
+                    e.MarginBounds.Width, e.MarginBounds.Height,
+                    e.PageSettings.Margins.Left, e.PageSettings.Margins.Right);
+                _mViewport = printViewport;
+
+                // move the viewport
+                _mViewport.X = x;
+                _mViewport.Y = y;
+
+                // set clip and draw
+                e.Graphics.SetClip(e.MarginBounds);
+                _Draw(e.Graphics);
+
+                // check if reached end of printing
+                if (_mViewport.X + e.MarginBounds.Width < viewport.WorldWidth)
+                {
+                    // continue horizontally
+                    x += e.MarginBounds.Width;
+                    e.HasMorePages = true;
+                }
+                else
+                {
+                    // reached end of worldwidth so we go down vertically once
+                    x = 0;
+                    if (y + e.MarginBounds.Height < viewport.WorldHeight)
+                    {
+                        y += e.MarginBounds.Height;
+                        e.HasMorePages = true;
+                    }
+                }
+            };
+            document.Print();
+
+            // restore the viewport 
+            _mViewport = viewport;
         }
 
         /// <summary>
@@ -836,8 +891,8 @@ namespace Braincase.GanttChart
         private void _GenerateHeaders()
         {
             // only generate the necessary headers by determining of current viewport location
-            var h1Rect = new Rectangle(Viewport.X, Viewport.Y, this.Viewport.Rectangle.Width, this.HeaderOneHeight);
-            var h2Rect = new Rectangle(h1Rect.Left, h1Rect.Bottom, this.Viewport.WorldWidth, this.BarHeight);
+            var h1Rect = new Rectangle(_mViewport.X, _mViewport.Y, _mViewport.Rectangle.Width, this.HeaderOneHeight);
+            var h2Rect = new Rectangle(h1Rect.Left, h1Rect.Bottom, _mViewport.Rectangle.Width, this.BarHeight);
             var h1LabelRects = new List<Rectangle>();
             var h2LabelRects = new List<Rectangle>();
             var columns = new List<Rectangle>();
@@ -847,13 +902,13 @@ namespace Braincase.GanttChart
             
             // generate columns across the viewport area
             var curDate = __CalculateViewportStart();
-            var h2LabelRect_Y = Viewport.Y + this.HeaderOneHeight;
+            var h2LabelRect_Y = _mViewport.Y + this.HeaderOneHeight;
             var columns_Y = h2LabelRect_Y + this.HeaderTwoHeight;
-            for (int x = Viewport.X - Viewport.X % this.BarWidth; x < Viewport.Right; x += this.BarWidth)
+            for (int x = _mViewport.X - _mViewport.X % this.BarWidth; x < _mViewport.Rectangle.Right; x += this.BarWidth)
             {
                 dates.Add(curDate);
                 h2LabelRects.Add(new Rectangle(x, h2LabelRect_Y, this.BarWidth, this.HeaderTwoHeight));
-                columns.Add(new Rectangle(x, columns_Y, this.BarWidth, Viewport.Rectangle.Height));
+                columns.Add(new Rectangle(x, columns_Y, this.BarWidth, _mViewport.Rectangle.Height));
 
                 __NextColumn(ref curDate);
             }
@@ -872,7 +927,7 @@ namespace Braincase.GanttChart
         /// <returns></returns>
         private DateTime __CalculateViewportStart()
         {
-            int vpTime = Viewport.X / this.BarWidth;
+            int vpTime = _mViewport.X / this.BarWidth;
             if (_mProject.TimeScale == TimeScale.Day)
             {
                 return _mProject.Start.AddDays(vpTime);
@@ -902,7 +957,7 @@ namespace Braincase.GanttChart
         /// <param name="graphics"></param>
         private void _Draw(Graphics graphics)
         {
-            graphics.Clear(this.BackColor);
+            graphics.Clear(Color.White);
 
             int row = 0;
             if (_mProject != null)
@@ -977,10 +1032,10 @@ namespace Braincase.GanttChart
             }
 
             // draw "Now" line
-            float xf = (_mProject.Now + 1.5f) * BarWidth;
+            float xf = (_mProject.Now + 0.5f) * BarWidth;
             var pen = new Pen(e.Format.Border.Color);
             pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
-            graphics.DrawLine(pen, new PointF(xf, _mViewport.Y), new PointF(xf, _mViewport.Bottom));
+            graphics.DrawLine(pen, new PointF(xf, _mViewport.Y), new PointF(xf, _mViewport.Rectangle.Bottom));
         }
 
         private void _DrawColumns(Graphics graphics)
@@ -1229,7 +1284,7 @@ namespace Braincase.GanttChart
         }
 
         ProjectManager<Task, object> _mProject = null; // The project to be visualised / rendered as a Gantt Chart
-        Viewport _mViewport = null;
+        IViewport _mViewport = null;
         Task _mDragSource = null; // The dragged source Task
         Point _mDragLastLocation = Point.Empty; // Record the dragging mouse offset
         Point _mDragStartLocation = Point.Empty;

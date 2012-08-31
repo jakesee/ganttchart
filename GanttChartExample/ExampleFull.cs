@@ -155,18 +155,13 @@ namespace Braincase.GanttChart
             using (var dialog = new PrintDialog())
             {
                 dialog.Document = new System.Drawing.Printing.PrintDocument();
-                dialog.Document.BeginPrint += new System.Drawing.Printing.PrintEventHandler(Document_BeginPrint);
-                dialog.Document.PrintPage += new System.Drawing.Printing.PrintPageEventHandler(doc_PrintPage);
                 if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
                 {
-                    dialog.Document.Print();
+                    dialog.Document.BeginPrint += (s, arg) => _mPainter.PrintMode = true;
+                    dialog.Document.EndPrint += (s, arg) => _mPainter.PrintMode = false;
+                    _mChart.Print(dialog.Document);
                 }
             }
-        }
-
-        void Document_BeginPrint(object sender, System.Drawing.Printing.PrintEventArgs e)
-        {
-            
         }
 
         private void mnuViewDaysDayOfWeek_Click(object sender, EventArgs e)
@@ -203,6 +198,7 @@ namespace Braincase.GanttChart
             _mManager = new ProjectManager();
             _mManager.Add(new Task() { Name = "New Task" });
             _mChart.Init(_mManager);
+            _mChart.Invalidate();
         }
 
         private void mnuHelpAbout_Click(object sender, EventArgs e)
@@ -223,11 +219,6 @@ namespace Braincase.GanttChart
         {
             _mChart.ShowSlack = mnuViewSlack.Checked = !mnuViewSlack.Checked;
             _mChart.Invalidate();
-        }
-
-        void doc_PrintPage(object sender, System.Drawing.Printing.PrintPageEventArgs e)
-        {
-            _mChart.Print(e.Graphics);
         }
 
         #endregion Main Menu
@@ -253,7 +244,8 @@ namespace Braincase.GanttChart
         private void _mNowDatePicker_ValueChanged(object sender, EventArgs e)
         {
             TimeSpan span = _mNowDatePicker.Value - _mStartDatePicker.Value;
-            _mManager.Now = span.Days;
+            _mManager.Now = span.Days + 1;
+            if (_mManager.TimeScale == TimeScale.Week) _mManager.Now = _mManager.Now / 7 + (_mManager.Now % 7 > 0 ? 1 : 0);
             _mChart.Invalidate();
         }
 
@@ -286,6 +278,9 @@ namespace Braincase.GanttChart
         /// <param name="e"></param>
         public void ChartOverlayPainter(object sender, ChartPaintEventArgs e)
         {
+            // Don't want to print instructions to file
+            if (this.PrintMode) return;
+
             var g = e.Graphics;
             var chart = e.Chart;
 
@@ -295,8 +290,6 @@ namespace Braincase.GanttChart
             e.Chart.BeginBillboardMode(e.Graphics);
 
             // draw mouse command instructions
-
-
             int margin = 260;
             int left = 20;
             var color = chart.HeaderFormat.Color;
@@ -327,6 +320,8 @@ namespace Braincase.GanttChart
             e.Chart.EndBillboardMode(e.Graphics);
             // Demo: Static billboards end -----------------------------------
         }
+
+        public bool PrintMode { get; set; }
     }
     #endregion overlay painter
 
