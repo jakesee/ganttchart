@@ -530,7 +530,10 @@ namespace Braincase.GanttChart
             this.Cursor = Cursors.Hand;
 
             if (_mTaskToolTip.ContainsKey(e.Task))
+            {
                 _mOverlay.ShowToolTip(_mViewport.DeviceToWorldCoord(e.Location), _mTaskToolTip[e.Task]);
+                this.Invalidate();
+            }
         }
 
         protected virtual void OnTaskMouseOut(TaskMouseEventArgs e)
@@ -541,6 +544,7 @@ namespace Braincase.GanttChart
             this.Cursor = Cursors.Default;
 
             _mOverlay.HideToolTip();
+            this.Invalidate();
         }
 
         protected virtual void OnTaskMouseDrag(TaskDragDropEventArgs e)

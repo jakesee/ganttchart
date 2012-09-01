@@ -425,61 +425,61 @@
             // mnuViewDays
             // 
             this.mnuViewDays.Name = "mnuViewDays";
-            this.mnuViewDays.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewDays.Size = new System.Drawing.Size(149, 22);
             this.mnuViewDays.Text = "Days";
             this.mnuViewDays.Click += new System.EventHandler(this.mnuViewDays_Click);
             // 
             // mnuViewWeek
             // 
             this.mnuViewWeek.Name = "mnuViewWeek";
-            this.mnuViewWeek.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewWeek.Size = new System.Drawing.Size(149, 22);
             this.mnuViewWeek.Text = "Weeks";
             this.mnuViewWeek.Click += new System.EventHandler(this.mnuViewWeek_Click);
             // 
             // toolStripMenuItem5
             // 
             this.toolStripMenuItem5.Name = "toolStripMenuItem5";
-            this.toolStripMenuItem5.Size = new System.Drawing.Size(149, 6);
+            this.toolStripMenuItem5.Size = new System.Drawing.Size(146, 6);
             // 
             // mnuViewDayOfWeek
             // 
             this.mnuViewDayOfWeek.Name = "mnuViewDayOfWeek";
-            this.mnuViewDayOfWeek.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewDayOfWeek.Size = new System.Drawing.Size(149, 22);
             this.mnuViewDayOfWeek.Text = "Day Of Week";
             this.mnuViewDayOfWeek.Click += new System.EventHandler(this.mnuViewDayOfWeek_Click);
             // 
             // mnuViewDayOfMonth
             // 
             this.mnuViewDayOfMonth.Name = "mnuViewDayOfMonth";
-            this.mnuViewDayOfMonth.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewDayOfMonth.Size = new System.Drawing.Size(149, 22);
             this.mnuViewDayOfMonth.Text = "Day Of Month";
             this.mnuViewDayOfMonth.Click += new System.EventHandler(this.mnuViewDayOfMonth_Click);
             // 
             // mnuViewWeekOfYear
             // 
             this.mnuViewWeekOfYear.Name = "mnuViewWeekOfYear";
-            this.mnuViewWeekOfYear.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewWeekOfYear.Size = new System.Drawing.Size(149, 22);
             this.mnuViewWeekOfYear.Text = "Week Of Year";
             this.mnuViewWeekOfYear.Click += new System.EventHandler(this.mnuViewWeekOfYear_Click);
             // 
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(149, 6);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(146, 6);
             // 
             // mnuViewRelationships
             // 
             this.mnuViewRelationships.Checked = true;
             this.mnuViewRelationships.CheckState = System.Windows.Forms.CheckState.Checked;
             this.mnuViewRelationships.Name = "mnuViewRelationships";
-            this.mnuViewRelationships.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewRelationships.Size = new System.Drawing.Size(149, 22);
             this.mnuViewRelationships.Text = "Relationships";
             this.mnuViewRelationships.Click += new System.EventHandler(this.mnuViewRelationships_Click);
             // 
             // mnuViewSlack
             // 
             this.mnuViewSlack.Name = "mnuViewSlack";
-            this.mnuViewSlack.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewSlack.Size = new System.Drawing.Size(149, 22);
             this.mnuViewSlack.Text = "Slack";
             this.mnuViewSlack.Click += new System.EventHandler(this.mnuViewSlack_Click);
             // 

@@ -3,6 +3,9 @@ Blog: http://www.jakesee.com/net-c-winforms-gantt-chart-control/
 Doxygen Documentation: http://jakesee.com/docs/ganttchart/
 Source/Download: http://ganttchart.codeplex.com
 
+2 Sep 2012
+- Fix issue where tool tip is not automatically showing. Have to call Chart.Invalidate() on TaskMouseOver and TaskMoveOut to work.
+
 1 Sep 2012 v1.2.0.0
 - Added example to show how to use PrintDocument.BeginPrint and EndPrint to handle custom drawing.
 - Fixed issue in the timeline date now example where the date for ProjectManager.Now is not shown correctly on the chart.
