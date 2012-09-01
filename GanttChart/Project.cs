@@ -67,63 +67,243 @@ namespace Braincase.GanttChart
         Day, Week
     }
 
+    /// <summary>
+    /// ProjectManager interface
+    /// </summary>
+    /// <typeparam name="T">Task class type</typeparam>
+    /// <typeparam name="R">Resource class type</typeparam>
     public interface IProjectManager<T, R>
         where T : Task
         where R : class
     {
-        // Relating to all the Tasks
+        /// <summary>
+        /// Add task to project manager
+        /// </summary>
+        /// <param name="task"></param>
         void Add(T task);
+        /// <summary>
+        /// Delete task from project manager
+        /// </summary>
+        /// <param name="task"></param>
         void Delete(T task);
+        /// <summary>
+        /// Group the member task under the group task. Group task cannot have relations.
+        /// </summary>
+        /// <param name="group"></param>
+        /// <param name="member"></param>
         void Group(T group, T member);
+        /// <summary>
+        /// Ungroup member task from group task. If there are no more task under group, group will become a normal task.
+        /// </summary>
+        /// <param name="group"></param>
+        /// <param name="member"></param>
         void Ungroup(T group, T member);
+        /// <summary>
+        /// Ungroup all member task under the specfied group task. The specified group task will become a normal task.
+        /// </summary>
+        /// <param name="group"></param>
         void Ungroup(T group);
+        /// <summary>
+        /// Move the specified task by offset positions in the task enumeration
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="offset"></param>
         void Move(T task, int offset);
+        /// <summary>
+        /// Set a relation between the precedent and dependant task
+        /// </summary>
+        /// <param name="precedent"></param>
+        /// <param name="dependant"></param>
         void Relate(T precedent, T dependant);
+        /// <summary>
+        /// Unset the relation between the precedent and dependant task, if any.
+        /// </summary>
+        /// <param name="precedent"></param>
+        /// <param name="dependant"></param>
         void Unrelate(T precedent, T dependant);
+        /// <summary>
+        /// Remove all dependant task from specified precedent task
+        /// </summary>
+        /// <param name="precedent"></param>
         void Unrelate(T precedent);
+        /// <summary>
+        /// Enumerate through all tasks that is a precedent, having dependants.
+        /// </summary>
         IEnumerable<T> Precedents { get; }
+        /// <summary>
+        /// Enumerate through all the tasks in the ProjectManager.
+        /// If there are no change to groups and no add/delete tasks, the order between consecutive calls is preserved.
+        /// </summary>
         IEnumerable<T> Tasks { get; }
 
-        // set schedules and timelines
+        /// <summary>
+        /// Set the start time of the specified task.
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="start">Number of timescale units after ProjectManager.Start</param>
         void SetStart(T task, int start);
+        /// <summary>
+        /// Set the end time of the specified task. Duration is automatically adjusted to satisfy.
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="end">Number of timescale units after ProjectManager.Start</param>
         void SetEnd(T task, int end);
+        /// <summary>
+        /// Set the duration of the specified task from start to end.
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="duration">Number of timescale units between ProjectManager.Start</param>
         void SetDuration(T task, int duration);
+        /// <summary>
+        /// Set the percentage complete of the specified task from 0.0f to 1.0f.
+        /// No effect on group tasks as they will get the aggregated percentage complete of all child tasks
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="complete"></param>
         void SetComplete(T task, float complete);
-        void SetCollapse(T task, bool collasped);
+        /// <summary>
+        /// Set whether to collapse the specified group task. No effect on regular tasks.
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="collasped"></param>
+        void SetCollapse(T group, bool collasped);
+        /// <summary>
+        /// Set the "now" time. Its value is the number of timescale units after the start time.
+        /// </summary>
         int Now { get; }
-
-        // Relating to single Tasks
+        /// <summary>
+        /// Set the start date of the project.
+        /// </summary>
+        DateTime Start { get; set; }
+        /// <summary>
+        /// Get the zero-based index of the specified task
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         int IndexOf(T task);
+        /// <summary>
+        /// Enumerate through parent group and grandparent groups of the specified task
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         IEnumerable<T> AncestorsOf(T task);
-        IEnumerable<T> DecendantsOf(T task);
-        IEnumerable<T> ChildrenOf(T task);
+        /// <summary>
+        /// Enumerate through all the children and grandchildren of the specified group
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
+        IEnumerable<T> DecendantsOf(T group);
+        /// <summary>
+        /// Enumerate through all the direct children of the specified group
+        /// </summary>
+        /// <param name="group"></param>
+        /// <returns></returns>
+        IEnumerable<T> ChildrenOf(T group);
+        /// <summary>
+        /// Enumerate through all the direct precedents and indirect precedents of the specified task
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         IEnumerable<T> PrecedentsOf(T task);
+        /// <summary>
+        /// Enumerate through all the direct dependants and indirect dependants of the specified task
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         IEnumerable<T> DependantsOf(T task);
+        /// <summary>
+        /// Enumerate through all the direct precedents of the specified task
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         IEnumerable<T> DirectPrecedentsOf(T task);
+        /// <summary>
+        /// Enumerate through all the direct dependants of the specified task
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         IEnumerable<T> DirectDependantsOf(T task);
+        /// <summary>
+        /// Enumerate through all the critical paths. Each path is an enumerable of tasks, starting from the final task of each path.
+        /// </summary>
         IEnumerable<IEnumerable<T>> CriticalPaths { get; }
+        /// <summary>
+        /// Get the parent group of the specified task
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         T ParentOf(T task);
-
-        // Queries
+        /// <summary>
+        /// Get whether the specified task is a group
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         bool IsGroup(T task);
+        /// <summary>
+        /// Get whether the specified task is a member
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         bool IsMember(T task);
+        /// <summary>
+        /// Get whether the specified task has relations, either has dependants or has precedents connecting to it.
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         bool HasRelations(T task);
-
-        // Resources
+        /// <summary>
+        /// Assign the specified resource to the specified task
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="resource"></param>
         void Assign(T task, R resource);
+        /// <summary>
+        /// Unassign the specified resource from the specfied task
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="resource"></param>
         void Unassign(T task, R resource);
+        /// <summary>
+        /// Unassign all resources from the specified task
+        /// </summary>
+        /// <param name="task"></param>
         void Unassign(T task);
+        /// <summary>
+        /// Unassign the specified resource from all tasks that has this resource assigned
+        /// </summary>
+        /// <param name="resource"></param>
         void Unassign(R resource);
+        /// <summary>
+        /// Enumerate through all the resources that has been assigned to some task.
+        /// </summary>
         IEnumerable<R> Resources { get; }
+        /// <summary>
+        /// Enumerate through all the resources that has been assigned to the specified task.
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         IEnumerable<R> ResourcesOf(T task);
+        /// <summary>
+        /// Enumerate through all the tasks that has the specified resource assigned to it.
+        /// </summary>
+        /// <param name="resource"></param>
+        /// <returns></returns>
         IEnumerable<T> TasksOf(R resource);
     }
 
+    /// <summary>
+    /// Wrapper ProjectManager class
+    /// </summary>
     [Serializable]
     public class ProjectManager : ProjectManager<Task, object>
     {
     }
 
+    /// <summary>
+    /// Concrete ProjectManager class for the IProjectManager interface
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <typeparam name="R"></typeparam>
     [Serializable]
     public class ProjectManager<T, R> : IProjectManager<T, R>
         where T : Task

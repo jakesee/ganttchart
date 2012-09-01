@@ -1,7 +1,14 @@
-1 Sep 2012
-- Added Chart.Print
+.NET C# Winforms Gantt Chart Control
+Blog: http://www.jakesee.com/net-c-winforms-gantt-chart-control/
+Doxygen Documentation: http://jakesee.com/docs/ganttchart/
+Source/Download: http://ganttchart.codeplex.com
+
+1 Sep 2012 v1.2.0.0
 - Added example to show how to use PrintDocument.BeginPrint and EndPrint to handle custom drawing.
 - Fixed issue in the timeline date now example where the date for ProjectManager.Now is not shown correctly on the chart.
+- Added Chart.Print with scaling. Respects margin and paper orientation.
+- Chart coordinates are now expressed in floats (this causing breaking type conversion changes)
+- Refactored example application to show new features
 
 31 Aug 2012 v1.1.0.1
 - Rewrite entire drawing routine to overcome Winforms control size limits

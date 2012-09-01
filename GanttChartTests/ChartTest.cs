@@ -98,23 +98,8 @@ namespace GanttChartTests
             Chart chart = new Chart();
             Form form = new Form();
 
-            // manual draw
-            chart.Print(form.CreateGraphics());
-
-            // autodraw
+            // test: paint chart without initialization
             chart.Invalidate();
-        }
-
-        /// <summary>
-        ///A test for Draw
-        ///</summary>
-        [TestMethod()]
-        [ExpectedException(typeof(ArgumentNullException))]
-        public void DrawGraphicsNullException()
-        {
-            Chart chart = new Chart(); // TODO: Initialize to an appropriate value
-            Graphics graphics = null; // TODO: Initialize to an appropriate value
-            chart.Print(graphics);
         }
     }
 }

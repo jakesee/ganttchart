@@ -53,15 +53,22 @@
             this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem4 = new System.Windows.Forms.ToolStripSeparator();
             this.mnuFilePrint = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuFilePrint200 = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuFilePrint150 = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuFilePrint100 = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuFilePrint80 = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuFilePrint50 = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuFilePrint25 = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuFilePrint10 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
             this.mnuFileExit = new System.Windows.Forms.ToolStripMenuItem();
             this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuViewDays = new System.Windows.Forms.ToolStripMenuItem();
-            this.mnuViewDaysDayOfWeek = new System.Windows.Forms.ToolStripMenuItem();
-            this.mnuViewDaysDayOfMonth = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuViewWeek = new System.Windows.Forms.ToolStripMenuItem();
-            this.mnuViewWeeksDayOfMonth = new System.Windows.Forms.ToolStripMenuItem();
-            this.mnuViewWeeksWeekOfYear = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem5 = new System.Windows.Forms.ToolStripSeparator();
+            this.mnuViewDayOfWeek = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuViewDayOfMonth = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuViewWeekOfYear = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
             this.mnuViewRelationships = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuViewSlack = new System.Windows.Forms.ToolStripMenuItem();
@@ -258,7 +265,7 @@
             this.TaskGridView.Name = "TaskGridView";
             this.TaskGridView.Size = new System.Drawing.Size(223, 619);
             this.TaskGridView.TabIndex = 0;
-            this.TaskGridView.SelectionChanged += new System.EventHandler(this.TaskGridView_SelectionChanged);
+            this.TaskGridView.SelectionChanged += new System.EventHandler(this._mTaskGridView_SelectionChanged);
             // 
             // label1
             // 
@@ -281,7 +288,6 @@
             this._mChart.Padding = new System.Windows.Forms.Padding(5);
             this._mChart.Size = new System.Drawing.Size(587, 664);
             this._mChart.TabIndex = 4;
-            this._mChart.TimeScaleDisplay = Braincase.GanttChart.TimeScaleDisplay.DayOfMonth;
             // 
             // menuStrip1
             // 
@@ -312,42 +318,91 @@
             // mnuFileNew
             // 
             this.mnuFileNew.Name = "mnuFileNew";
-            this.mnuFileNew.Size = new System.Drawing.Size(152, 22);
+            this.mnuFileNew.Size = new System.Drawing.Size(306, 22);
             this.mnuFileNew.Text = "New";
             this.mnuFileNew.Click += new System.EventHandler(this.mnuFileNew_Click);
             // 
             // toolStripMenuItem3
             // 
             this.toolStripMenuItem3.Name = "toolStripMenuItem3";
-            this.toolStripMenuItem3.Size = new System.Drawing.Size(149, 6);
+            this.toolStripMenuItem3.Size = new System.Drawing.Size(303, 6);
             // 
             // saveToolStripMenuItem
             // 
             this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.saveToolStripMenuItem.Size = new System.Drawing.Size(306, 22);
             this.saveToolStripMenuItem.Text = "Save";
             // 
             // toolStripMenuItem4
             // 
             this.toolStripMenuItem4.Name = "toolStripMenuItem4";
-            this.toolStripMenuItem4.Size = new System.Drawing.Size(149, 6);
+            this.toolStripMenuItem4.Size = new System.Drawing.Size(303, 6);
             // 
             // mnuFilePrint
             // 
+            this.mnuFilePrint.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.mnuFilePrint200,
+            this.mnuFilePrint150,
+            this.mnuFilePrint100,
+            this.mnuFilePrint80,
+            this.mnuFilePrint50,
+            this.mnuFilePrint25,
+            this.mnuFilePrint10});
             this.mnuFilePrint.Name = "mnuFilePrint";
-            this.mnuFilePrint.Size = new System.Drawing.Size(152, 22);
-            this.mnuFilePrint.Text = "Print...";
-            this.mnuFilePrint.Click += new System.EventHandler(this.mnuFilePrint_Click);
+            this.mnuFilePrint.Size = new System.Drawing.Size(306, 22);
+            this.mnuFilePrint.Text = "Print (Printing to PDF is advised for this test)";
+            // 
+            // mnuFilePrint200
+            // 
+            this.mnuFilePrint200.Name = "mnuFilePrint200";
+            this.mnuFilePrint200.Size = new System.Drawing.Size(102, 22);
+            this.mnuFilePrint200.Text = "200%";
+            // 
+            // mnuFilePrint150
+            // 
+            this.mnuFilePrint150.Name = "mnuFilePrint150";
+            this.mnuFilePrint150.Size = new System.Drawing.Size(102, 22);
+            this.mnuFilePrint150.Text = "150%";
+            // 
+            // mnuFilePrint100
+            // 
+            this.mnuFilePrint100.Name = "mnuFilePrint100";
+            this.mnuFilePrint100.Size = new System.Drawing.Size(102, 22);
+            this.mnuFilePrint100.Text = "100%";
+            // 
+            // mnuFilePrint80
+            // 
+            this.mnuFilePrint80.Name = "mnuFilePrint80";
+            this.mnuFilePrint80.Size = new System.Drawing.Size(102, 22);
+            this.mnuFilePrint80.Text = "80%";
+            // 
+            // mnuFilePrint50
+            // 
+            this.mnuFilePrint50.Name = "mnuFilePrint50";
+            this.mnuFilePrint50.Size = new System.Drawing.Size(102, 22);
+            this.mnuFilePrint50.Text = "50%";
+            // 
+            // mnuFilePrint25
+            // 
+            this.mnuFilePrint25.Name = "mnuFilePrint25";
+            this.mnuFilePrint25.Size = new System.Drawing.Size(102, 22);
+            this.mnuFilePrint25.Text = "25%";
+            // 
+            // mnuFilePrint10
+            // 
+            this.mnuFilePrint10.Name = "mnuFilePrint10";
+            this.mnuFilePrint10.Size = new System.Drawing.Size(102, 22);
+            this.mnuFilePrint10.Text = "10%";
             // 
             // toolStripMenuItem1
             // 
             this.toolStripMenuItem1.Name = "toolStripMenuItem1";
-            this.toolStripMenuItem1.Size = new System.Drawing.Size(149, 6);
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(303, 6);
             // 
             // mnuFileExit
             // 
             this.mnuFileExit.Name = "mnuFileExit";
-            this.mnuFileExit.Size = new System.Drawing.Size(152, 22);
+            this.mnuFileExit.Size = new System.Drawing.Size(306, 22);
             this.mnuFileExit.Text = "Exit";
             this.mnuFileExit.Click += new System.EventHandler(this.mnuFileExit_Click);
             // 
@@ -356,6 +411,10 @@
             this.viewToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.mnuViewDays,
             this.mnuViewWeek,
+            this.toolStripMenuItem5,
+            this.mnuViewDayOfWeek,
+            this.mnuViewDayOfMonth,
+            this.mnuViewWeekOfYear,
             this.toolStripMenuItem2,
             this.mnuViewRelationships,
             this.mnuViewSlack});
@@ -365,68 +424,62 @@
             // 
             // mnuViewDays
             // 
-            this.mnuViewDays.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.mnuViewDaysDayOfWeek,
-            this.mnuViewDaysDayOfMonth});
             this.mnuViewDays.Name = "mnuViewDays";
-            this.mnuViewDays.Size = new System.Drawing.Size(144, 22);
+            this.mnuViewDays.Size = new System.Drawing.Size(152, 22);
             this.mnuViewDays.Text = "Days";
-            // 
-            // mnuViewDaysDayOfWeek
-            // 
-            this.mnuViewDaysDayOfWeek.Name = "mnuViewDaysDayOfWeek";
-            this.mnuViewDaysDayOfWeek.Size = new System.Drawing.Size(149, 22);
-            this.mnuViewDaysDayOfWeek.Text = "Day Of Week";
-            this.mnuViewDaysDayOfWeek.Click += new System.EventHandler(this.mnuViewDaysDayOfWeek_Click);
-            // 
-            // mnuViewDaysDayOfMonth
-            // 
-            this.mnuViewDaysDayOfMonth.Name = "mnuViewDaysDayOfMonth";
-            this.mnuViewDaysDayOfMonth.Size = new System.Drawing.Size(149, 22);
-            this.mnuViewDaysDayOfMonth.Text = "Day Of Month";
-            this.mnuViewDaysDayOfMonth.Click += new System.EventHandler(this.mnuViewDaysDayOfMonth_Click);
+            this.mnuViewDays.Click += new System.EventHandler(this.mnuViewDays_Click);
             // 
             // mnuViewWeek
             // 
-            this.mnuViewWeek.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.mnuViewWeeksDayOfMonth,
-            this.mnuViewWeeksWeekOfYear});
             this.mnuViewWeek.Name = "mnuViewWeek";
-            this.mnuViewWeek.Size = new System.Drawing.Size(144, 22);
+            this.mnuViewWeek.Size = new System.Drawing.Size(152, 22);
             this.mnuViewWeek.Text = "Weeks";
+            this.mnuViewWeek.Click += new System.EventHandler(this.mnuViewWeek_Click);
             // 
-            // mnuViewWeeksDayOfMonth
+            // toolStripMenuItem5
             // 
-            this.mnuViewWeeksDayOfMonth.Name = "mnuViewWeeksDayOfMonth";
-            this.mnuViewWeeksDayOfMonth.Size = new System.Drawing.Size(149, 22);
-            this.mnuViewWeeksDayOfMonth.Text = "Day Of Month";
-            this.mnuViewWeeksDayOfMonth.Click += new System.EventHandler(this.mnuViewWeeksDayOfMonth_Click);
+            this.toolStripMenuItem5.Name = "toolStripMenuItem5";
+            this.toolStripMenuItem5.Size = new System.Drawing.Size(149, 6);
             // 
-            // mnuViewWeeksWeekOfYear
+            // mnuViewDayOfWeek
             // 
-            this.mnuViewWeeksWeekOfYear.Name = "mnuViewWeeksWeekOfYear";
-            this.mnuViewWeeksWeekOfYear.Size = new System.Drawing.Size(149, 22);
-            this.mnuViewWeeksWeekOfYear.Text = "Week Of Year";
-            this.mnuViewWeeksWeekOfYear.Click += new System.EventHandler(this.mnuViewWeeksWeekOfYear_Click);
+            this.mnuViewDayOfWeek.Name = "mnuViewDayOfWeek";
+            this.mnuViewDayOfWeek.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewDayOfWeek.Text = "Day Of Week";
+            this.mnuViewDayOfWeek.Click += new System.EventHandler(this.mnuViewDayOfWeek_Click);
+            // 
+            // mnuViewDayOfMonth
+            // 
+            this.mnuViewDayOfMonth.Name = "mnuViewDayOfMonth";
+            this.mnuViewDayOfMonth.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewDayOfMonth.Text = "Day Of Month";
+            this.mnuViewDayOfMonth.Click += new System.EventHandler(this.mnuViewDayOfMonth_Click);
+            // 
+            // mnuViewWeekOfYear
+            // 
+            this.mnuViewWeekOfYear.Name = "mnuViewWeekOfYear";
+            this.mnuViewWeekOfYear.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewWeekOfYear.Text = "Week Of Year";
+            this.mnuViewWeekOfYear.Click += new System.EventHandler(this.mnuViewWeekOfYear_Click);
             // 
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(141, 6);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(149, 6);
             // 
             // mnuViewRelationships
             // 
             this.mnuViewRelationships.Checked = true;
             this.mnuViewRelationships.CheckState = System.Windows.Forms.CheckState.Checked;
             this.mnuViewRelationships.Name = "mnuViewRelationships";
-            this.mnuViewRelationships.Size = new System.Drawing.Size(144, 22);
+            this.mnuViewRelationships.Size = new System.Drawing.Size(152, 22);
             this.mnuViewRelationships.Text = "Relationships";
             this.mnuViewRelationships.Click += new System.EventHandler(this.mnuViewRelationships_Click);
             // 
             // mnuViewSlack
             // 
             this.mnuViewSlack.Name = "mnuViewSlack";
-            this.mnuViewSlack.Size = new System.Drawing.Size(144, 22);
+            this.mnuViewSlack.Size = new System.Drawing.Size(152, 22);
             this.mnuViewSlack.Text = "Slack";
             this.mnuViewSlack.Click += new System.EventHandler(this.mnuViewSlack_Click);
             // 
@@ -520,10 +573,6 @@
         private System.Windows.Forms.DateTimePicker _mStartDatePicker;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel lblStatus;
-        private System.Windows.Forms.ToolStripMenuItem mnuViewDaysDayOfWeek;
-        private System.Windows.Forms.ToolStripMenuItem mnuViewDaysDayOfMonth;
-        private System.Windows.Forms.ToolStripMenuItem mnuViewWeeksDayOfMonth;
-        private System.Windows.Forms.ToolStripMenuItem mnuViewWeeksWeekOfYear;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem2;
         private System.Windows.Forms.ToolStripMenuItem mnuViewRelationships;
         private System.Windows.Forms.TabPage tabPage3;
@@ -538,6 +587,17 @@
         private System.Windows.Forms.TabPage tabPage4;
         private System.Windows.Forms.DataGridView TaskGridView;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.ToolStripMenuItem mnuFilePrint200;
+        private System.Windows.Forms.ToolStripMenuItem mnuFilePrint150;
+        private System.Windows.Forms.ToolStripMenuItem mnuFilePrint100;
+        private System.Windows.Forms.ToolStripMenuItem mnuFilePrint80;
+        private System.Windows.Forms.ToolStripMenuItem mnuFilePrint50;
+        private System.Windows.Forms.ToolStripMenuItem mnuFilePrint25;
+        private System.Windows.Forms.ToolStripMenuItem mnuFilePrint10;
+        private System.Windows.Forms.ToolStripSeparator toolStripMenuItem5;
+        private System.Windows.Forms.ToolStripMenuItem mnuViewDayOfWeek;
+        private System.Windows.Forms.ToolStripMenuItem mnuViewDayOfMonth;
+        private System.Windows.Forms.ToolStripMenuItem mnuViewWeekOfYear;
 
     }
 }

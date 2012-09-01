@@ -1099,22 +1099,29 @@ namespace GanttChartTests
             var one = new Task();
             var two = new Task();
             var three = new Task();
+            var four = new Task();
             manager.Add(one);
             manager.Add(two);
             manager.Add(three);
+            manager.Add(four);
 
             // setup: create a relationship
+            manager.Relate(four, one);
             manager.Relate(one, two);
             manager.Relate(one, three);
             Assert.IsTrue(manager.DependantsOf(one).Contains(three));
             Assert.IsTrue(manager.PrecedentsOf(two).Contains(one));
             Assert.IsTrue(manager.PrecedentsOf(three).Contains(one));
+            Assert.IsTrue(manager.DependantsOf(four).Contains(one));
+            Assert.IsTrue(manager.PrecedentsOf(one).Contains(four));
 
-            // test: remove relation
+            // test: remove dependants
             manager.Unrelate(one);
             Assert.IsTrue(manager.DependantsOf(one).Count() == 0);
             Assert.IsTrue(manager.PrecedentsOf(two).Count() == 0);
             Assert.IsTrue(manager.PrecedentsOf(three).Count() == 0);
+            Assert.IsTrue(manager.DependantsOf(four).Contains(one));
+            Assert.IsTrue(manager.PrecedentsOf(one).Contains(four));
         }
        
         [TestMethod]

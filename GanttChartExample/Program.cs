@@ -15,9 +15,8 @@ namespace Braincase.GanttChart
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            //Application.Run(new ScrollTest());
             Application.Run(new ExampleFull());
-            //Application.Run(new ExampleSimple());
+            Application.Run(new ExampleSimple());
         }
     }
 }

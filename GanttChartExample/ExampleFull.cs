@@ -9,9 +9,14 @@ using System.Windows.Forms;
 
 namespace Braincase.GanttChart
 {
+    /// <summary>
+    /// An elaborate example on how the chart control might be used. 
+    /// Start by collapsing all regions and then read the constructor.
+    /// Refer to IProjectManager interface for method description.
+    /// </summary>
     public partial class ExampleFull : Form
     {
-        OverlayPainter _mPainter = new OverlayPainter();
+        OverlayPainter _mOverlay = new OverlayPainter();
 
         ProjectManager _mManager = null;
 
@@ -39,12 +44,12 @@ namespace Braincase.GanttChart
 
             // Create another 1000 tasks for stress testing
             Random rand = new Random();
-            for (int i = 0; i < 1000; i++)
+            for (int i = 0; i < 50; i++)
             {
                 var task = new MyTask(_mManager) { Name = string.Format("New Task {0}", i.ToString()) };
                 _mManager.Add(task);
-                _mManager.SetStart(task, rand.Next(100));
-                _mManager.SetDuration(task, rand.Next(10));
+                _mManager.SetStart(task, rand.Next(300));
+                _mManager.SetDuration(task, rand.Next(50));
             }
 
             // Set task durations, e.g. using ProjectManager methods 
@@ -101,7 +106,7 @@ namespace Braincase.GanttChart
             _mChart.TaskMouseOver += new EventHandler<TaskMouseEventArgs>(_mChart_TaskMouseOver);
             _mChart.TaskMouseOut += new EventHandler<TaskMouseEventArgs>(_mChart_TaskMouseOut);
             _mChart.TaskSelected += new EventHandler<TaskMouseEventArgs>(_mChart_TaskSelected);
-            _mChart.PaintOverlay += _mPainter.ChartOverlayPainter;
+            _mChart.PaintOverlay += _mOverlay.ChartOverlayPainter;
             _mChart.AllowTaskDragDrop = true;
 
             // set some tooltips to show the resources in each task
@@ -116,12 +121,8 @@ namespace Braincase.GanttChart
             _mManager.Now = (int)Math.Round(span.TotalDays); // set the "Now" marker at the correct date
             _mChart.TimeScaleDisplay = TimeScaleDisplay.DayOfWeek; // Set the chart to display days of week in header
 
-            // The parent container for Chart should have autoscroll
-            // this will allow the UI user to scroll through the chart.
-            _mSplitter1.Panel2.AutoScroll = true;
-
-            // TaskGridView
-            TaskGridView.DataSource = new BindingSource(_mManager.Tasks, null);
+            // Init the rest of the UI
+            _InitExampleUI();            
         }
 
         void _mChart_TaskSelected(object sender, TaskMouseEventArgs e)
@@ -143,6 +144,18 @@ namespace Braincase.GanttChart
             _mChart.Invalidate();
         }
 
+        private void _InitExampleUI()
+        {
+            TaskGridView.DataSource = new BindingSource(_mManager.Tasks, null);
+            mnuFilePrint200.Click += (s, e) => _Print(2.0f);
+            mnuFilePrint150.Click += (s, e) => _Print(1.5f);
+            mnuFilePrint100.Click += (s, e) => _Print(1.0f);
+            mnuFilePrint80.Click += (s, e) => _Print(0.8f);
+            mnuFilePrint50.Click += (s, e) => _Print(0.5f);
+            mnuFilePrint25.Click += (s, e) => _Print(0.25f);
+            mnuFilePrint10.Click += (s, e) => _Print(0.1f);
+        }
+
         #region Main Menu
 
         private void mnuFileExit_Click(object sender, EventArgs e)
@@ -150,45 +163,10 @@ namespace Braincase.GanttChart
             this.Close();
         }
 
-        private void mnuFilePrint_Click(object sender, EventArgs e)
-        {
-            using (var dialog = new PrintDialog())
-            {
-                dialog.Document = new System.Drawing.Printing.PrintDocument();
-                if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
-                {
-                    dialog.Document.BeginPrint += (s, arg) => _mPainter.PrintMode = true;
-                    dialog.Document.EndPrint += (s, arg) => _mPainter.PrintMode = false;
-                    _mChart.Print(dialog.Document);
-                }
-            }
-        }
-
         private void mnuViewDaysDayOfWeek_Click(object sender, EventArgs e)
         {
             _mManager.TimeScale = TimeScale.Day;
             _mChart.TimeScaleDisplay = TimeScaleDisplay.DayOfWeek;
-            _mChart.Invalidate();
-        }
-
-        private void mnuViewDaysDayOfMonth_Click(object sender, EventArgs e)
-        {
-            _mManager.TimeScale = TimeScale.Day;
-            _mChart.TimeScaleDisplay = TimeScaleDisplay.DayOfMonth;
-            _mChart.Invalidate();
-        }
-
-        private void mnuViewWeeksDayOfMonth_Click(object sender, EventArgs e)
-        {
-            _mManager.TimeScale = TimeScale.Week;
-            _mChart.TimeScaleDisplay = TimeScaleDisplay.DayOfMonth;
-            _mChart.Invalidate();
-        }
-
-        private void mnuViewWeeksWeekOfYear_Click(object sender, EventArgs e)
-        {
-            _mManager.TimeScale = TimeScale.Week;
-            _mChart.TimeScaleDisplay = TimeScaleDisplay.WeekOfYear;
             _mChart.Invalidate();
         }
 
@@ -221,6 +199,46 @@ namespace Braincase.GanttChart
             _mChart.Invalidate();
         }
 
+        #region Timescale Views
+        private void mnuViewDays_Click(object sender, EventArgs e)
+        {
+            _mManager.TimeScale = TimeScale.Day;
+            mnuViewDays.Checked = true;
+            mnuViewWeek.Checked = false;
+        }
+
+        private void mnuViewWeek_Click(object sender, EventArgs e)
+        {
+            _mManager.TimeScale = TimeScale.Week;
+            mnuViewDays.Checked = false;
+            mnuViewWeek.Checked = true;
+        }
+
+        private void mnuViewDayOfWeek_Click(object sender, EventArgs e)
+        {
+            _mChart.TimeScaleDisplay = TimeScaleDisplay.DayOfWeek;
+            mnuViewDayOfWeek.Checked = true;
+            mnuViewDayOfMonth.Checked = false;
+            mnuViewWeekOfYear.Checked = false;
+        }
+
+        private void mnuViewDayOfMonth_Click(object sender, EventArgs e)
+        {
+            _mChart.TimeScaleDisplay = TimeScaleDisplay.DayOfMonth;
+            mnuViewDayOfWeek.Checked = false;
+            mnuViewDayOfMonth.Checked = true;
+            mnuViewWeekOfYear.Checked = false;
+        }
+
+        private void mnuViewWeekOfYear_Click(object sender, EventArgs e)
+        {
+            _mChart.TimeScaleDisplay = TimeScaleDisplay.WeekOfYear;
+            mnuViewDayOfWeek.Checked = false;
+            mnuViewDayOfMonth.Checked = false;
+            mnuViewWeekOfYear.Checked = true;
+        }
+        #endregion Timescale Views
+
         #endregion Main Menu
 
         #region Sidebar
@@ -239,8 +257,6 @@ namespace Braincase.GanttChart
             _mChart.Invalidate();
         }
 
-        #endregion Sidebar
-
         private void _mNowDatePicker_ValueChanged(object sender, EventArgs e)
         {
             TimeSpan span = _mNowDatePicker.Value - _mStartDatePicker.Value;
@@ -255,7 +271,7 @@ namespace Braincase.GanttChart
             _mChart.Invalidate();
         }
 
-        private void TaskGridView_SelectionChanged(object sender, EventArgs e)
+        private void _mTaskGridView_SelectionChanged(object sender, EventArgs e)
         {
             if (TaskGridView.SelectedRows.Count > 0)
             {
@@ -263,6 +279,29 @@ namespace Braincase.GanttChart
                 _mChart.ScrollTo(task);
             }
         }
+
+        #endregion Sidebar
+
+        #region Print
+
+        private void _Print(float scale)
+        {
+            using (var dialog = new PrintDialog())
+            {
+                dialog.Document = new System.Drawing.Printing.PrintDocument();
+                if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    // set the print mode for the custom overlay painter so that we skip printing instructions
+                    dialog.Document.BeginPrint += (s, arg) => _mOverlay.PrintMode = true;
+                    dialog.Document.EndPrint += (s, arg) => _mOverlay.PrintMode = false;
+
+                    // tell chart to print to the document at the specified scale
+                    _mChart.Print(dialog.Document, scale);
+                }
+            }
+        }
+
+        #endregion Print        
     }
 
     #region overlay painter

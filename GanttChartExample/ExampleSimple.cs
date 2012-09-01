@@ -20,15 +20,6 @@ namespace Braincase.GanttChart
             _mProject = new ProjectManager();
             _mProject.Add(new Task() { Name = "New Task" });
             _mChart.Init(_mProject);
-
-            this.AutoScroll = true;
-        }
-
-        protected override void OnResize(EventArgs e)
-        {
-            _mChart.Invalidate();
-
-            base.OnResize(e);
         }
     }
 }
