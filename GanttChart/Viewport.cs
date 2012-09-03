@@ -144,8 +144,6 @@ namespace Braincase.GanttChart
         /// Construct a Viewport
         /// </summary>
         /// <param name="view"></param>
-        /// <param name="hScroll"></param>
-        /// <param name="vScroll"></param>
         public Viewport(Control view)
         {
             _mDevice = view;
@@ -264,7 +262,7 @@ namespace Braincase.GanttChart
         /// <summary>
         /// Convert world coordinates to view coordinates
         /// </summary>
-        /// <param name="screencoord"></param>
+        /// <param name="worldcoord"></param>
         /// <returns></returns>
         public PointF WorldToDeviceCoord(PointF worldcoord)
         {

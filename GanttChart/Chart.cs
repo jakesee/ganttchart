@@ -19,10 +19,13 @@ namespace Braincase.GanttChart
         }
     }
 
+    /// <summary>
+    /// Gantt Chart control
+    /// </summary>
     public partial class Chart : UserControl
     {
         /// <summary>
-        /// Create a GanttChart
+        /// Construct a gantt chart
         /// </summary>
         public Chart()
         {
@@ -281,7 +284,6 @@ namespace Braincase.GanttChart
         /// <summary>
         /// Print the Chart to the specified PrintDocument.
         /// </summary>
-        /// <param name="document"></param>
         public void Print(PrintDocument document, float scale = 1.0f)
         {
             // save a copy of the current viewport and swap it with PrintViewport
@@ -353,7 +355,7 @@ namespace Braincase.GanttChart
         /// Set tool tip for the specified task
         /// </summary>
         /// <param name="task"></param>
-        /// <param name="tooltiptext"></param>
+        /// <param name="text"></param>
         public void SetToolTip(Task task, string text)
         {
             if (task != null && text != string.Empty)
@@ -422,6 +424,10 @@ namespace Braincase.GanttChart
 
         #region UserControl Events
 
+        /// <summary>
+        /// Raises the System.Windows.Forms.Control.Paint event
+        /// </summary>
+        /// <param name="e"></param>
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
@@ -429,7 +435,11 @@ namespace Braincase.GanttChart
             if (!this.DesignMode)
                 this._Draw(e.Graphics, e.ClipRectangle);
         }
-
+        
+        /// <summary>
+        /// Raises the System.Windows.Forms.Control.MouseMove event
+        /// </summary>
+        /// <param name="e"></param>
         protected override void OnMouseMove(MouseEventArgs e)
         {
             // Hot tracking
@@ -460,6 +470,10 @@ namespace Braincase.GanttChart
             base.OnMouseMove(e);
         }
 
+        /// <summary>
+        /// Raises the System.Windows.Forms.Control.MouseClick event
+        /// </summary>
+        /// <param name="e"></param>
         protected override void OnMouseClick(MouseEventArgs e)
         {
             var task = _GetTaskUnderMouse(e.Location);
@@ -474,6 +488,10 @@ namespace Braincase.GanttChart
             base.OnMouseClick(e);
         }
 
+        /// <summary>
+        /// Raises the System.Windows.Forms.Control.MouseDown event
+        /// </summary>
+        /// <param name="e"></param>
         protected override void OnMouseDown(MouseEventArgs e)
         {
             // Begin Drag
@@ -490,6 +508,10 @@ namespace Braincase.GanttChart
             base.OnMouseDown(e);
         }
 
+        /// <summary>
+        /// Raises the System.Windows.Forms.Control.MouseUp event
+        /// </summary>
+        /// <param name="e"></param>
         protected override void OnMouseUp(MouseEventArgs e)
         {
             // Drop task
@@ -508,6 +530,10 @@ namespace Braincase.GanttChart
             base.OnMouseUp(e);
         }
 
+        /// <summary>
+        /// Raises the System.Windows.Forms.Control.MouseDoubleClick event
+        /// </summary>
+        /// <param name="e"></param>
         protected override void OnMouseDoubleClick(MouseEventArgs e)
         {
             var task = _GetTaskUnderMouse(e.Location);
@@ -522,6 +548,10 @@ namespace Braincase.GanttChart
         #endregion UserControl Events
 
         #region Chart Events
+        /// <summary>
+        /// Raises the TaskMouseOver event
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void OnTaskMouseOver(TaskMouseEventArgs e)
         {
             if (TaskMouseOver != null)
@@ -535,7 +565,10 @@ namespace Braincase.GanttChart
                 this.Invalidate();
             }
         }
-
+        /// <summary>
+        /// Raises the TaskMouseOver event
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void OnTaskMouseOut(TaskMouseEventArgs e)
         {
             if (TaskMouseOut != null)
@@ -546,7 +579,10 @@ namespace Braincase.GanttChart
             _mOverlay.HideToolTip();
             this.Invalidate();
         }
-
+        /// <summary>
+        /// Raises the TaskMouseDrag( event
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void OnTaskMouseDrag(TaskDragDropEventArgs e)
         {
             // fire listeners
@@ -591,7 +627,10 @@ namespace Braincase.GanttChart
             }
             this.Invalidate();
         }
-
+        /// <summary>
+        /// Raises the TaskMouseDrop event
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void OnTaskMouseDrop(TaskDragDropEventArgs e)
         {
             // Fire event
@@ -650,7 +689,10 @@ namespace Braincase.GanttChart
             _mOverlay.Clear();
             this.Invalidate();
         }
-
+        /// <summary>
+        /// Raises the TaskMouseClick event
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void OnTaskMouseClick(TaskMouseEventArgs e)
         {
             if (TaskMouseClick != null)
@@ -684,7 +726,10 @@ namespace Braincase.GanttChart
             }
             this.Invalidate();
         }
-
+        /// <summary>
+        /// Raises the TaskMouseDoubleClick event
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void OnTaskMouseDoubleClick(TaskMouseEventArgs e)
         {
             if (TaskMouseDoubleClick != null)
@@ -696,13 +741,19 @@ namespace Braincase.GanttChart
                 this.Invalidate();
             }
         }
-
+        /// <summary>
+        /// Raises the TaskSelected event
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void OnTaskSelected(TaskMouseEventArgs e)
         {
             if (TaskSelected != null)
                 TaskSelected(this, e);
         }
-
+        /// <summary>
+        /// Raises the TaskDeselecting event
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void OnTaskDeselecting(TaskMouseEventArgs e)
         {
             if (TaskDeselecting != null)
@@ -711,7 +762,10 @@ namespace Braincase.GanttChart
             // deselect all tasks
             _mSelectedTasks.Clear();
         }
-
+        /// <summary>
+        /// Raises the PaintOverlay event
+        /// </summary>
+        /// <param name="e"></param>
         protected virtual void OnPaintOverlay(ChartPaintEventArgs e)
         {
             if (this.PaintOverlay != null)
@@ -780,11 +834,6 @@ namespace Braincase.GanttChart
 
         #region Private Helper Methods
 
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="e"></param>
-        /// <returns></returns>
         private Task _GetTaskUnderMouse(Point mouse)
         {
             var worldcoord = _mViewport.DeviceToWorldCoord(mouse);
@@ -947,14 +996,13 @@ namespace Braincase.GanttChart
         {
             if (_mProject.TimeScale == TimeScale.Day)
                 current = current.AddDays(1);
-            else /// if (_mProject.TimeScale == TimeScale.Week)
+            else // if (_mProject.TimeScale == TimeScale.Week)
                 current = current.AddDays(7);
         }
 
         /// <summary>
         /// Draw the Chart using the specified graphics
         /// </summary>
-        /// <param name="graphics"></param>
         private void _Draw(Graphics graphics, Rectangle clipRect)
         {
             graphics.Clear(Color.White);
@@ -1298,11 +1346,29 @@ namespace Braincase.GanttChart
     }
 
     #region Chart Formatting
+
+    /// <summary>
+    /// Time scale display format
+    /// </summary>
     public enum TimeScaleDisplay
     {
-        DayOfWeek, DayOfMonth, WeekOfYear
+        /// <summary>
+        /// Day of the week: S, M, T, W, T, F, S
+        /// </summary>
+        DayOfWeek,
+        /// <summary>
+        /// Day of month; 1 to 31
+        /// </summary>
+        DayOfMonth,
+        /// <summary>
+        /// Week of the year: 1 to 52; or 53 in case of leap year
+        /// </summary>
+        WeekOfYear
     }
 
+    /// <summary>
+    /// Format for painting tasks
+    /// </summary>
     public struct TaskFormat
     {
         /// <summary>
@@ -1331,6 +1397,9 @@ namespace Braincase.GanttChart
         public Brush SlackFill { get; set; }
     }
 
+    /// <summary>
+    /// Format for painting relations
+    /// </summary>
     public struct RelationFormat
     {
         /// <summary>
@@ -1339,6 +1408,9 @@ namespace Braincase.GanttChart
         public Pen Line { get; set; }
     }
 
+    /// <summary>
+    /// Format for painting chart header
+    /// </summary>
     public struct HeaderFormat
     {
         /// <summary>
@@ -1361,7 +1433,9 @@ namespace Braincase.GanttChart
     #endregion Chart Formatting
 
     #region EventAgrs
-
+    /// <summary>
+    /// Provides data for TaskMouseEvent
+    /// </summary>
     public class TaskMouseEventArgs : MouseEventArgs
     {
         /// <summary>
@@ -1372,7 +1446,9 @@ namespace Braincase.GanttChart
         /// Rectangle bounds of the Task
         /// </summary>
         public RectangleF Rectangle { get; private set; }
-
+        /// <summary>
+        /// Initialize a new instance of TaskMouseEventArgs with the MouseEventArgs parameters and the Task involved.
+        /// </summary>
         public TaskMouseEventArgs(Task task, RectangleF rectangle, MouseButtons buttons, int clicks, int x, int y, int delta)
             : base(buttons, clicks, x, y, delta)
         {
@@ -1380,7 +1456,9 @@ namespace Braincase.GanttChart
             this.Rectangle = rectangle;
         }
     }
-
+    /// <summary>
+    /// Provides data for TaskDragDropEvent
+    /// </summary>
     public class TaskDragDropEventArgs : MouseEventArgs
     {
         /// <summary>
@@ -1411,7 +1489,9 @@ namespace Braincase.GanttChart
         /// Get the chart row number that the mouse is current at.
         /// </summary>
         public int Row { get; private set; }
-
+        /// <summary>
+        /// Initialize a new instance of TaskDragDropEventArgs with the MouseEventArgs parameters and the Task involved and the previous mouse location.
+        /// </summary>
         public TaskDragDropEventArgs(Point startLocation, Point prevLocation, Task source, RectangleF sourceRect, Task target, RectangleF targetRect, int row, MouseButtons buttons, int clicks, int x, int y, int delta)
             : base(buttons, clicks, x, y, delta)
         {
@@ -1425,6 +1505,9 @@ namespace Braincase.GanttChart
         }
     }
 
+    /// <summary>
+    /// Provides data for ChartPaintEvent
+    /// </summary>
     public class ChartPaintEventArgs : PaintEventArgs
     {
         /// <summary>
@@ -1432,6 +1515,12 @@ namespace Braincase.GanttChart
         /// </summary>
         public Chart Chart { get; private set; }
 
+        /// <summary>
+        /// Initialize a new instance of ChartPaintEventArgs with the PaintEventArgs graphics and clip rectangle, and the chart itself.
+        /// </summary>
+        /// <param name="graphics"></param>
+        /// <param name="clipRect"></param>
+        /// <param name="chart"></param>
         public ChartPaintEventArgs(Graphics graphics, Rectangle clipRect, Chart chart)
             : base(graphics, clipRect)
         {
@@ -1439,13 +1528,22 @@ namespace Braincase.GanttChart
         }
     }
 
+    /// <summary>
+    /// Provides data for ChartPaintEvent
+    /// </summary>
     public class HeaderPaintEventArgs : ChartPaintEventArgs
     {
+        /// <summary>
+        /// Get or set the font to use for drawing the text on the header
+        /// </summary>
         public Font Font { get; set; }
+        /// <summary>
+        /// Get or set the header formatting
+        /// </summary>
         public HeaderFormat Format { get; set; }
 
         /// <summary>
-        /// Get or set whether the task is already painted and can be skipped over by Chart
+        /// Initialize a new instance of HeaderPaintEventArgs with the editable default font and header format
         /// </summary>
         public HeaderPaintEventArgs(Graphics graphics, Rectangle clipRect, Chart chart, Font font, HeaderFormat format)
             : base(graphics, clipRect, chart)
@@ -1455,9 +1553,18 @@ namespace Braincase.GanttChart
         }
     }
 
+    /// <summary>
+    /// Provides data for TaskPaintEvent
+    /// </summary>
     public class TaskPaintEventArgs : ChartPaintEventArgs
     {
+        /// <summary>
+        /// Get the task to be painted
+        /// </summary>
         public Task Task { get; private set; }
+        /// <summary>
+        /// Get the rectangle bounds of the task
+        /// </summary>
         public RectangleF Rectangle
         {
             get
@@ -1465,11 +1572,25 @@ namespace Braincase.GanttChart
                 return new RectangleF(this.Task.Start * this.Chart.BarWidth, this.Row * this.Chart.BarSpacing + this.Chart.BarSpacing + this.Chart.HeaderOneHeight, this.Task.Duration * this.Chart.BarWidth, this.Chart.BarHeight);
             }    
         }
+        /// <summary>
+        /// Get the row number of the task
+        /// </summary>
         public int Row { get; private set; }
+        /// <summary>
+        /// Get or set the font to be used to draw the task label
+        /// </summary>
         public Font Font { get; set; }
-        public bool IsCritical { get; private set; }
+        /// <summary>
+        /// Get or set the formatting of the task
+        /// </summary>
         public TaskFormat Format { get; set; }
-
+        /// <summary>
+        /// Get whether the task is in a critical path
+        /// </summary>
+        public bool IsCritical { get; private set; }
+        /// <summary>
+        /// Initialize a new instance of TaskPaintEventArgs with the editable default font and task paint format
+        /// </summary>
         public TaskPaintEventArgs(Graphics graphics, Rectangle clipRect, Chart chart, Task task, int row, bool critical, Font font, TaskFormat format) // need to create a paint event for each task for custom painting
             : base(graphics, clipRect, chart)
         {
@@ -1481,14 +1602,29 @@ namespace Braincase.GanttChart
         }
     }
 
+    /// <summary>
+    /// Provides data for RelationPaintEvent
+    /// </summary>
     public class RelationPaintEventArgs : ChartPaintEventArgs
     {
+        /// <summary>
+        /// Get the precedent task in the relation
+        /// </summary>
         public Task Precedent { get; private set; }
 
+        /// <summary>
+        /// Get the dependant task in the relation
+        /// </summary>
         public Task Dependant { get; private set; }
 
+        /// <summary>
+        /// Get or set the formatting to use for drawing the relation
+        /// </summary>
         public RelationFormat Format { get; set; }
 
+        /// <summary>
+        /// Initialize a new instance of RelationPaintEventArgs with the editable default font and relation paint format
+        /// </summary>
         public RelationPaintEventArgs(Graphics graphics, Rectangle clipRect, Chart chart, Task before, Task after, RelationFormat format)
             : base(graphics, clipRect, chart)
         {
@@ -1517,7 +1653,12 @@ namespace Braincase.GanttChart
         /// Get or set the task
         /// </summary>
         public Task Task { get; set; }
-
+        /// <summary>
+        /// Construct a passive data structure to hold chart information
+        /// </summary>
+        /// <param name="row"></param>
+        /// <param name="dateTime"></param>
+        /// <param name="task"></param>
         public ChartInfo(int row, DateTime dateTime, Task task)
             : this()
         {

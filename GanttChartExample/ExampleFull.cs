@@ -158,6 +158,47 @@ namespace Braincase.GanttChart
 
         #region Main Menu
 
+        private void mnuFileSave_Click(object sender, EventArgs e)
+        {
+            using (var dialog = new SaveFileDialog())
+            {
+                dialog.InitialDirectory = System.IO.Path.GetDirectoryName(Application.ExecutablePath);
+                if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    using (var fs = System.IO.File.OpenWrite(dialog.FileName))
+                    {
+                        System.Runtime.Serialization.Formatters.Binary.BinaryFormatter bf = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+                        bf.Serialize(fs, _mManager);
+                    }
+                }
+            }
+        }
+
+        private void mnuFileOpen_Click(object sender, EventArgs e)
+        {
+            using (var dialog = new OpenFileDialog())
+            {
+                dialog.InitialDirectory = System.IO.Path.GetDirectoryName(Application.ExecutablePath);
+                if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    using (var fs = System.IO.File.OpenRead(dialog.FileName))
+                    {
+                        System.Runtime.Serialization.Formatters.Binary.BinaryFormatter bf = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
+                        _mManager = bf.Deserialize(fs) as ProjectManager;
+                        if (_mManager == null)
+                        {
+                            MessageBox.Show("Unable to load ProjectManager. Data structure might have changed from previous verions", "Gantt Chart", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                        else
+                        {
+                            _mChart.Init(_mManager);
+                            _mChart.Invalidate();
+                        }
+                    }
+                }
+            }
+        }
+
         private void mnuFileExit_Click(object sender, EventArgs e)
         {
             this.Close();
@@ -365,11 +406,12 @@ namespace Braincase.GanttChart
     #endregion overlay painter
 
     #region custom task and resource
+    [Serializable]
     public class MyResource
     {
         public string Name { get; set; }
     }
-
+    [Serializable]
     public class MyTask : Task
     {
 

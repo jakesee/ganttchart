@@ -5,9 +5,15 @@ using System.Text;
 
 namespace Braincase.GanttChart
 {
+    /// <summary>
+    /// Passive data class holding schedule information
+    /// </summary>
     [Serializable]
     public class Task
     {
+        /// <summary>
+        /// Initialize a new task to hold schedule information
+        /// </summary>
         public Task()
         {
             Complete = 0.0f;
@@ -62,9 +68,19 @@ namespace Braincase.GanttChart
         }
     }
 
+    /// <summary>
+    /// Time scale in which the time units represent
+    /// </summary>
     public enum TimeScale
     {
-        Day, Week
+        /// <summary>
+        /// Unit time in Days
+        /// </summary>
+        Day,
+        /// <summary>
+        /// Unit time in Weeks
+        /// </summary>
+        Week
     }
 
     /// <summary>
@@ -135,7 +151,6 @@ namespace Braincase.GanttChart
         /// If there are no change to groups and no add/delete tasks, the order between consecutive calls is preserved.
         /// </summary>
         IEnumerable<T> Tasks { get; }
-
         /// <summary>
         /// Set the start time of the specified task.
         /// </summary>
@@ -164,7 +179,7 @@ namespace Braincase.GanttChart
         /// <summary>
         /// Set whether to collapse the specified group task. No effect on regular tasks.
         /// </summary>
-        /// <param name="task"></param>
+        /// <param name="group"></param>
         /// <param name="collasped"></param>
         void SetCollapse(T group, bool collasped);
         /// <summary>
@@ -190,7 +205,7 @@ namespace Braincase.GanttChart
         /// <summary>
         /// Enumerate through all the children and grandchildren of the specified group
         /// </summary>
-        /// <param name="task"></param>
+        /// <param name="group"></param>
         /// <returns></returns>
         IEnumerable<T> DecendantsOf(T group);
         /// <summary>
@@ -325,18 +340,22 @@ namespace Braincase.GanttChart
             Start = DateTime.Now;
             TimeScale = GanttChart.TimeScale.Day;
         }
+
         /// <summary>
         /// Get or set the period we are at now
         /// </summary>
         public int Now { get; set; }
+
         /// <summary>
         /// Get or set the starting date for this project
         /// </summary>
         public DateTime Start { get; set; }
+
         /// <summary>
         /// Get or set the time scale on this project. Each period on the task represents one unit of TimeScale.
         /// </summary>
         public TimeScale TimeScale { get; set; }
+
         /// <summary>
         /// Get the date after the specified period based on TimeScale
         /// </summary>
@@ -424,7 +443,6 @@ namespace Braincase.GanttChart
         /// <summary>
         /// Remove the member task from its group
         /// </summary>
-        /// <param name="member"></param>
         public void Ungroup(T group, T member)
         {
             if (group != null
@@ -439,6 +457,10 @@ namespace Braincase.GanttChart
             }
         }
 
+        /// <summary>
+        /// Ungroup all member task under the specfied group task. The specified group task will become a normal task.
+        /// </summary>
+        /// <param name="group"></param>
         public void Ungroup(T group)
         {
             List<T> list;
@@ -563,7 +585,10 @@ namespace Braincase.GanttChart
                 }
             }
         }
-
+        
+        /// <summary>
+        /// Enumerate through all the children and grandchildren of the specified group
+        /// </summary>
         public IEnumerable<T> AncestorsOf(T task)
         {
             T parent = ParentOf(task);
@@ -574,6 +599,11 @@ namespace Braincase.GanttChart
             }
         }
 
+        /// <summary>
+        /// Enumerate through all the children and grandchildren of the specified group
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         public IEnumerable<T> DecendantsOf(T task)
         {
             if(_mRegister.Contains(task))
@@ -601,18 +631,28 @@ namespace Braincase.GanttChart
             }
         }
 
-        public IEnumerable<T> ChildrenOf(T task)
+        /// <summary>
+        /// Enumerate through all the direct children of the specified group
+        /// </summary>
+        /// <param name="group"></param>
+        /// <returns></returns>
+        public IEnumerable<T> ChildrenOf(T group)
         {
-            if (task == null) yield break;
+            if (group == null) yield break;
 
             List<T> list;
-            if (_mTaskGroups.TryGetValue(task, out list))
+            if (_mTaskGroups.TryGetValue(group, out list))
             {
                 var iter = list.GetEnumerator();
                 while (iter.MoveNext()) yield return iter.Current;
             }
         }
 
+        /// <summary>
+        /// Enumerate through all the direct precedents and indirect precedents of the specified task
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         public IEnumerable<T> PrecedentsOf(T task)
         {
             if (_mRegister.Contains(task))
@@ -632,6 +672,11 @@ namespace Braincase.GanttChart
             }
         }
 
+        /// <summary>
+        /// Enumerate through all the direct dependants and indirect dependants of the specified task
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         public IEnumerable<T> DependantsOf(T task)
         {
             var stack = new Stack<T>(20);
@@ -648,11 +693,21 @@ namespace Braincase.GanttChart
             }
         }
 
+        /// <summary>
+        /// Enumerate through all the direct precedents of the specified task
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         public IEnumerable<T> DirectPrecedentsOf(T task)
         {
             return _mDependents.Where(x => x.Value.Contains(task)).Select(x => x.Key);
         }
 
+        /// <summary>
+        /// Enumerate through all the direct dependants of the specified task
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         public IEnumerable<T> DirectDependantsOf(T task)
         {
             if (task == null) yield break;
@@ -665,6 +720,9 @@ namespace Braincase.GanttChart
             }
         }
 
+        /// <summary>
+        /// Enumerate through all tasks that is a precedent, having dependants.
+        /// </summary>
         public IEnumerable<T> Precedents
         {
             get { return _mDependents.Where(x => _mDependents[x.Key].Count > 0).Select(x => x.Key); }
@@ -708,6 +766,11 @@ namespace Braincase.GanttChart
             }
         }
 
+        /// <summary>
+        /// Get the parent group of the specified task
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         public T ParentOf(T task)
         {
             if (_mRegister.Contains(task))
@@ -720,6 +783,11 @@ namespace Braincase.GanttChart
             }
         }
 
+        /// <summary>
+        /// Get whether the specified task is a group
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         public bool IsGroup(T task)
         {
             List<T> list;
@@ -729,11 +797,21 @@ namespace Braincase.GanttChart
                 return false;
         }
 
+        /// <summary>
+        /// Get whether the specified task is a member
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         public bool IsMember(T task)
         {
             return this.ParentOf(task) != null;
         }
 
+        /// <summary>
+        /// Get whether the specified task has relations, either has dependants or has precedents connecting to it.
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         public bool HasRelations(T task)
         {
             if (_mRegister.Contains(task))
@@ -746,6 +824,11 @@ namespace Braincase.GanttChart
             }
         }
 
+        /// <summary>
+        /// Set a relation between the precedent and dependant task
+        /// </summary>
+        /// <param name="precedent"></param>
+        /// <param name="dependant"></param>
         public void Relate(T precedent, T dependant)
         {
             if (_mRegister.Contains(precedent)
@@ -761,7 +844,12 @@ namespace Braincase.GanttChart
                 _RecalculateSlack();
             }
         }
-
+        
+        /// <summary>
+        /// Unset the relation between the precedent and dependant task, if any.
+        /// </summary>
+        /// <param name="precedent"></param>
+        /// <param name="dependant"></param>
         public void Unrelate(T precedent, T dependant)
         {
             if (_mRegister.Contains(precedent) && _mRegister.Contains(dependant))
@@ -772,6 +860,10 @@ namespace Braincase.GanttChart
             }
         }
 
+        /// <summary>
+        /// Remove all dependant task from specified precedent task
+        /// </summary>
+        /// <param name="precedent"></param>
         public void Unrelate(T precedent)
         {
             if (_mRegister.Contains(precedent))
@@ -782,29 +874,50 @@ namespace Braincase.GanttChart
             }
         }
 
+        /// <summary>
+        /// Assign the specified resource to the specified task
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="resource"></param>
         public void Assign(T task, R resource)
         {
             if (_mRegister.Contains(task) && !_mResources[task].Contains(resource))
                 _mResources[task].Add(resource);
         }
 
+        /// <summary>
+        /// Unassign the specified resource from the specfied task
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="resource"></param>
         public void Unassign(T task, R resource)
         {
             _mResources[task].Remove(resource);
         }
 
+        /// <summary>
+        /// Unassign the specified resource from the specfied task
+        /// </summary>
+        /// <param name="task"></param>
         public void Unassign(T task)
         {
             if(_mRegister.Contains(task))
                 _mResources[task].Clear();
         }
 
+        /// <summary>
+        /// Unassign the specified resource from all tasks that has this resource assigned
+        /// </summary>
+        /// <param name="resource"></param>
         public void Unassign(R resource)
         {
             foreach (var r in _mResources.Where(x => x.Value.Contains(resource)))
                 r.Value.Remove(resource);
         }
 
+        /// <summary>
+        /// Enumerate through all the resources that has been assigned to some task.
+        /// </summary>
         public IEnumerable<R> Resources
         {
             get
@@ -813,6 +926,11 @@ namespace Braincase.GanttChart
             }
         }
 
+        /// <summary>
+        /// Enumerate through all the resources that has been assigned to the specified task.
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
         public IEnumerable<R> ResourcesOf(T task)
         {
             if (task == null || !_mRegister.Contains(task))
@@ -826,6 +944,11 @@ namespace Braincase.GanttChart
             }
         }
 
+        /// <summary>
+        /// Enumerate through all the tasks that has the specified resource assigned to it.
+        /// </summary>
+        /// <param name="resource"></param>
+        /// <returns></returns>
         public IEnumerable<T> TasksOf(R resource)
         {
             return _mResources.Where(x => x.Value.Contains(resource)).Select(x => x.Key);
@@ -834,7 +957,6 @@ namespace Braincase.GanttChart
         /// <summary>
         /// Set the start value. Affects group start/end and dependants start time.
         /// </summary>
-        /// <param name="value"></param>
         public void SetStart(T task, int value)
         {
             if (_mRegister.Contains(task) && value != task.Start && !this.IsGroup(task))
@@ -849,7 +971,6 @@ namespace Braincase.GanttChart
         /// <summary>
         /// Set the end time. Affects group end and dependants start time.
         /// </summary>
-        /// <param name="value"></param>
         public void SetEnd(T task, int value)
         {
             if (_mRegister.Contains(task) && value != task.End && !this.IsGroup(task))
@@ -861,21 +982,37 @@ namespace Braincase.GanttChart
             }
         }
 
+        /// <summary>
+        /// Set the duration of the specified task from start to end.
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="duration">Number of timescale units between ProjectManager.Start</param>
         public void SetDuration(T task, int duration)
         {
             this.SetEnd(task, task.Start + duration);
         }
 
-        public void SetComplete(T task, float value)
+        /// <summary>
+        /// Set the percentage complete of the specified task from 0.0f to 1.0f.
+        /// No effect on group tasks as they will get the aggregated percentage complete of all child tasks
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="complete"></param>
+        public void SetComplete(T task, float complete)
         {
-            if (_mRegister.Contains(task) && value != task.Complete && !this.IsGroup(task))
+            if (_mRegister.Contains(task) && complete != task.Complete && !this.IsGroup(task))
             {
-                _SetCompleteHelper(task, value);
+                _SetCompleteHelper(task, complete);
 
                 _RecalculateComplete();
             }
         }
 
+        /// <summary>
+        /// Set whether to collapse the specified group task. No effect on regular tasks.
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="collasped"></param>
         public void SetCollapse(T task, bool collasped)
         {
             if (_mRegister.Contains(task) && this.IsGroup(task))
@@ -884,6 +1021,10 @@ namespace Braincase.GanttChart
             }
         }
 
+        /// <summary>
+        /// Leave the parent group if task is a member, but remain registered in ProjectManager
+        /// </summary>
+        /// <param name="task"></param>
         private void _LeaveParent(T task)
         {
             var parent = this.ParentOf(task);

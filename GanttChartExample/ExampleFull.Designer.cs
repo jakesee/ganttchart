@@ -50,7 +50,8 @@
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuFileNew = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripSeparator();
-            this.saveToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuFileSave = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuFileOpen = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem4 = new System.Windows.Forms.ToolStripSeparator();
             this.mnuFilePrint = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuFilePrint200 = new System.Windows.Forms.ToolStripMenuItem();
@@ -306,7 +307,8 @@
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.mnuFileNew,
             this.toolStripMenuItem3,
-            this.saveToolStripMenuItem,
+            this.mnuFileSave,
+            this.mnuFileOpen,
             this.toolStripMenuItem4,
             this.mnuFilePrint,
             this.toolStripMenuItem1,
@@ -327,11 +329,19 @@
             this.toolStripMenuItem3.Name = "toolStripMenuItem3";
             this.toolStripMenuItem3.Size = new System.Drawing.Size(303, 6);
             // 
-            // saveToolStripMenuItem
+            // mnuFileSave
             // 
-            this.saveToolStripMenuItem.Name = "saveToolStripMenuItem";
-            this.saveToolStripMenuItem.Size = new System.Drawing.Size(306, 22);
-            this.saveToolStripMenuItem.Text = "Save";
+            this.mnuFileSave.Name = "mnuFileSave";
+            this.mnuFileSave.Size = new System.Drawing.Size(306, 22);
+            this.mnuFileSave.Text = "Save...";
+            this.mnuFileSave.Click += new System.EventHandler(this.mnuFileSave_Click);
+            // 
+            // mnuFileOpen
+            // 
+            this.mnuFileOpen.Name = "mnuFileOpen";
+            this.mnuFileOpen.Size = new System.Drawing.Size(306, 22);
+            this.mnuFileOpen.Text = "Open...";
+            this.mnuFileOpen.Click += new System.EventHandler(this.mnuFileOpen_Click);
             // 
             // toolStripMenuItem4
             // 
@@ -562,7 +572,7 @@
         private System.Windows.Forms.ToolStripMenuItem mnuHelpAbout;
         private System.Windows.Forms.ToolStripMenuItem viewToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem3;
-        private System.Windows.Forms.ToolStripMenuItem saveToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem mnuFileSave;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem4;
         private System.Windows.Forms.ToolStripMenuItem mnuViewDays;
         private System.Windows.Forms.ToolStripMenuItem mnuViewWeek;
@@ -598,6 +608,7 @@
         private System.Windows.Forms.ToolStripMenuItem mnuViewDayOfWeek;
         private System.Windows.Forms.ToolStripMenuItem mnuViewDayOfMonth;
         private System.Windows.Forms.ToolStripMenuItem mnuViewWeekOfYear;
+        private System.Windows.Forms.ToolStripMenuItem mnuFileOpen;
 
     }
 }

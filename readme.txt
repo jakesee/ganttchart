@@ -3,6 +3,10 @@ Blog: http://www.jakesee.com/net-c-winforms-gantt-chart-control/
 Doxygen Documentation: http://jakesee.com/docs/ganttchart/
 Source/Download: http://ganttchart.codeplex.com
 
+3 Sep 2012
+- Added save and open binary serializer in example application
+- Added comments for all public interfaces
+
 2 Sep 2012
 - Fix issue where tool tip is not automatically showing. Have to call Chart.Invalidate() on TaskMouseOver and TaskMoveOut to work.
 
