@@ -20,6 +20,9 @@ namespace Braincase.GanttChart
 
         ProjectManager _mManager = null;
 
+        /// <summary>
+        /// Example starts here
+        /// </summary>
         public ExampleFull()
         {
             InitializeComponent();
@@ -406,15 +409,20 @@ namespace Braincase.GanttChart
     #endregion overlay painter
 
     #region custom task and resource
+    /// <summary>
+    /// A custom resource of your own type (optional)
+    /// </summary>
     [Serializable]
     public class MyResource
     {
         public string Name { get; set; }
     }
+    /// <summary>
+    /// A custom task of your own type deriving from the Task interface (optional)
+    /// </summary>
     [Serializable]
     public class MyTask : Task
     {
-
         public MyTask(ProjectManager manager)
             : base()
         {
