@@ -23,7 +23,7 @@ namespace Braincase.GanttChart
     }
 
     /// <summary>
-    /// Viewport for printing to file
+    /// IViewport for printing to file
     /// </summary>
     class PrintViewport : IViewport
     {
@@ -136,15 +136,15 @@ namespace Braincase.GanttChart
     }
 
     /// <summary>
-    /// A Viewport that is placed over a world coordinate system and provides methods to transform between world and view coordinates
+    /// An IViewport that is placed over a world coordinate system and provides methods to transform between world and view coordinates
     /// </summary>
-    class Viewport : IViewport
+    class ControlViewport : IViewport
     {
         /// <summary>
         /// Construct a Viewport
         /// </summary>
         /// <param name="view"></param>
-        public Viewport(Control view)
+        public ControlViewport(Control view)
         {
             _mDevice = view;
             _mhScroll = new HScrollBar();

@@ -62,6 +62,7 @@ namespace Braincase.GanttChart
             _mManager.SetDuration(clothes, 4);
             _mManager.SetDuration(hair, 3);
             _mManager.SetDuration(pack, 5);
+            _mManager.Split(pack, new MyTask(_mManager), new MyTask(_mManager), 2);
 
             // Set task complete status, e.g. using newly created properties
             wake.Complete = 0.9f;
@@ -243,12 +244,19 @@ namespace Braincase.GanttChart
             _mChart.Invalidate();
         }
 
+        private void mnuViewIntructions_Click(object sender, EventArgs e)
+        {
+            _mOverlay.PrintMode = !(mnuViewIntructions.Checked = !mnuViewIntructions.Checked);
+            _mChart.Invalidate();
+        }
+
         #region Timescale Views
         private void mnuViewDays_Click(object sender, EventArgs e)
         {
             _mManager.TimeScale = TimeScale.Day;
             mnuViewDays.Checked = true;
             mnuViewWeek.Checked = false;
+            _mChart.Invalidate();
         }
 
         private void mnuViewWeek_Click(object sender, EventArgs e)
@@ -256,6 +264,7 @@ namespace Braincase.GanttChart
             _mManager.TimeScale = TimeScale.Week;
             mnuViewDays.Checked = false;
             mnuViewWeek.Checked = true;
+            _mChart.Invalidate();
         }
 
         private void mnuViewDayOfWeek_Click(object sender, EventArgs e)
@@ -264,6 +273,7 @@ namespace Braincase.GanttChart
             mnuViewDayOfWeek.Checked = true;
             mnuViewDayOfMonth.Checked = false;
             mnuViewWeekOfYear.Checked = false;
+            _mChart.Invalidate();
         }
 
         private void mnuViewDayOfMonth_Click(object sender, EventArgs e)
@@ -272,6 +282,7 @@ namespace Braincase.GanttChart
             mnuViewDayOfWeek.Checked = false;
             mnuViewDayOfMonth.Checked = true;
             mnuViewWeekOfYear.Checked = false;
+            _mChart.Invalidate();
         }
 
         private void mnuViewWeekOfYear_Click(object sender, EventArgs e)
@@ -280,6 +291,7 @@ namespace Braincase.GanttChart
             mnuViewDayOfWeek.Checked = false;
             mnuViewDayOfMonth.Checked = false;
             mnuViewWeekOfYear.Checked = true;
+            _mChart.Invalidate();
         }
         #endregion Timescale Views
 
@@ -373,7 +385,7 @@ namespace Braincase.GanttChart
             e.Chart.BeginBillboardMode(e.Graphics);
 
             // draw mouse command instructions
-            int margin = 260;
+            int margin = 300;
             int left = 20;
             var color = chart.HeaderFormat.Color;
             StringBuilder builder = new StringBuilder();
@@ -384,7 +396,9 @@ namespace Braincase.GanttChart
             builder.AppendLine("Right Mouse Drag - Change task duration");
             builder.AppendLine("Middle Mouse Drag - Change task complete percentage");
             builder.AppendLine("Left Doubleclick - Toggle collaspe on task group");
+            builder.AppendLine("Right Doubleclick - Split task into task parts");
             builder.AppendLine("Left Mouse Dragdrop onto another task - Group drag task under drop task");
+            builder.AppendLine("Right Mouse Dragdrop onto another task part - Join task parts");
             builder.AppendLine("SHIFT + Left Mouse Dragdrop onto another task - Make drop task precedent of drag task");
             builder.AppendLine("ALT + Left Dragdrop onto another task - Ungroup drag task from drop task / Remove drop task from drag task precedent list");
             builder.AppendLine("SHIFT + Left Mouse Dragdrop - Order tasks");

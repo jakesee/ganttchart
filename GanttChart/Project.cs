@@ -115,6 +115,58 @@ namespace Braincase.GanttChart
         /// <param name="member"></param>
         void Ungroup(T group, T member);
         /// <summary>
+        /// Split the specified task into consecutive parts part1 and part2.
+        /// </summary>
+        /// <param name="task">The regular task to split which has duration of at least 2 to make two parts of 1 time unit duration each.</param>
+        /// <param name="part1">New Task part (1) of the split task, with the start time of the original task and the specified duration value.</param>
+        /// <param name="part2">New Task part (2) of the split task, starting 1 time unit after part (1) ends and having the remaining of the duration of the origina task.</param>
+        /// <param name="duration">The duration of part (1) will be set to the specified duration value but will also be adjusted to approperiate value if necessary.</param>
+        void Split(T task, T part1, T part2, int duration);
+        /// <summary>
+        /// Split the specified part and obtain another part from it.
+        /// </summary>
+        /// <param name="part">The task part to split which has duration of at least 2 to make two parts of 1 time unit duration each. Its duration will be set to the specified duration value.</param>
+        /// <param name="another">New Task part of the original part, starting 1 time unit after it ends and having the remaining of the duration of the original part.</param>
+        /// <param name="duration">The duration of part (1) will be set to the specified duration value but will also be adjusted to approperiate value if necessary.</param>
+        void Split(T part, T another, int duration);
+        /// <summary>
+        /// Join part1 and part2 in a split task into a single part represented by part1, and part2 will be deleted from the ProjectManager.
+        /// The resulting part will have a duration total of the two parts. Schedule of other parts will be packed according to direction of join.
+        /// If the join will result in only one part remaining, the split task will merge instead.
+        /// </summary>
+        /// <param name="part1">The part to keep in the ProjectManager after the join completes successfully.</param>
+        /// <param name="part2">The part to join into part1 and be deleted afterwards from the ProjectManager.</param>
+        void Join(T part1, T part2);
+        /// <summary>
+        /// Merge all the parts of the splitted task back into one task, having duration equal to sum of total duration of individual task parts, and aggregating the resources onto the resulting task.
+        /// </summary>
+        /// <param name="task"></param>
+        void Merge(T split);
+        /// <summary>
+        /// Get the parts of the split task
+        /// </summary>
+        /// <param name="split"></param>
+        /// <returns></returns>
+        IEnumerable<T> PartsOf(T split);
+        /// <summary>
+        /// Get the split task that the specified belogs to.
+        /// </summary>
+        /// <param name="part"></param>
+        /// <returns></returns>
+        T SplitTaskOf(T part);
+        /// <summary>
+        /// Get whether the specified task is a split task
+        /// </summary>
+        /// <param name="split"></param>
+        /// <returns></returns>
+        bool IsSplit(T task);
+        /// <summary>
+        /// Get whether the specified task is a part of a split task
+        /// </summary>
+        /// <param name="task"></param>
+        /// <returns></returns>
+        bool IsPart(T task);
+        /// <summary>
         /// Ungroup all member task under the specfied group task. The specified group task will become a normal task.
         /// </summary>
         /// <param name="group"></param>
@@ -329,6 +381,8 @@ namespace Braincase.GanttChart
         Dictionary<T, List<T>> _mTaskGroups = new Dictionary<T, List<T>>();
         Dictionary<T, HashSet<T>> _mDependents = new Dictionary<T, HashSet<T>>();
         Dictionary<T, HashSet<R>> _mResources = new Dictionary<T, HashSet<R>>();
+        Dictionary<T, List<T>> _mSplitTasks = new Dictionary<T, List<T>>();
+        Dictionary<T, T> _mSplitTaskOfPart = new Dictionary<T, T>();
         Dictionary<T, T> _mParentOfChild = new Dictionary<T, T>();
 
         /// <summary>
@@ -398,11 +452,16 @@ namespace Braincase.GanttChart
         /// <param name="task"></param>
         public void Delete(T task)
         {
-            if (task != null)
+            if (task != null
+                && !_mSplitTaskOfPart.ContainsKey(task) // not a task part
+                )
             {
                 // Check if is group so can ungroup the task
                 if (this.IsGroup(task))
                     this.Ungroup(task);
+
+                if (this.IsSplit(task))
+                    this.Merge(task);
 
                 // Really delete all references
                 _mRootTasks.Remove(task);
@@ -410,9 +469,32 @@ namespace Braincase.GanttChart
                 _mDependents.Remove(task);
                 _mResources.Remove(task);
                 _mParentOfChild.Remove(task);
+                _mSplitTasks.Remove(task);
                 foreach (var g in _mTaskGroups) g.Value.Remove(task); // optimised: no need to check for contains
                 foreach (var g in _mDependents) g.Value.Remove(task);
                 _mRegister.Remove(task);
+            }
+            else if (task != null
+                && _mSplitTaskOfPart.ContainsKey(task) // must be existing part
+                )
+            {
+                var split = _mSplitTaskOfPart[task];
+                var parts = _mSplitTasks[split];
+                if (parts.Count > 2)
+                {
+                    parts.Remove(task); // remove the part from the split task
+                    _mRegister.Remove(task); // unregister the part
+                    _mResources.Remove(task);
+                    _mSplitTaskOfPart.Remove(task); // remove the reverse lookup
+                    
+                    split.Start = parts.First().Start; // recalculate the split task
+                    split.End = parts.Last().End;
+                    split.Duration = split.End - split.Start;
+                }
+                else
+                {
+                    this.Merge(split);
+                }
             }
         }
 
@@ -426,10 +508,14 @@ namespace Braincase.GanttChart
             if (group != null
                 && member != null
                 && !group.Equals(member)
+                && !_mSplitTasks.ContainsKey(group) // group cannot be split task
+                && !_mSplitTaskOfPart.ContainsKey(group) // group and member cannot be parts
+                && !_mSplitTaskOfPart.ContainsKey(member)
                 && _mRegister.Contains(group)
                 && _mRegister.Contains(member)
                 && !this.DecendantsOf(member).Contains(group)
-                && !this.HasRelations(group))
+                && !this.HasRelations(group)
+                )
             {
                 _LeaveParent(member);
                 _mTaskGroups[group].Add(member);
@@ -577,6 +663,7 @@ namespace Braincase.GanttChart
                     {
                         var visited = stack.Pop();
                         yield return visited;
+
                         foreach (var member in _mTaskGroups[visited])
                             rstack.Push(member);
 
@@ -606,7 +693,7 @@ namespace Braincase.GanttChart
         /// <returns></returns>
         public IEnumerable<T> DecendantsOf(T task)
         {
-            if(_mRegister.Contains(task))
+            if (_mRegister.Contains(task))
             {
                 Stack<T> stack = new Stack<T>(20);
                 Stack<T> rstack = new Stack<T>(10);
@@ -679,6 +766,8 @@ namespace Braincase.GanttChart
         /// <returns></returns>
         public IEnumerable<T> DependantsOf(T task)
         {
+            if (!_mDependents.ContainsKey(task)) yield break;
+
             var stack = new Stack<T>(20);
             foreach (var d in _mDependents[task])
             {
@@ -754,15 +843,6 @@ namespace Braincase.GanttChart
                         yield return new T[] { task }.Concat(PrecedentsOf(task));
                     }
                 }
-
-                /*
-                var max = this.Tasks.Max(x => x.End);
-                var paths = this.Tasks.Where(x => x.End == max);
-                foreach (var task in paths)
-                {
-                    yield return new T[] { task }.Concat(PrecedentsOf(task));
-                }
-                 */
             }
         }
 
@@ -773,7 +853,7 @@ namespace Braincase.GanttChart
         /// <returns></returns>
         public T ParentOf(T task)
         {
-            if (_mRegister.Contains(task))
+            if (_mParentOfChild.ContainsKey(task)) // _mRegister.Contains(task))
             {
                 return _mParentOfChild[task];
             }
@@ -814,7 +894,7 @@ namespace Braincase.GanttChart
         /// <returns></returns>
         public bool HasRelations(T task)
         {
-            if (_mRegister.Contains(task))
+            if (_mRegister.Contains(task) && _mDependents.ContainsKey(task))
             {
                 return _mDependents[task].Count > 0 || DirectPrecedentsOf(task).FirstOrDefault() != null;
             }
@@ -833,15 +913,23 @@ namespace Braincase.GanttChart
         {
             if (_mRegister.Contains(precedent)
                 && _mRegister.Contains(dependant)
-                && !this.DependantsOf(dependant).Contains(precedent)
-                && !this.IsGroup(precedent)
-                && !this.IsGroup(dependant))
+                )
             {
-                _mDependents[precedent].Add(dependant);
+                if (_mSplitTaskOfPart.ContainsKey(precedent)) precedent = _mSplitTaskOfPart[precedent];
+                if (_mSplitTaskOfPart.ContainsKey(dependant)) dependant = _mSplitTaskOfPart[dependant];
 
-                _RecalculateDependantsOf(precedent);
-                _RecalculateAncestorsSchedule();
-                _RecalculateSlack();
+                if (!precedent.Equals(dependant)
+                    &&!this.DependantsOf(dependant).Contains(precedent)
+                    && !this.IsGroup(precedent)
+                    && !this.IsGroup(dependant)
+                    )
+                {
+                    _mDependents[precedent].Add(dependant);
+
+                    _RecalculateDependantsOf(precedent);
+                    _RecalculateAncestorsSchedule();
+                    _RecalculateSlack();
+                }
             }
         }
         
@@ -854,6 +942,9 @@ namespace Braincase.GanttChart
         {
             if (_mRegister.Contains(precedent) && _mRegister.Contains(dependant))
             {
+                if (_mSplitTaskOfPart.ContainsKey(precedent)) precedent = _mSplitTaskOfPart[precedent];
+                if (_mSplitTaskOfPart.ContainsKey(dependant)) dependant = _mSplitTaskOfPart[dependant];
+
                 _mDependents[precedent].Remove(dependant);
 
                 _RecalculateSlack();
@@ -868,6 +959,9 @@ namespace Braincase.GanttChart
         {
             if (_mRegister.Contains(precedent))
             {
+                if (_mSplitTaskOfPart.ContainsKey(precedent))
+                    precedent = _mSplitTaskOfPart[precedent];
+
                 _mDependents[precedent].Clear();
 
                 _RecalculateSlack();
@@ -896,7 +990,7 @@ namespace Braincase.GanttChart
         }
 
         /// <summary>
-        /// Unassign the specified resource from the specfied task
+        /// Unassign the all resources from the specfied task
         /// </summary>
         /// <param name="task"></param>
         public void Unassign(T task)
@@ -1000,7 +1094,11 @@ namespace Braincase.GanttChart
         /// <param name="complete"></param>
         public void SetComplete(T task, float complete)
         {
-            if (_mRegister.Contains(task) && complete != task.Complete && !this.IsGroup(task))
+            if (_mRegister.Contains(task)
+                && complete != task.Complete
+                && !this.IsGroup(task) // not a group
+                && !_mSplitTasks.ContainsKey(task) // not a split task
+                )
             {
                 _SetCompleteHelper(task, complete);
 
@@ -1019,6 +1117,216 @@ namespace Braincase.GanttChart
             {
                 task.IsCollapsed = collasped;
             }
+        }
+        
+        /// <summary>
+        /// Split the specified task into consecutive parts part1 and part2.
+        /// </summary>
+        /// <param name="task">The regular task to split which has duration of at least 2 to make two parts of 1 time unit duration each.</param>
+        /// <param name="part1">New Task part (1) of the split task, with the start time of the original task and the specified duration value.</param>
+        /// <param name="part2">New Task part (2) of the split task, starting 1 time unit after part (1) ends and having the remaining of the duration of the origina task.</param>
+        /// <param name="duration">The duration of part (1) will be set to the specified duration value but will also be adjusted to approperiate value if necessary.</param>
+        public void Split(T task, T part1, T part2, int duration)
+        {
+            if (task != null
+                && part1 != null
+                && part2 != null
+                && !part1.Equals(part2) // parts cannot be the same
+                && _mRegister.Contains(task) // task must be registered
+                && !_mSplitTasks.ContainsKey(task) // task must not already be a split task
+                && !_mSplitTaskOfPart.ContainsKey(task) // task must not be a task part
+                && _mTaskGroups[task].Count == 0 // task cannot be a group
+                && !_mRegister.Contains(part1) // part1 and part2 must have never existed
+                && !_mRegister.Contains(part2)
+                )
+            {
+                _mRegister.Add(part1);  // register part1
+                _mResources[part1] = new HashSet<R>(); // create container for holding resource
+                
+                // add part1 to split task
+                task.Complete = 0.0f; // reset the complete status
+                var parts = _mSplitTasks[task] = new List<T>(2); 
+                parts.Add(part1);
+                _mSplitTaskOfPart[part1] = task; // make a reverse lookup
+
+                // allign the schedule
+                if (duration >= task.Duration) duration--;
+                part1.Start = task.Start;
+                part1.End = task.End;
+                part1.Duration = task.Duration;
+
+                // split part1 to give part2
+                this.Split(part1, part2, duration);
+            }
+        }
+        
+        /// <summary>
+        /// Split the specified part and obtain another part from it.
+        /// </summary>
+        /// <param name="part">The task part to split which has duration of at least 2 to make two parts of 1 time unit duration each. Its duration will be set to the specified duration value.</param>
+        /// <param name="other">New Task part of the original part, starting 1 time unit after it ends and having the remaining of the duration of the original part.</param>
+        /// <param name="duration">The duration of part (1) will be set to the specified duration value but will also be adjusted to approperiate value if necessary.</param>
+        public void Split(T part, T other, int duration)
+        {
+            if (part != null
+                && other != null
+                && _mSplitTaskOfPart.ContainsKey(part) // part must be an existing part
+                && !_mRegister.Contains(other) // other must not have existed
+                )
+            {
+                _mRegister.Add(other); // register other part
+                _mResources[other] = new HashSet<R>(); // create container for holding resource
+
+                var split = _mSplitTaskOfPart[part]; // get the split task
+                var parts = _mSplitTasks[split]; // get the list of ordered parts
+
+                parts.Insert(parts.IndexOf(part) + 1, other); // insert the other part after the existing part
+                _mSplitTaskOfPart[other] = split; // set the reverse lookup
+
+                if (part.Duration < 2) part.Duration = 2; // increase duration to allow for split
+
+                if (duration < 1) duration = 1; // limit the duration point within the split task duration
+                else if (duration >= part.Duration) duration = part.Duration - 1;
+
+                // the real split
+                var one_duration = duration;
+                var two_duration = part.Duration - duration;
+                part.Duration = one_duration;
+                part.End = part.Start + one_duration;
+                other.Duration = two_duration;
+                other.Start = part.End + 1;
+                other.End = other.Start + two_duration;
+
+                _PackPartsForward(parts);
+                split.Start = parts.First().Start; // recalculate the split task
+                split.End = parts.Last().End;
+                split.Duration = split.End - split.Start;
+
+                _RecalculateAncestorsSchedule();
+            }
+        }
+        
+        /// <summary>
+        /// Join part1 and part2 in a split task into a single part represented by part1, and part2 will be deleted from the ProjectManager.
+        /// The resulting part will have a duration total of the two parts.
+        /// Part1 and part2 must be actual parts and must be consecutive parts in the split task.
+        /// If the join results in only one part remaining, the all parts will be deleted and the split task will promote to a regular task
+        /// Schedule of other parts will not be affected.
+        /// TODO: Join option: EarlyStartLateEnd, EarlyStartEarlyEnd, LateStartLateEnd
+        /// </summary>
+        /// <param name="part1">The part to keep in the ProjectManager after the join completes successfully.</param>
+        /// <param name="part2">The part to join into part1 and be deleted afterwards from the ProjectManager.</param>
+        public void Join(T part1, T part2)
+        {
+            if (part1 != null
+                && part2 != null
+                && _mSplitTaskOfPart.ContainsKey(part1) // part1 and part2 must already be existing parts
+                && _mSplitTaskOfPart.ContainsKey(part2) 
+                && _mSplitTaskOfPart[part1] == _mSplitTaskOfPart[part2] // part1 and part2 must be of the same split task
+                )
+            {
+
+                var split = _mSplitTaskOfPart[part1];
+                var parts = _mSplitTasks[split];
+                if (parts.Count > 2)
+                {
+                    // Aggregate part2 into part1, and determine join type
+                    int min; bool join_backwards;
+                    if (part1.Start < part2.Start) { min = part1.Start; join_backwards = true; }
+                    else { min = part2.Start; join_backwards = false; }
+                    int duration = part1.Duration + part2.Duration;
+
+                    part1.Start = min;
+                    part1.Duration = duration;
+                    part1.End = min + duration;
+
+                    // aggregate resouces
+                    // TODO: Ask whether to aggregate resources?
+                    foreach (var r in this.ResourcesOf(part2))
+                        this.Assign(part1, r);
+                    this.Unassign(part2);
+
+                    // remove all traces of part2
+                    parts.Remove(part2);
+                    _mResources.Remove(part2);
+                    _mSplitTaskOfPart.Remove(part2);
+                    _mRegister.Remove(part2);
+
+                    // pack the remaining parts
+                    if (join_backwards) _PackPartsForward(parts);
+                    else _PackPartsBackwards(parts);
+
+                    // set the duration
+                    split.End = parts.Last().End;
+                    split.Duration = split.End - split.Start;
+                    split.Start = parts.First().Start;
+
+                    _RecalculateAncestorsSchedule();
+                }
+                else
+                {
+                    this.Merge(split);
+                }
+            }
+        }
+
+        public void Merge(T split)
+        {
+            if (split != null
+                && _mSplitTasks.ContainsKey(split) // must be existing split task
+                )
+            {
+                int duration = 0;
+                _mSplitTasks[split].ForEach(x => {
+
+                    // sum durations
+                    duration += x.Duration;
+
+                    // merge resources onto split task
+                    foreach (var r in _mResources[x])
+                        this.Assign(split, r);
+
+                    // remove traces of all parts
+                    _mSplitTaskOfPart.Remove(x);
+                    _mRegister.Remove(x);
+                    _mResources.Remove(x);
+                });
+                _mSplitTasks.Remove(split); // remove split as a split task
+
+                // set the duration
+                this.SetDuration(split, duration);
+            }
+        }
+
+        public IEnumerable<T> PartsOf(T split)
+        {
+            if (split != null
+                && _mSplitTasks.ContainsKey(split) // must be existing split task
+                )
+            {
+                return _mSplitTasks[split].Select(x => x);
+            }
+            else
+            {
+                return new T[0];
+            }
+        }
+
+        public T SplitTaskOf(T part)
+        {
+            if (_mSplitTaskOfPart.ContainsKey(part))
+                return _mSplitTaskOfPart[part];
+            return null;
+        }
+
+        public bool IsSplit(T task)
+        {
+            return task != null && _mSplitTasks.ContainsKey(task);
+        }
+
+        public bool IsPart(T task)
+        {
+            return task != null && _mSplitTaskOfPart.ContainsKey(task);
         }
 
         /// <summary>
@@ -1041,23 +1349,43 @@ namespace Braincase.GanttChart
         {
             if (task.Start != value)
             {
-                // check out of bounds
-                if (value < 0) value = 0;
-                if (this.DirectPrecedentsOf(task).Any())
+                if (_mSplitTaskOfPart.ContainsKey(task)) 
                 {
-                    var max_end = this.DirectPrecedentsOf(task).Max(x => x.End);
-                    if (value <= max_end) value = max_end + 1;
+                    // task part belonging to a split task needs special treatment
+                    _SetPartStartHelper(task, value);
                 }
+                else // regular task or a split task, which we will treat normally
+                {
+                    // check out of bounds
+                    if (value < 0) value = 0;
+                    if (this.DirectPrecedentsOf(task).Any())
+                    {
+                        var max_end = this.DirectPrecedentsOf(task).Max(x => x.End);
+                        if (value <= max_end) value = max_end + 1;
+                    }
 
-                // cache value
-                task.Duration = task.End - task.Start;
-                task.Start = value;
+                    // save offset just in case we need to use for moving task parts
+                    var offset = value - task.Start;
 
+                    // cache value
+                    task.Duration = task.End - task.Start;
+                    task.Start = value;
 
-                // affect self
-                task.End = task.Start + task.Duration;
+                    // affect self
+                    task.End = task.Start + task.Duration;
 
-                _RecalculateDependantsOf(task);
+                    // calculate dependants
+                    _RecalculateDependantsOf(task);
+
+                    // shift the task parts accordingly if task was a split task
+                    if (_mSplitTasks.ContainsKey(task))
+                    {
+                        _mSplitTasks[task].ForEach(x => {
+                            x.Start += offset;
+                            x.End += offset;
+                        });
+                    }
+                }
             }
         }
 
@@ -1065,14 +1393,121 @@ namespace Braincase.GanttChart
         {
             if (task.End != value)
             {
-                // cache value
-                task.End = value;
-                
-                // check bounds
-                if (task.End <= task.Start) task.End = task.Start + 1;
-                task.Duration = task.End - task.Start;
+                if (_mSplitTaskOfPart.ContainsKey(task))
+                {
+                    // task part belonging to a split task needs special treatment
+                    _SetPartEndHelper(task, value);
+                }
+                else // regular task or a split task, which we will treat normally
+                {
+                    // check bounds
+                    bool isSplitTask = _mSplitTasks.ContainsKey(task);
+                    T last_part = null;
+                    if (isSplitTask)
+                    {
+                        last_part = _mSplitTasks[task].Last();
+                        if (value <= last_part.Start) value = last_part.Start + 1;
+                    }
+                    if (value <= task.Start) value = task.Start + 1; // end cannot be less than start
+                    
+                    // assign end value
+                    task.End = value;
+                    task.Duration = task.End - task.Start;
 
-                _RecalculateDependantsOf(task);
+                    _RecalculateDependantsOf(task);
+
+                    if (isSplitTask)
+                    {
+                        last_part.End = value;
+                        last_part.Duration = 1;
+                    }
+                }
+            }
+        }
+
+        private void _SetPartStartHelper(T part, int value)
+        {
+            var split = _mSplitTaskOfPart[part];
+            var parts = _mSplitTasks[split];
+
+            // check bounds
+            if (this.DirectPrecedentsOf(split).Any())
+            {
+                var max_end = this.DirectPrecedentsOf(split).Max(x => x.End);
+                if (value < max_end) value = max_end + 1;
+            }
+            if (value < 0) value = 0;
+
+            // flag whether we need to pack parts forward or backwards
+            bool backwards = value < part.Start;
+
+            // assign start value, maintining duration and modifying end
+            var duration = part.End - part.Start;
+            part.Start = value;
+            part.End = value + duration;
+
+            // pack packs
+            if (backwards) _PackPartsBackwards(parts);
+            else _PackPartsForward(parts);
+
+            // recalculate the split
+            split.Start = parts.First().Start; // recalculate the split task
+            split.End = parts.Last().End;
+            split.Duration = split.End - split.Start;
+        }
+
+        private void _SetPartEndHelper(T part, int value)
+        {
+            var split = _mSplitTaskOfPart[part];
+            var parts = _mSplitTasks[split];
+
+            // check for bounds
+            if (value <= part.Start) value = part.Start + 1;
+
+            // flag whether duration is increased or reduced
+            bool increased = value > part.End;
+
+            // set end value and duration
+            part.End = value;
+            part.Duration = part.End - part.Start;
+
+            // pack parts
+            if (increased) _PackPartsForward(parts);
+
+            // recalculate the split
+            split.Start = parts.First().Start; // recalculate the split task
+            split.End = parts.Last().End;
+            split.Duration = split.End - split.Start;
+        }
+
+        private void _PackPartsBackwards(List<T> parts)
+        {
+            // pack backwards first before packing forward again
+            for (int i = parts.Count - 2; i > 0; i--) // Cannot pack beyond first part (i > 0)
+            {
+                var earlier = parts[i];
+                var later = parts[i + 1];
+                if (later.Start <= earlier.End)
+                {
+                    earlier.End = later.Start - 1;
+                    earlier.Start = earlier.End - earlier.Duration;
+                }
+            }
+
+            _PackPartsForward(parts);
+        }
+
+        private void _PackPartsForward(List<T> parts)
+        {
+            for (int i = 1; i < parts.Count; i++)
+            {
+                var current = parts[i];
+                var previous = parts[i - 1];
+                if (previous.End >= current.Start)
+                {
+                    current.Start = previous.End + 1;
+                    current.End = current.Start + current.Duration;
+                }
             }
         }
 
@@ -1083,6 +1518,20 @@ namespace Braincase.GanttChart
                 if (value > 1) value = 1;
                 else if (value < 0) value = 0;
                 task.Complete = value;
+
+                if (_mSplitTaskOfPart.ContainsKey(task))
+                {
+                    var split = _mSplitTaskOfPart[task];
+                    var parts = _mSplitTasks[split];
+                    float complete = 0;
+                    int duration = 0;
+                    foreach (var part in parts)
+                    {
+                        complete += part.Complete * part.Duration;
+                        duration += part.Duration;
+                    }
+                    split.Complete = complete / duration;
+                }
             }
         }
 
@@ -1095,20 +1544,33 @@ namespace Braincase.GanttChart
             }
         }
 
-        private float _RecalculateCompletedHelper(T group)
+        private float _RecalculateCompletedHelper(T groupOrSplit)
         {
             float t_complete = 0;
             int t_duration = 0;
-            foreach (var member in this.ChildrenOf(group))
+
+            if (_mSplitTasks.ContainsKey(groupOrSplit))
             {
-                t_duration += member.Duration;
-                if (this.IsGroup(member)) t_complete += _RecalculateCompletedHelper(member) * member.Duration;
-                else t_complete += member.Complete * member.Duration;
+                foreach (var part in _mSplitTasks[groupOrSplit])
+                {
+                    t_complete += part.Complete * part.Duration;
+                    t_duration += part.Duration;
+                }
+            }
+            else
+            {
+                foreach (var member in this.ChildrenOf(groupOrSplit))
+                {
+                    t_duration += member.Duration;
+                    if (this.IsGroup(member)) t_complete += _RecalculateCompletedHelper(member) * member.Duration;
+                    else t_complete += member.Complete * member.Duration;
+                }
             }
 
-            group.Complete = t_complete / t_duration;
+            groupOrSplit.Complete = t_complete / t_duration;
+            
 
-            return group.Complete;
+            return groupOrSplit.Complete;
         }
 
         private void _RecalculateDependantsOf(T precedent)
@@ -1171,5 +1633,7 @@ namespace Braincase.GanttChart
                 }
             }
         }
+
+        
     }
 }

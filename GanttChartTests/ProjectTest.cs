@@ -508,7 +508,7 @@ namespace GanttChartTests
         }
 
         [TestMethod]
-        public void UnroupTaskFromUnknownGroups()
+        public void UngroupTaskFromUnknownGroups()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
             IProjectManager<Task, object> other = new ProjectManager<Task, object>();
@@ -1575,6 +1575,1001 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsMember(member));
         }
 
-        
+        [TestMethod]
+        public void SplitTaskAndConfirmStructure()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            manager.Add(split);
+
+            // setup: confirm task type status
+            Assert.IsTrue(!manager.IsSplit(split));
+            Assert.IsTrue(!manager.IsSplit(part1));
+            Assert.IsTrue(!manager.IsSplit(part2));
+            Assert.IsTrue(!manager.IsPart(split));
+            Assert.IsTrue(!manager.IsPart(part1));
+            Assert.IsTrue(!manager.IsPart(part2));
+
+            // test: split the task into part1 and part2 and see resulting structure
+            manager.Split(split, part1, part2, 1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+
+            Assert.IsTrue(!manager.IsPart(split));
+            Assert.IsTrue(!manager.IsSplit(part1));
+            Assert.IsTrue(!manager.IsSplit(part2));
+
+            Assert.IsTrue(manager.PartsOf(split).Count() == 2);
+            Assert.IsTrue(manager.PartsOf(split).Contains(part1));
+            Assert.IsTrue(manager.PartsOf(split).Contains(part2));
+        }
+
+        [TestMethod]
+        public void SplitTaskAndConfirmSchedule()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task() { Name = "split" };
+            var part1 = new Task() { Name = "part1" };
+            var part2 = new Task() { Name = "part2" };
+            manager.Add(split);
+
+            // setup: set schedule on regular task
+            manager.SetStart(split, 11);
+            manager.SetDuration(split, 15);
+            Assert.IsTrue(split.Start == 11);
+            Assert.IsTrue(split.End == 26);
+
+            // test: split the task into parts and make sure the schedules of the new parts tally with original task
+            manager.Split(split, part1, part2, 5);
+            Assert.IsTrue(part1.Duration == 5);
+            Assert.IsTrue(part1.Start == 11);
+            Assert.IsTrue(part1.End == 16);
+
+            Assert.IsTrue(part2.Duration == 10);
+            Assert.IsTrue(part2.Start == 17);
+            Assert.IsTrue(part2.End == 27);
+            
+            Assert.IsTrue(split.Start == 11);
+            Assert.IsTrue(split.End == 27);
+            Assert.IsTrue(split.Duration == 16);
+        }
+
+        [TestMethod]
+        public void SplitNullTaskNoEffect()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var part1 = new Task();
+            var part2 = new Task();
+
+            // setup: confirm part is not part
+            Assert.IsTrue(!manager.IsPart(part1));
+            Assert.IsTrue(!manager.IsPart(part2));
+
+            // test: try to split a null task
+            manager.Split(null, part1, part2, 1);
+            Assert.IsTrue(!manager.IsPart(part1));
+            Assert.IsTrue(!manager.IsPart(part2));
+        }
+
+        [TestMethod]
+        public void SplitTaskUsingRegularTaskNoEffect()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var one = new Task();
+            var two = new Task();
+            var three = new Task();
+            manager.Add(one);
+            manager.Add(two);
+            manager.Add(three);
+
+            // setup: confirm we have 3 regular tasks
+            Assert.IsTrue(manager.Tasks.Count() == 3);
+
+            // test: split one using two and three
+            manager.Split(one, two, three, 1);
+            Assert.IsTrue(manager.Tasks.Count() == 3);
+            Assert.IsTrue(!manager.IsSplit(one));
+            Assert.IsTrue(!manager.IsPart(two));
+            Assert.IsTrue(!manager.IsPart(two));
+        }
+
+        [TestMethod]
+        public void SplitTask()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            manager.Add(split);
+
+            // setup: confirm no split tasks
+            Assert.IsTrue(!manager.IsSplit(split));
+            Assert.IsTrue(!manager.IsPart(part1));
+            Assert.IsTrue(!manager.IsPart(part2));
+
+            // test: split the task
+            manager.Split(split, part1, part2, 1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(manager.PartsOf(split).Count() == 2);
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(0).Equals(part1));
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(1).Equals(part2));
+        }
+
+        [TestMethod]
+        public void SplitNonExistingPart()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var part1 = new Task();
+            var part2 = new Task();
+
+            // setup: confirm no parts
+            Assert.IsTrue(!manager.IsPart(part1));
+            Assert.IsTrue(!manager.IsPart(part2));
+            Assert.IsTrue(manager.Tasks.Count() == 0);
+
+            // test: attempt to split part (no effect)
+            manager.Split(part1, part2, 1);
+            Assert.IsTrue(!manager.IsPart(part1));
+            Assert.IsTrue(!manager.IsPart(part2));
+            Assert.IsTrue(manager.Tasks.Count() == 0);
+        }
+
+        [TestMethod]
+        public void SplitNullPart()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            var part3 = new Task();
+            manager.Add(split);
+
+            // setup: create a split task
+            manager.Split(split, part1, part2, 1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(!manager.IsPart(part3));
+            
+            // test: split a null part (no effect);
+            manager.Split(null, part3, 1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(!manager.IsPart(part3));
+
+            // test: split a null part (no effect);
+            manager.Split(part1, null, 1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(!manager.IsPart(part3));
+        }
+
+        [TestMethod]
+        public void JoinNullPart()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var task = new Task();
+            
+            // test: two nulls (no effect)
+            manager.Join(null, null);
+            Assert.IsTrue(manager.Tasks.Count() == 0);
+            
+            // test: null existing
+            manager.Join(null, task);
+            Assert.IsTrue(!manager.IsPart(task));
+        }
+
+        [TestMethod]
+        public void JoinPartFromDifferentSplitTask()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split1 = new Task();
+            var part1a = new Task();
+            var part1b = new Task();
+            var split2 = new Task();
+            var part2a = new Task();
+            var part2b = new Task();
+            manager.Add(split1);
+            manager.Add(split2);
+
+            // setup: create 2 split tasks
+            manager.Split(split1, part1a, part1b, 1);
+            manager.Split(split2, part2a, part2b, 1);
+            Assert.IsTrue(manager.IsSplit(split1));
+            Assert.IsTrue(manager.IsSplit(split2));
+            Assert.IsTrue(manager.IsPart(part1a));
+            Assert.IsTrue(manager.IsPart(part1b));
+            Assert.IsTrue(manager.IsPart(part2a));
+            Assert.IsTrue(manager.IsPart(part2b));
+            Assert.IsTrue(manager.PartsOf(split1).Count() == 2);
+            Assert.IsTrue(manager.PartsOf(split1).Contains(part1a));
+            Assert.IsTrue(manager.PartsOf(split1).Contains(part1b));
+            Assert.IsTrue(manager.PartsOf(split2).Count() == 2);
+            Assert.IsTrue(manager.PartsOf(split2).Contains(part2a));
+            Assert.IsTrue(manager.PartsOf(split2).Contains(part2b));
+
+            // test: join part1x with part2x (no effect)
+            manager.Join(part1a, part2a);
+            Assert.IsTrue(manager.IsSplit(split1));
+            Assert.IsTrue(manager.IsSplit(split2));
+            Assert.IsTrue(manager.IsPart(part1a));
+            Assert.IsTrue(manager.IsPart(part1b));
+            Assert.IsTrue(manager.IsPart(part2a));
+            Assert.IsTrue(manager.IsPart(part2b));
+            Assert.IsTrue(manager.PartsOf(split1).Count() == 2);
+            Assert.IsTrue(manager.PartsOf(split1).Contains(part1a));
+            Assert.IsTrue(manager.PartsOf(split1).Contains(part1b));
+            Assert.IsTrue(manager.PartsOf(split2).Count() == 2);
+            Assert.IsTrue(manager.PartsOf(split2).Contains(part2a));
+            Assert.IsTrue(manager.PartsOf(split2).Contains(part2b));
+        }
+
+        [TestMethod]
+        public void JoinPartsConfirmPackedSchedule()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            var part3 = new Task();
+            var part4 = new Task();
+            manager.Add(split);
+
+            // setup: create a 4 part split task
+            manager.SetDuration(split, 40);
+            manager.Split(split, part1, part2, 5);
+            manager.Split(part2, part3, 10);
+            manager.Split(part3, part4, 20);
+            Assert.IsTrue(part4.Duration == 5);
+            Assert.IsTrue(part2.Duration == 10);
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(manager.IsPart(part3));
+            Assert.IsTrue(manager.IsPart(part4));
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.PartsOf(split).Count() == 4);
+
+            Assert.IsTrue(part1.Start == 0);
+            Assert.IsTrue(part1.End == 5);
+            Assert.IsTrue(part2.Start == 6);
+            Assert.IsTrue(part2.End == 16);
+            Assert.IsTrue(part3.Start == 17);
+            Assert.IsTrue(part3.End == 37);
+            Assert.IsTrue(part4.Start == 38);
+            Assert.IsTrue(part4.End == 43);
+
+            // test: join part 2 and 4
+            manager.Join(part2, part4);
+            Assert.IsTrue(part2.Duration == 15);
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(manager.IsPart(part3));
+            Assert.IsTrue(!manager.IsPart(part4));
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.PartsOf(split).Count() == 3);
+
+            Assert.IsTrue(part1.Start == 0);
+            Assert.IsTrue(part1.End == 5);
+            Assert.IsTrue(part2.Start == 6);
+            Assert.IsTrue(part2.End == 21);
+            Assert.IsTrue(part3.Start == 22);
+            Assert.IsTrue(part3.End == 42);
+        }
+
+        [TestMethod]
+        public void AllowRelateSplitTaskToTask()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1a = new Task();
+            var part1b = new Task();
+            var task = new Task();
+            manager.Add(split);
+            manager.Add(task);
+
+            // setup: create a split task
+            manager.Split(split, part1a, part1b, 1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(!manager.IsSplit(part1a));
+            Assert.IsTrue(!manager.IsSplit(part1b));
+            Assert.IsTrue(!manager.IsPart(split));
+            Assert.IsTrue(manager.IsPart(part1a));
+            Assert.IsTrue(manager.IsPart(part1b));
+            Assert.IsTrue(!manager.HasRelations(split));
+            Assert.IsTrue(!manager.HasRelations(part1a));
+            Assert.IsTrue(!manager.HasRelations(part1b));
+            Assert.IsTrue(!manager.HasRelations(task));
+
+            // test: relate task and split task
+            manager.Relate(task, split);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(!manager.IsSplit(part1a));
+            Assert.IsTrue(!manager.IsSplit(part1b));
+            Assert.IsTrue(!manager.IsPart(split));
+            Assert.IsTrue(manager.IsPart(part1a));
+            Assert.IsTrue(manager.IsPart(part1b));
+            Assert.IsTrue(manager.HasRelations(split));
+            Assert.IsTrue(!manager.HasRelations(part1a));
+            Assert.IsTrue(!manager.HasRelations(part1b));
+            Assert.IsTrue(manager.HasRelations(task));
+            Assert.IsTrue(manager.PrecedentsOf(split).Contains(task));
+        }
+
+        [TestMethod]
+        public void DoNotRelatePartsOfTheSameSplitTask()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1a = new Task();
+            var part1b = new Task();
+            manager.Add(split);
+
+            // setup: create a split task
+            manager.Split(split, part1a, part1b, 1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(!manager.IsSplit(part1a));
+            Assert.IsTrue(!manager.IsSplit(part1b));
+            Assert.IsTrue(!manager.IsPart(split));
+            Assert.IsTrue(manager.IsPart(part1a));
+            Assert.IsTrue(manager.IsPart(part1b));
+            Assert.IsTrue(!manager.HasRelations(split));
+            Assert.IsTrue(!manager.HasRelations(part1a));
+            Assert.IsTrue(!manager.HasRelations(part1b));
+
+            // test: relate the two parts
+            manager.Relate(part1a, part1b);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(!manager.IsSplit(part1a));
+            Assert.IsTrue(!manager.IsSplit(part1b));
+            Assert.IsTrue(!manager.IsPart(split));
+            Assert.IsTrue(manager.IsPart(part1a));
+            Assert.IsTrue(manager.IsPart(part1b));
+            Assert.IsTrue(!manager.HasRelations(split));
+            Assert.IsTrue(!manager.HasRelations(part1a));
+            Assert.IsTrue(!manager.HasRelations(part1b));
+        }
+
+        [TestMethod]
+        public void RelateUnrelatePartsBecomeRelateUnrelateSplitTasks()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split1 = new Task();
+            var part1a = new Task();
+            var part1b = new Task();
+
+            var split2 = new Task();
+            var part2a = new Task();
+            var part2b = new Task();
+            manager.Add(split1);
+            manager.Add(split2);
+
+            // setup: create 2 split tasks each of 2 parts
+            manager.Split(split1, part1a, part1b, 1);
+            manager.Split(split2, part2a, part2b, 1);
+            Assert.IsTrue(!manager.HasRelations(split1));
+            Assert.IsTrue(!manager.HasRelations(part1a));
+            Assert.IsTrue(!manager.HasRelations(part1b));
+            Assert.IsTrue(!manager.HasRelations(split2));
+            Assert.IsTrue(!manager.HasRelations(part2a));
+            Assert.IsTrue(!manager.HasRelations(part2b));
+
+            // test: relate parts from different splits
+            manager.Relate(part1a, part2a);
+            Assert.IsTrue(manager.HasRelations(split1));
+            Assert.IsTrue(!manager.HasRelations(part1a));
+            Assert.IsTrue(!manager.HasRelations(part1b));
+            Assert.IsTrue(manager.HasRelations(split2));
+            Assert.IsTrue(!manager.HasRelations(part2a));
+            Assert.IsTrue(!manager.HasRelations(part2b));
+
+            // test: relate parts from different splits
+            manager.Unrelate(part1b, part2b);
+            Assert.IsTrue(!manager.HasRelations(split1));
+            Assert.IsTrue(!manager.HasRelations(part1a));
+            Assert.IsTrue(!manager.HasRelations(part1b));
+            Assert.IsTrue(!manager.HasRelations(split2));
+            Assert.IsTrue(!manager.HasRelations(part2a));
+            Assert.IsTrue(!manager.HasRelations(part2b));
+
+            // test: relate parts using different parts
+            manager.Relate(part2b, part1b);
+            Assert.IsTrue(manager.HasRelations(split1));
+            Assert.IsTrue(!manager.HasRelations(part1a));
+            Assert.IsTrue(!manager.HasRelations(part1b));
+            Assert.IsTrue(manager.HasRelations(split2));
+            Assert.IsTrue(!manager.HasRelations(part2a));
+            Assert.IsTrue(!manager.HasRelations(part2b));
+
+            // test: unrelate all
+            manager.Unrelate(part2a);
+            Assert.IsTrue(!manager.HasRelations(split1));
+            Assert.IsTrue(!manager.HasRelations(part1a));
+            Assert.IsTrue(!manager.HasRelations(part1b));
+            Assert.IsTrue(!manager.HasRelations(split2));
+            Assert.IsTrue(!manager.HasRelations(part2a));
+            Assert.IsTrue(!manager.HasRelations(part2b));
+        }
+
+        [TestMethod]
+        public void SplitTaskUsingSamePartsNoEffect()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part = new Task();
+            manager.Add(split);
+
+            // setup: confirm no splits and parts
+            Assert.IsTrue(!manager.IsPart(split));
+            Assert.IsTrue(!manager.IsPart(part));
+            Assert.IsTrue(!manager.IsSplit(split));
+            Assert.IsTrue(!manager.IsPart(part));
+
+            // test: split using part and part
+            manager.Split(split, part, part, 1);
+            Assert.IsTrue(!manager.IsPart(split));
+            Assert.IsTrue(!manager.IsPart(part));
+            Assert.IsTrue(!manager.IsSplit(split));
+            Assert.IsTrue(!manager.IsPart(part));
+        }
+
+        [TestMethod]
+        public void SplitPartUsingSamePartsNoEffect()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            manager.Add(split);
+
+            // setup: create a split
+            manager.Split(split, part1, part2, 1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(manager.PartsOf(split).Count() == 2);
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(0).Equals(part1));
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(1).Equals(part2));
+
+            // test: split part1 using part1
+            manager.Split(part1, part1, 1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(manager.PartsOf(split).Count() == 2);
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(0).Equals(part1));
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(1).Equals(part2));
+        }
+
+        [TestMethod]
+        public void RelatedTaskCannotBecomeParts()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            manager.Add(split);
+            manager.Add(part1);
+            manager.Add(part2);
+
+            // setup: relate part1 and part2
+            manager.Relate(part1, part2);
+            Assert.IsTrue(manager.HasRelations(part1));
+            Assert.IsTrue(manager.HasRelations(part2));
+            Assert.IsTrue(manager.DependantsOf(part1).Contains(part2));
+
+            // test: split task using part1 and part2
+            manager.Split(split, part1, part2, 1);
+            Assert.IsTrue(manager.HasRelations(part1));
+            Assert.IsTrue(manager.HasRelations(part2));
+            Assert.IsTrue(manager.DependantsOf(part1).Contains(part2));
+            Assert.IsTrue(!manager.IsSplit(split));
+            Assert.IsTrue(!manager.IsPart(part1));
+            Assert.IsTrue(!manager.IsPart(part2));
+        }
+
+        [TestMethod]
+        public void SplitPart()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task() { Name = "part1" };
+            var part2 = new Task() { Name = "part2" };
+            var part3 = new Task() { Name = "part3" };
+            var part4 = new Task() { Name = "part4" };
+            manager.Add(split);
+
+            // setup: set up a split task
+            manager.Split(split, part1, part3, 1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(!manager.IsPart(part2));
+            Assert.IsTrue(manager.IsPart(part3));
+            Assert.IsTrue(!manager.IsPart(part4));
+            Assert.IsTrue(manager.PartsOf(split).Count() == 2);
+            var ele = manager.PartsOf(split);
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(0).Equals(part1));
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(1).Equals(part3));
+            Assert.IsTrue(split.Start == part1.Start);
+            Assert.IsTrue(split.End == part3.End);
+
+            // test: split part3 to give part3 and part4
+            manager.Split(part3, part4, 1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(!manager.IsPart(part2));
+            Assert.IsTrue(manager.IsPart(part3));
+            Assert.IsTrue(manager.IsPart(part4));
+            Assert.IsTrue(manager.PartsOf(split).Count() == 3);
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(0).Equals(part1));
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(1).Equals(part3));
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(2).Equals(part4));
+            Assert.IsTrue(split.Start == part1.Start);
+            Assert.IsTrue(split.End == part4.End);
+
+            // test: split part1 to give part1 and part2
+            manager.Split(part1, part2, 1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(manager.IsPart(part3));
+            Assert.IsTrue(manager.IsPart(part4));
+            Assert.IsTrue(manager.PartsOf(split).Count() == 4);
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(0) == part1);
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(1) == part2);
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(2) == part3);
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(3) == part4);
+            Assert.IsTrue(split.Start == part1.Start);
+            Assert.IsTrue(split.End == part4.End);
+
+            // test: ensure no parts overlap
+            Assert.IsTrue(part1.End < part2.Start);
+            Assert.IsTrue(part2.End < part3.Start);
+            Assert.IsTrue(part3.End < part4.Start);
+            Assert.IsTrue(part1.Start < part1.End);
+            Assert.IsTrue(part4.Start < part4.End);
+        }
+
+        [TestMethod]
+        public void SplitPartAsThoughItIsTask()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task() { Name = "part1" };
+            var part2 = new Task() { Name = "part2" };
+            var part3 = new Task();
+            var part4 = new Task();
+            manager.Add(split);
+
+            // setup: create a split task with parts
+            manager.Split(split, part1, part2, 1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(!manager.IsSplit(part1));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+
+            // test: split the part using the split task method
+            manager.Split(part1, part3, part4, 1);
+            Assert.IsTrue(!manager.IsSplit(part1));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(!manager.IsPart(part3));
+            Assert.IsTrue(!manager.IsPart(part4));
+        }
+
+        [TestMethod]
+        public void JoinParts()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            var part3 = new Task();
+            manager.Add(split);
+
+            // setup: create a split task with 3 parts
+            manager.Split(split, part1, part2, 1);
+            manager.Split(part2, part3, 1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(manager.IsPart(part3));
+            Assert.IsTrue(manager.PartsOf(split).Count() == 3);
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(0) == part1);
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(1) == part2);
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(2) == part3);
+
+            // test: join part 1 and part2
+            manager.Join(part1, part2);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(!manager.IsPart(part2));
+            Assert.IsTrue(manager.IsPart(part3));
+            Assert.IsTrue(manager.PartsOf(split).Count() == 2);
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(0) == part1);
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(1) == part3);
+        }
+
+        [TestMethod]
+        public void JoinPartRemainSinglePartBecomeRegularTask()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            manager.Add(split);
+
+            // setup: create split task with only part1 and part2
+            manager.Split(split, part1, part2, 1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(manager.PartsOf(split).Count() == 2);
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(0) == part1);
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(1) == part2);
+
+            // test: join the 2 parts, leave only a non-split task left
+            manager.Join(part1, part2);
+            Assert.IsTrue(!manager.IsSplit(split));
+            Assert.IsTrue(!manager.IsPart(part1));
+            Assert.IsTrue(!manager.IsPart(part2));
+            Assert.IsTrue(split.Duration == 2);
+        }
+
+        [TestMethod]
+        public void MergeSplittedTask()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            var part3 = new Task();
+            var part4 = new Task();
+            manager.Add(split);
+
+            // setup: create a 4 part split task
+            manager.Split(split, part1, part2, 1);
+            manager.Split(part1, part3, 1);
+            manager.Split(part3, part4, 1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(manager.IsPart(part3));
+            Assert.IsTrue(manager.IsPart(part4));
+            Assert.IsTrue(manager.PartsOf(split).Count() == 4);
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(0) == part1);
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(1) == part3);
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(2) == part4);
+            Assert.IsTrue(manager.PartsOf(split).ElementAt(3) == part2);
+            Assert.IsTrue(manager.Tasks.Count() == 1);
+
+            // test: merge the split task
+            manager.Merge(split);
+            Assert.IsTrue(!manager.IsSplit(split));
+            Assert.IsTrue(!manager.IsPart(part1));
+            Assert.IsTrue(!manager.IsPart(part2));
+            Assert.IsTrue(!manager.IsPart(part3));
+            Assert.IsTrue(!manager.IsPart(part4));
+            Assert.IsTrue(manager.Tasks.Count() == 1);
+            Assert.IsTrue(split.Duration == 4);
+        }
+
+        [TestMethod]
+        public void CannotGroupParts()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task() { Name = "split" };
+            var part1 = new Task() { Name = "part1" };
+            var part2 = new Task() { Name = "part2" };
+            var group = new Task() { Name = "group" };
+            var task = new Task() { Name = "task" };
+            manager.Add(split);
+            manager.Add(group);
+            manager.Add(task);
+
+            // setup: create a split task and a group
+            manager.Split(split, part1, part2, 2);
+            manager.Group(group, task);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(manager.IsGroup(group));
+            Assert.IsTrue(manager.IsMember(task));
+
+            // test: group part into task (no effect);
+            manager.Group(group, part1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(manager.IsGroup(group));
+            Assert.IsTrue(manager.IsMember(task));
+            Assert.IsTrue(!manager.IsMember(part1));
+            Assert.IsTrue(manager.ChildrenOf(group).Count() == 1);
+            Assert.IsTrue(manager.ChildrenOf(group).Contains(task));
+
+            // test: group task into part (no effect)
+            manager.Group(part1, task);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(manager.IsGroup(group));
+            Assert.IsTrue(manager.IsMember(task));
+            Assert.IsTrue(!manager.IsMember(part1));
+            Assert.IsTrue(manager.ChildrenOf(group).Count() == 1);
+            Assert.IsTrue(manager.ChildrenOf(group).Contains(task));
+
+            // test: group split task into group (allowed)
+            manager.Group(group, split);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(manager.IsGroup(group));
+            Assert.IsTrue(manager.IsMember(task));
+            Assert.IsTrue(!manager.IsMember(part1));
+            Assert.IsTrue(manager.ChildrenOf(group).Count() == 2);
+            Assert.IsTrue(manager.ChildrenOf(group).Contains(task));
+            Assert.IsTrue(manager.ChildrenOf(group).Contains(split));
+        }
+
+        [TestMethod]
+        public void JoinPartConfirmSchedule()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            var part3 = new Task();
+            manager.Add(split);
+
+            // setup: create a 3 part split
+            manager.SetStart(split, 16);
+            manager.SetDuration(split, 24);
+            manager.Split(split, part1, part2, 8);
+            manager.Split(part2, part3, 8);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.PartsOf(split).Count() == 3);
+            Assert.IsTrue(part1.Duration == 8);
+            Assert.IsTrue(part2.Duration == 8);
+            Assert.IsTrue(part3.Duration == 8);
+            Assert.IsTrue(split.Duration == 26);
+            Assert.IsTrue(split.Start == 16);
+            Assert.IsTrue(split.End == 42);
+
+            // setup: join parts 1 and 2, intentionally in bad order, but should still work
+            manager.Join(part2, part1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.PartsOf(split).Count() == 2);
+            Assert.IsTrue(part2.Duration == 16);
+            Assert.IsTrue(part3.Duration == 8);
+            Assert.IsTrue(split.Duration == 26); // schedule of other parts not affected
+            Assert.IsTrue(split.Start == 16);
+            Assert.IsTrue(split.End == 42);
+        }
+
+        [TestMethod]
+        public void JoinIntoMerge()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            manager.Add(split);
+
+            // setup: create a split task
+            manager.Split(split, part1, part2, 7);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+
+            // test: join the two parts, resulting in split becoming back ito regular task
+            manager.Join(part1, part2);
+            Assert.IsTrue(!manager.IsSplit(split));
+            Assert.IsTrue(!manager.IsPart(part1));
+            Assert.IsTrue(!manager.IsPart(part2));
+        }
+
+        [TestMethod]
+        public void DeleteMiddlePart()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            var part3 = new Task();
+            manager.Add(split);
+
+            // setup: create a 3 part split task
+            manager.SetDuration(split, 30);
+            manager.Split(split, part1, part2, 4);
+            manager.Split(part2, part3, 5);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(manager.IsPart(part3));
+            Assert.IsTrue(part1.Start == 0);
+            Assert.IsTrue(part2.Start == 5);
+            Assert.IsTrue(part3.Start == 11);
+            Assert.IsTrue(part1.Duration == 4);
+            Assert.IsTrue(part2.Duration == 5);
+            Assert.IsTrue(part3.Duration == 21);
+            Assert.IsTrue(split.Start == 0);
+            Assert.IsTrue(split.End == 32);
+
+            // test: delete part2, part1 and part3 should not be affected
+            manager.Delete(part2);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(!manager.IsPart(part2));
+            Assert.IsTrue(manager.IsPart(part3));
+            Assert.IsTrue(part1.Duration == 4);
+            Assert.IsTrue(part3.Duration == 21);
+            Assert.IsTrue(part1.Start == 0);
+            Assert.IsTrue(part3.Start == 11);
+            Assert.IsTrue(part3.End == 32);
+            Assert.IsTrue(split.Start == 0);
+            Assert.IsTrue(split.End == 32);
+        }
+
+        [TestMethod]
+        public void DeleteLastPart()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            var part3 = new Task();
+            manager.Add(split);
+
+            // setup: create a 3 part split task
+            manager.SetDuration(split, 30);
+            manager.Split(split, part1, part2, 4);
+            manager.Split(part2, part3, 5);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(manager.IsPart(part3));
+            Assert.IsTrue(part1.Start == 0);
+            Assert.IsTrue(part2.Start == 5);
+            Assert.IsTrue(part3.Start == 11);
+            Assert.IsTrue(part1.Duration == 4);
+            Assert.IsTrue(part2.Duration == 5);
+            Assert.IsTrue(part3.Duration == 21);
+            Assert.IsTrue(split.Start == 0);
+            Assert.IsTrue(split.End == 32);
+
+            // test: delete part3, part1 and part2 should not be affected
+            manager.Delete(part3);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(!manager.IsPart(part3));
+            Assert.IsTrue(part1.Duration == 4);
+            Assert.IsTrue(part2.Duration == 5);
+            Assert.IsTrue(split.Start == 0);
+            Assert.IsTrue(split.End == 10);
+        }
+
+        [TestMethod]
+        public void DeleteFirstPart()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            var part3 = new Task();
+            manager.Add(split);
+
+            // setup: create a 3 part split task
+            manager.SetDuration(split, 30);
+            manager.Split(split, part1, part2, 4);
+            manager.Split(part2, part3, 5);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(manager.IsPart(part3));
+            Assert.IsTrue(part1.Start == 0);
+            Assert.IsTrue(part2.Start == 5);
+            Assert.IsTrue(part3.Start == 11);
+            Assert.IsTrue(part1.Duration == 4);
+            Assert.IsTrue(part2.Duration == 5);
+            Assert.IsTrue(part3.Duration == 21);
+            Assert.IsTrue(split.Start == 0);
+            Assert.IsTrue(split.End == 32);
+
+            // test: delete part1, part2 and part3 should not be affected
+            manager.Delete(part1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(!manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(manager.IsPart(part3));
+            Assert.IsTrue(part2.Start == 5);
+            Assert.IsTrue(part3.Start == 11);
+            Assert.IsTrue(part2.Duration == 5);
+            Assert.IsTrue(part3.Duration == 21);
+            Assert.IsTrue(split.Start == 5);
+            Assert.IsTrue(split.End == 32);
+        }
+
+        [TestMethod]
+        public void CannotSetCompleteOnSplitTask()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            manager.Add(split);
+
+            // setup: create a split
+            manager.SetComplete(split, 0.2f);
+            manager.Split(split, part1, part2, 1);
+            Assert.IsTrue(split.Complete == 0);
+            Assert.IsTrue(part1.Complete == 0);
+            Assert.IsTrue(part2.Complete == 0);
+
+            // test: changing complete on split will not have effect
+            manager.SetComplete(split, 10);
+            Assert.IsTrue(split.Complete == 0);
+            Assert.IsTrue(part1.Complete == 0);
+            Assert.IsTrue(part2.Complete == 0);
+        }
+
+        [TestMethod]
+        public void AdjustGroupDurationOnSplit()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var group = new Task();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            var part3 = new Task();
+            manager.Add(split);
+            manager.Add(group);
+
+            // setup: create a split under a group
+            manager.Group(group, split);
+            manager.Split(split, part1, part2, 1);
+            Assert.IsTrue(group.Duration == split.Duration);
+            Assert.IsTrue(group.End == part2.End);
+
+            // test: split somemore and ensure group duration and end adjust correctly
+            manager.Split(part2, part3, 1);
+            Assert.IsTrue(group.Duration == split.Duration);
+            Assert.IsTrue(group.End == part3.End);
+        }
+
+        [TestMethod]
+        public void AdjustGroupDuringJoin()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var group = new Task();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            var part3 = new Task();
+            manager.Add(split);
+            manager.Add(group);
+
+            // setup: create a split under a group
+            manager.Group(group, split);
+            manager.Split(split, part1, part2, 1);
+            manager.Split(part2, part3, 1);
+            Assert.IsTrue(group.Duration == 5);
+            Assert.IsTrue(group.Duration == split.Duration);
+            Assert.IsTrue(group.End == part3.End);
+
+            // test: join and make sure group duration is shortened
+            manager.Join(part1, part3);
+            Assert.IsTrue(!manager.IsPart(part3));
+            Assert.IsTrue(group.Duration == 4);
+            Assert.IsTrue(group.Duration == split.Duration);
+            Assert.IsTrue(group.End == part2.End);
+        }
     }
 }
+

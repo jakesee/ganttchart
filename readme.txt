@@ -1,9 +1,22 @@
 .NET C# Winforms Gantt Chart Control
+Copyright 2012 Jake See 
+
 Blog: http://www.jakesee.com/net-c-winforms-gantt-chart-control/
 Doxygen Documentation: http://jakesee.com/docs/ganttchart/
 Source/Download: http://ganttchart.codeplex.com
+Email: jakesee@gmail.com
 
-3 Sep 2012
+
+=============================
+CHANGE LOG
+=============================
+5 Sep 2012
+- Added feature to split tasks and join tasks
+- Added mouse commands for split and join tasks
+- Added view instructions toggle
+- Added associated unit tests
+
+3 Sep 2012 v1.2.0.2 (tagged)
 - Added save and open binary serializer in example application
 - Added comments for all public interfaces
 
@@ -17,7 +30,7 @@ Source/Download: http://ganttchart.codeplex.com
 - Chart coordinates are now expressed in floats (this causing breaking type conversion changes)
 - Refactored example application to show new features
 
-31 Aug 2012 v1.1.0.1
+31 Aug 2012 v1.1.0.1 (tagged)
 - Rewrite entire drawing routine to overcome Winforms control size limits
 - Improved drawing speed and culling
 - Header now stays on top of view area
@@ -47,3 +60,20 @@ Source/Download: http://ganttchart.codeplex.com
 - Fix a crash when moving a group-task under itself
 - Improve rendering by culling relationship and smaller iteration loops
 - Other minior refactoring
+
+=============================
+ISSUE TRACKER
+=============================
+- Option to disable/enable mouse commands (lock chart)
+- Middle align tasks
+- Option to draw horizontal row lines
+- Add support down to hour
+- Split Tasks (COMPLETED)
+- Task schedule conflict events
+	- dependant start earlier than precedent end
+	- precedent end later than dependant start
+- Draggable header to change timescale
+- ProjectManager option to scale task schedules according to timescale changes
+- Collapsable rows
+- Resizable row heights
+- PERT Chart

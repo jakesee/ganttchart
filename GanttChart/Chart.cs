@@ -39,7 +39,7 @@ namespace Braincase.GanttChart
             BarHeight = 20;
             BarWidth = 20;
             this.DoubleBuffered = true;
-            var viewport = new Viewport(this);
+            var viewport = new ControlViewport(this);
             viewport.WheelDelta = BarSpacing;
             _mViewport = viewport;
             TimeScaleDisplay = GanttChart.TimeScaleDisplay.DayOfWeek;
@@ -246,9 +246,9 @@ namespace Braincase.GanttChart
         public bool TryGetRow(Task task, out int row)
         {
             row = 0;
-            if (_mWorldTaskRects.ContainsKey(task))
+            if (_mChartTaskRects.ContainsKey(task))
             {
-                row = _ChartCoordToChartRow(_mWorldTaskRects[task].Top);
+                row = _ChartCoordToChartRow(_mChartTaskRects[task].Top);
                 return true;
             }
             return false;
@@ -396,9 +396,9 @@ namespace Braincase.GanttChart
         /// <param name="task"></param>
         public void ScrollTo(Task task)
         {
-            if (_mWorldTaskRects.ContainsKey(task))
+            if (_mChartTaskRects.ContainsKey(task))
             {
-                var rect = _mWorldTaskRects[task];
+                var rect = _mChartTaskRects[task];
                 _mViewport.X = rect.Left - this.BarWidth;
                 _mViewport.Y = rect.Top - this.HeaderOneHeight - this.HeaderTwoHeight;
             }
@@ -410,7 +410,7 @@ namespace Braincase.GanttChart
         /// <param name="graphics"></param>
         public void BeginBillboardMode(Graphics graphics)
         {
-            graphics.Transform = Viewport.Identity;
+            graphics.Transform = ControlViewport.Identity;
         }
 
         /// <summary>
@@ -453,7 +453,7 @@ namespace Braincase.GanttChart
             else if(_mMouseEntered == null && task != null)
             {
                 _mMouseEntered = task;
-                OnTaskMouseOver(new TaskMouseEventArgs(_mMouseEntered, _mWorldTaskRects[task], e.Button, e.Clicks, e.X, e.Y, e.Delta));
+                OnTaskMouseOver(new TaskMouseEventArgs(_mMouseEntered, _mChartTaskHitRects[task], e.Button, e.Clicks, e.X, e.Y, e.Delta));
             }
 
             // Dragging
@@ -461,9 +461,9 @@ namespace Braincase.GanttChart
             {
                 Task target = task;
                 if (target == _mDragSource) target = null;
-                RectangleF targetRect = target == null ? RectangleF.Empty : _mWorldTaskRects[target];
+                RectangleF targetRect = target == null ? RectangleF.Empty : _mChartTaskHitRects[target];
                 int row = _DeviceCoordToChartRow(e.Location.Y);
-                OnTaskMouseDrag(new TaskDragDropEventArgs(_mDragStartLocation, _mDragLastLocation, _mDragSource, _mWorldTaskRects[_mDragSource], target, targetRect, row, e.Button, e.Clicks, e.X, e.Y, e.Delta));
+                OnTaskMouseDrag(new TaskDragDropEventArgs(_mDragStartLocation, _mDragLastLocation, _mDragSource, _mChartTaskHitRects[_mDragSource], target, targetRect, row, e.Button, e.Clicks, e.X, e.Y, e.Delta));
                 _mDragLastLocation = e.Location;
             }
 
@@ -479,7 +479,7 @@ namespace Braincase.GanttChart
             var task = _GetTaskUnderMouse(e.Location);
             if (task != null)
             {
-                OnTaskMouseClick(new TaskMouseEventArgs(task, _mWorldTaskRects[task], e.Button, e.Clicks, e.X, e.Y, e.Delta));
+                OnTaskMouseClick(new TaskMouseEventArgs(task, _mChartTaskHitRects[task], e.Button, e.Clicks, e.X, e.Y, e.Delta));
             }
             else
             {
@@ -519,9 +519,9 @@ namespace Braincase.GanttChart
             {
                 var target = _GetTaskUnderMouse(e.Location);
                 if (target == _mDragSource) target = null;
-                var targetRect = target == null ? RectangleF.Empty : _mWorldTaskRects[target];
+                var targetRect = target == null ? RectangleF.Empty : _mChartTaskHitRects[target];
                 int row = _DeviceCoordToChartRow(e.Location.Y);
-                OnTaskMouseDrop(new TaskDragDropEventArgs(_mDragStartLocation, _mDragLastLocation, _mDragSource, _mWorldTaskRects[_mDragSource], target, targetRect, row, e.Button, e.Clicks, e.X, e.Y, e.Delta));
+                OnTaskMouseDrop(new TaskDragDropEventArgs(_mDragStartLocation, _mDragLastLocation, _mDragSource, _mChartTaskHitRects[_mDragSource], target, targetRect, row, e.Button, e.Clicks, e.X, e.Y, e.Delta));
                 _mDragSource = null;
                 _mDragLastLocation = Point.Empty;
                 _mDragStartLocation = Point.Empty;
@@ -539,7 +539,7 @@ namespace Braincase.GanttChart
             var task = _GetTaskUnderMouse(e.Location);
             if (task != null)
             {
-                OnTaskMouseDoubleClick(new TaskMouseEventArgs(task, _mWorldTaskRects[task], e.Button, e.Clicks, e.X, e.Y, e.Delta));
+                OnTaskMouseDoubleClick(new TaskMouseEventArgs(task, _mChartTaskHitRects[task], e.Button, e.Clicks, e.X, e.Y, e.Delta));
             }
 
             base.OnMouseDoubleClick(e);
@@ -597,9 +597,17 @@ namespace Braincase.GanttChart
             }
             else if (e.Button == System.Windows.Forms.MouseButtons.Right)
             {
-                var delta = (e.PreviousLocation.X - e.StartLocation.X);
-                _mOverlay.DraggedRect = e.SourceRect;
-                _mOverlay.DraggedRect.Width += delta;
+                if (e.Target == null)
+                {
+                    var delta = (e.PreviousLocation.X - e.StartLocation.X);
+                    _mOverlay.DraggedRect = e.SourceRect;
+                    _mOverlay.DraggedRect.Width += delta;
+                }
+                else // drop targetting (join)
+                {
+                    _mOverlay.DraggedRect = e.TargetRect;
+                    _mOverlay.Row = int.MinValue;
+                }
             }
             else if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
@@ -682,8 +690,15 @@ namespace Braincase.GanttChart
             }
             else if (e.Button == System.Windows.Forms.MouseButtons.Right)
             {
-                var duration = e.Source.Duration + delta;
-                _mProject.SetDuration(e.Source, duration);
+                if (e.Target == null)
+                {
+                    var duration = e.Source.Duration + delta;
+                    _mProject.SetDuration(e.Source, duration);
+                }
+                else // have target then we do a join
+                {
+                    _mProject.Join(e.Target, e.Source);
+                }
             }
 
             _mOverlay.Clear();
@@ -719,7 +734,8 @@ namespace Braincase.GanttChart
                     _mProject.Add(newtask);
                     _mProject.SetStart(newtask, e.Task.Start);
                     _mProject.SetDuration(newtask, 5);
-                    _mProject.Move(newtask, _mProject.IndexOf(e.Task) + 1 - _mProject.IndexOf(newtask));
+                    if (_mProject.IsPart(e.Task)) _mProject.Move(newtask, _mProject.IndexOf(_mProject.SplitTaskOf(e.Task)) + 1 - _mProject.IndexOf(newtask));
+                    else _mProject.Move(newtask, _mProject.IndexOf(e.Task) + 1 - _mProject.IndexOf(newtask));
                 }
                 else if (Control.ModifierKeys.HasFlag(Keys.Alt))
                     _mProject.Delete(e.Task);
@@ -738,8 +754,15 @@ namespace Braincase.GanttChart
             if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
                 e.Task.IsCollapsed = !e.Task.IsCollapsed;
-                this.Invalidate();
             }
+            else if (e.Button == System.Windows.Forms.MouseButtons.Right)
+            {
+                int duration = (int)((_mViewport.DeviceToWorldCoord(e.Location).X - e.Rectangle.Left) / this.BarWidth);
+                if (_mProject.IsPart(e.Task)) _mProject.Split(e.Task, new Task(), duration);
+                else _mProject.Split(e.Task, new Task(), new Task(), duration);
+            }
+
+            this.Invalidate();
         }
         /// <summary>
         /// Raises the TaskSelected event
@@ -836,14 +859,14 @@ namespace Braincase.GanttChart
 
         private Task _GetTaskUnderMouse(Point mouse)
         {
-            var worldcoord = _mViewport.DeviceToWorldCoord(mouse);
+            var chartcoord = _mViewport.DeviceToWorldCoord(mouse);
 
-            if (!_mHeaderInfo.H1Rect.Contains(worldcoord)
-                && !_mHeaderInfo.H2Rect.Contains(worldcoord))
+            if (!_mHeaderInfo.H1Rect.Contains(chartcoord)
+                && !_mHeaderInfo.H2Rect.Contains(chartcoord))
             {
-                foreach (var task in _mWorldTaskRects.Keys)
+                foreach (var task in _mChartTaskHitRects.Keys)
                 {
-                    if (_mWorldTaskRects[task].Contains(worldcoord))
+                    if (_mChartTaskHitRects[task].Contains(chartcoord))
                         return task;
                 }
             }
@@ -897,40 +920,62 @@ namespace Braincase.GanttChart
         private void _GenerateModels()
         {
             // Clear Models
-            _mWorldTaskRects.Clear();
-            _mWorldSlackRects.Clear();
+            _mChartTaskRects.Clear();
+            _mChartTaskHitRects.Clear();
+            _mChartSlackRects.Clear();
+            _mChartTaskPartRects.Clear();
 
             var pHeight = this.Parent == null ? this.Width : this.Parent.Height;
             var pWidth = this.Parent == null ? this.Height : this.Parent.Width;
 
             // loop over the tasks and pick up items
             int end = int.MinValue;
-            int count = 0;
+            int row = 0;
             foreach (var task in _mProject.Tasks)
             {
                 if (!_mProject.AncestorsOf(task).Any(x => x.IsCollapsed))
                 {
-                    int y_coord = count * this.BarSpacing + this.HeaderTwoHeight + this.HeaderOneHeight;
+                    int y_coord = row * this.BarSpacing + this.HeaderTwoHeight + this.HeaderOneHeight;
+                    RectangleF taskRect;
 
-                    // store task rect models
-                    var taskRect = new RectangleF(task.Start * this.BarWidth + this.BarWidth / 2, y_coord, task.Duration * this.BarWidth, this.BarHeight);
-                    _mWorldTaskRects.Add(task, taskRect);
+                    // Compute task rectangle
+                    taskRect = new RectangleF(task.Start * this.BarWidth + this.BarWidth / 2, y_coord, task.Duration * this.BarWidth, this.BarHeight);
+                    _mChartTaskRects.Add(task, taskRect);
+                    
+                    if(!_mProject.IsSplit(task))
+                    {
+                        // Add normal Task Rectangles to hitRect collection for hit testing
+                        _mChartTaskHitRects.Add(task, taskRect);
+                    }
+                    else // Compute task part rectangles if task is a split task
+                    {
+                        var parts = new List<KeyValuePair<Task, RectangleF>>();
+                        _mChartTaskPartRects.Add(task, parts);
+                        foreach (var part in _mProject.PartsOf(task))
+                        {
+                            taskRect = new RectangleF(part.Start * this.BarWidth + this.BarWidth / 2, y_coord, part.Duration * this.BarWidth, this.BarHeight);
+                            parts.Add(new KeyValuePair<Task,RectangleF>(part, taskRect));
 
-                    // store task slack rects
+                            // Parts are mouse enabled, add to hitRect collection
+                            _mChartTaskHitRects.Add(part, taskRect);
+                        }
+                    }
+
+                    // Compute Slack Rectangles
                     if (this.ShowSlack)
                     {
                         var slackRect = new RectangleF(task.End * this.BarWidth + this.BarWidth / 2, y_coord, task.Slack * this.BarWidth, this.BarHeight);
-                        _mWorldSlackRects.Add(task, slackRect);
+                        _mChartSlackRects.Add(task, slackRect);
                     }
-                    
-                    // find max end
+
+                    // Find maximum end time
                     if (task.End > end) end = task.End;
 
-                    count++;
+                    row++;
                 }
             }
-            count += 5;
-            _mViewport.WorldHeight = Math.Max(pHeight, count * this.BarSpacing + this.BarHeight);
+            row += 5;
+            _mViewport.WorldHeight = Math.Max(pHeight, row * this.BarSpacing + this.BarHeight);
             _mViewport.WorldWidth = Math.Max(pWidth, end * this.BarWidth + 200);
         }
         
@@ -1022,6 +1067,9 @@ namespace Braincase.GanttChart
 
                 // draw bar charts
                 row = this._DrawTasks(graphics, clipRect);
+
+                // Draw Task Parts
+                _DrawTaskParts(graphics);
 
                 // draw predecessor arrows
                 if (this.ShowRelations)
@@ -1161,60 +1209,18 @@ namespace Braincase.GanttChart
             graphics.DrawPolygon(new Pen(SystemColors.ButtonShadow), marker);
         }
 
-        private void _DrawPredecessorLines(Graphics graphics)
-        {
-            var viewRect = _mViewport.Rectangle;
-            RectangleF clipRectF = new RectangleF(viewRect.X, viewRect.Y, viewRect.Width, viewRect.Height);
-            foreach (var p in _mProject.Precedents)
-            {
-                var precedent = p;
-                IEnumerable<Task> dependants = _mProject.DirectDependantsOf(precedent);
-
-                // check with _mTaskRects that the precedent was drawn; this is needed to connect the lines
-                if (_mWorldTaskRects.ContainsKey(precedent))
-                {
-                    foreach (var d in dependants)
-                    {
-                        var dependant = d;
-
-                        // check with _mTaskRects that the dependant was drawn; this is needed to connect the lines
-                        if (_mWorldTaskRects.ContainsKey(dependant))
-                        {
-                            var prect = _mWorldTaskRects[precedent];
-                            var srect = _mWorldTaskRects[dependant];
-                            if (precedent.End <= dependant.Start)
-                            {
-                                var p1 = new PointF(prect.Right, prect.Top + prect.Height / 2.0f);
-                                var p2 = new PointF(srect.Left - BarWidth / 2, prect.Top + prect.Height / 2.0f);
-                                var p3 = new PointF(srect.Left - BarWidth / 2, srect.Top + srect.Height / 2.0f);
-                                var p4 = new PointF(srect.Left, srect.Top + srect.Height / 2.0f);
-                                var size = new SizeF(Math.Abs(p4.X - p1.X), Math.Abs(p4.Y - p1.Y));
-                                var linerect = p1.Y < p4.Y ? new RectangleF(p1, size) : new RectangleF(new PointF(p1.X, p1.Y - size.Height), size);
-                                if (clipRectF.IntersectsWith(linerect))
-                                {
-                                    graphics.DrawLines(Pens.Black, new PointF[] { p1, p2, p3, p4 });
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
         private int _DrawTasks(Graphics graphics, Rectangle clipRect)
         {
-            // draw bars
             var viewRect = _mViewport.Rectangle;
             int row = 0;
             var crit_task_set = new HashSet<Task>(_mProject.CriticalPaths.SelectMany(x => x));
-            // var crit_task_set = _mProject.CriticalPaths.SelectMany(x => x);
             TaskPaintEventArgs e;
-            foreach (var task in _mWorldTaskRects.Keys)
+            foreach (var task in _mChartTaskRects.Keys)
             {
-                // get the taskrect
-                var taskrect = _mWorldTaskRects[task];
+                // Get the taskrect
+                var taskrect = _mChartTaskRects[task];
 
-                // only begin drawing when the taskrect is to the left of the clipRect's right edge
+                // Only begin drawing when the taskrect is to the left of the clipRect's right edge
                 if (taskrect.Left <= viewRect.Right)
                 {
                     // Crtical Path
@@ -1223,8 +1229,8 @@ namespace Braincase.GanttChart
                     else e = new TaskPaintEventArgs(graphics, clipRect, this, task, row, critical, this.Font, this.TaskFormat);
                     if (PaintTask != null) PaintTask(this, e);
 
-                    // draw task bar
-                    if (viewRect.IntersectsWith(taskrect))
+                    // Draw task bar
+                    if (viewRect.IntersectsWith(taskrect) && !_mProject.IsSplit(task))
                     {
                         var fill = taskrect;
                         fill.Width = (int)(fill.Width * task.Complete);
@@ -1269,7 +1275,7 @@ namespace Braincase.GanttChart
                     // draw slack
                     if (this.ShowSlack && task.Complete < 1.0f)
                     {
-                        var slackrect = _mWorldSlackRects[task];
+                        var slackrect = _mChartSlackRects[task];
                         if (viewRect.IntersectsWith(slackrect))
                             graphics.FillRectangle(e.Format.SlackFill, slackrect);
                     }
@@ -1279,6 +1285,78 @@ namespace Braincase.GanttChart
             }
 
             return row;
+        }
+
+        private void _DrawPredecessorLines(Graphics graphics)
+        {
+            var viewRect = _mViewport.Rectangle;
+            RectangleF clipRectF = new RectangleF(viewRect.X, viewRect.Y, viewRect.Width, viewRect.Height);
+            foreach (var p in _mProject.Precedents)
+            {
+                var precedent = p;
+                IEnumerable<Task> dependants = _mProject.DirectDependantsOf(precedent);
+
+                // check with _mTaskRects that the precedent was drawn; this is needed to connect the lines
+                if (_mChartTaskRects.ContainsKey(precedent))
+                {
+                    foreach (var d in dependants)
+                    {
+                        var dependant = d;
+
+                        // check with _mTaskRects that the dependant was drawn; this is needed to connect the lines
+                        if (_mChartTaskRects.ContainsKey(dependant))
+                        {
+                            var prect = _mChartTaskRects[precedent];
+                            var srect = _mChartTaskRects[dependant];
+                            if (precedent.End <= dependant.Start)
+                            {
+                                var p1 = new PointF(prect.Right, prect.Top + prect.Height / 2.0f);
+                                var p2 = new PointF(srect.Left - BarWidth / 2, prect.Top + prect.Height / 2.0f);
+                                var p3 = new PointF(srect.Left - BarWidth / 2, srect.Top + srect.Height / 2.0f);
+                                var p4 = new PointF(srect.Left, srect.Top + srect.Height / 2.0f);
+                                var size = new SizeF(Math.Abs(p4.X - p1.X), Math.Abs(p4.Y - p1.Y));
+                                var linerect = p1.Y < p4.Y ? new RectangleF(p1, size) : new RectangleF(new PointF(p1.X, p1.Y - size.Height), size);
+                                if (clipRectF.IntersectsWith(linerect))
+                                {
+                                    graphics.DrawLines(Pens.Black, new PointF[] { p1, p2, p3, p4 });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private void _DrawTaskParts(Graphics graphics)
+        {
+            var pen = new Pen(Color.Gray);
+            pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
+            var viewRect = _mViewport.Rectangle;
+            foreach (var task in _mChartTaskPartRects.Keys)
+            {
+                if (viewRect.IntersectsWith(_mChartTaskRects[task]))
+                {
+                    var parts = _mChartTaskPartRects[task];
+
+                    // Draw line indicator
+                    var firstRect = parts[0].Value;
+                    var lastRect = parts[parts.Count - 1].Value;
+                    var y_coord = (firstRect.Top + firstRect.Bottom) / 2.0f;
+                    var point1 = new PointF(firstRect.Right, y_coord);
+                    var point2 = new PointF(lastRect.Left, y_coord);
+                    graphics.DrawLine(pen, point1, point2);
+
+                    // Draw Part Rectangles
+                    var taskRects = parts.Select(x => x.Value).ToArray();
+                    graphics.FillRectangles(this.TaskFormat.BackFill, taskRects);
+                    
+                    // Draw % complete indicators
+                    graphics.FillRectangles(this.TaskFormat.ForeFill, parts.Select(x => new RectangleF(x.Value.X, x.Value.Y, x.Value.Width * x.Key.Complete, x.Value.Height)).ToArray());
+
+                    // Draw border
+                    graphics.DrawRectangles(this.TaskFormat.Border, taskRects);
+                }
+            }
         }
 
         private RectangleF _TextAlignCenterMiddle(Graphics graphics, RectangleF rect, string text, Font font)
@@ -1337,8 +1415,10 @@ namespace Braincase.GanttChart
         Point _mDragLastLocation = Point.Empty; // Record the dragging mouse offset
         Point _mDragStartLocation = Point.Empty;
         List<Task> _mSelectedTasks = new List<Task>(); // List of selected tasks
-        Dictionary<Task, RectangleF> _mWorldTaskRects = new Dictionary<Task, RectangleF>(); // list of hitareas for Task Rectangles
-        Dictionary<Task, RectangleF> _mWorldSlackRects = new Dictionary<Task, RectangleF>();
+        Dictionary<Task, RectangleF> _mChartTaskHitRects = new Dictionary<Task, RectangleF>(); // list of hitareas for Task Rectangles
+        Dictionary<Task, RectangleF> _mChartTaskRects = new Dictionary<Task, RectangleF>();
+        Dictionary<Task, List<KeyValuePair<Task, RectangleF>>> _mChartTaskPartRects = new Dictionary<Task, List<KeyValuePair<Task, RectangleF>>>();
+        Dictionary<Task, RectangleF> _mChartSlackRects = new Dictionary<Task, RectangleF>();
         HeaderInfo _mHeaderInfo = new HeaderInfo();
         Task _mMouseEntered = null; // flag whether the mouse has entered a Task rectangle or not
         Dictionary<Task, string> _mTaskToolTip = new Dictionary<Task, string>();
