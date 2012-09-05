@@ -883,7 +883,8 @@ namespace Braincase.GanttChart
                 split.End = parts.Last().End;
                 split.Duration = split.End - split.Start;
 
-                _RecalculateAncestorsSchedule();
+                _RecalculateDependantsOf(split);
+                _RecalculateAncestorsSchedule();                
             }
         }
         
@@ -1183,6 +1184,8 @@ namespace Braincase.GanttChart
             split.Start = parts.First().Start; // recalculate the split task
             split.End = parts.Last().End;
             split.Duration = split.End - split.Start;
+
+            _RecalculateDependantsOf(split);
         }
 
         private void _PackPartsBackwards(List<T> parts)

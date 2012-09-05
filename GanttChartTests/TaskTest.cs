@@ -670,6 +670,56 @@ namespace GanttChartTests
         }
 
         [TestMethod]
+        public void MovePartLaterThanDependantStart()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            var dependant = new Task();
+            manager.Add(split);
+            manager.Add(dependant);
+
+            // setup: create a dependant on the split task
+            manager.SetDuration(split, 20);
+            manager.SetDuration(dependant, 7);
+            manager.Split(split, part1, part2, 15);
+            manager.Relate(split, dependant);
+            Assert.IsTrue(dependant.Start == 22);
+            Assert.IsTrue(part2.End == 21);
+            Assert.IsTrue(split.End == 21);
+
+            // test: adjust part2 duration beyond dependant start
+            manager.SetEnd(part2, 25);
+            Assert.IsTrue(dependant.Start == 26);
+            Assert.IsTrue(part2.End == 25);
+            Assert.IsTrue(split.End == 25);
+        }
+        [TestMethod]
+        public void SplitPartWithDependantAndAdjustDependantStart()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            var dependant = new Task();
+            manager.Add(split);
+            manager.Add(dependant);
+
+            // setup: create a dependant on the split task
+            manager.SetDuration(split, 20);
+            manager.SetDuration(dependant, 7);
+            manager.Relate(split, dependant);
+            Assert.IsTrue(dependant.Start == 21);
+
+            // test: split and dependant should be pushed forward due to interrupt
+            manager.Split(split, part1, part2, 15);
+            Assert.IsTrue(dependant.Start == 22);
+            Assert.IsTrue(part2.End == 21);
+            Assert.IsTrue(split.End == 21);
+        }
+
+        [TestMethod]
         public void SetSplitTaskStartMaintainPartsRelativeSchedule()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();

@@ -10,11 +10,11 @@ Email: jakesee@gmail.com
 =============================
 CHANGE LOG
 =============================
-5 Sep 2012
+5 Sep 2012 v1.3.0.0(tagged)
 - Added feature to split tasks and join tasks
 - Added mouse commands for split and join tasks
 - Added view instructions toggle
-- Added associated unit tests. (117 total)
+- Added associated unit tests. (119 total)
 - Task bars are now aligned to the middle of the chart rows
 
 3 Sep 2012 v1.2.0.2 (tagged)

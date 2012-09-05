@@ -62,6 +62,8 @@ namespace Braincase.GanttChart
             _mManager.SetDuration(clothes, 4);
             _mManager.SetDuration(hair, 3);
             _mManager.SetDuration(pack, 5);
+
+            // demostrate splitting a task
             _mManager.Split(pack, new MyTask(_mManager), new MyTask(_mManager), 2);
 
             // Set task complete status, e.g. using newly created properties
@@ -103,11 +105,9 @@ namespace Braincase.GanttChart
             _mManager.Assign(shower, lucas);
             _mManager.Assign(shower, john);
 
-            // Initialize the Chart with our ProjectManager
+            // Initialize the Chart with our ProjectManager and CreateTaskDelegate
             _mChart.Init(_mManager);
             _mChart.CreateTaskDelegate = delegate() { return new MyTask(_mManager); };
-            _mChart.BarHeight = 15;
-            _mChart.BarSpacing = 19;
 
             // Attach event listeners for events we are interested in
             _mChart.TaskMouseOver += new EventHandler<TaskMouseEventArgs>(_mChart_TaskMouseOver);

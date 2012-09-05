@@ -251,8 +251,15 @@ namespace Braincase.GanttChart
         public bool TryGetRow(Task task, out int row)
         {
             row = 0;
-            if (_mChartTaskRects.ContainsKey(task))
+            if (_mChartTaskHitRects.ContainsKey(task))
             {
+                // collection contains parts
+                row = _ChartCoordToChartRow(_mChartTaskHitRects[task].Top);
+                return true;
+            }
+            else if (_mChartTaskRects.ContainsKey(task))
+            {
+                // collectino contains splits
                 row = _ChartCoordToChartRow(_mChartTaskRects[task].Top);
                 return true;
             }
@@ -270,7 +277,7 @@ namespace Braincase.GanttChart
             task = null;
             if (row > 0 && row < _mProject.Tasks.Count())
             {
-                task = _mProject.Tasks.ElementAtOrDefault(row - 1);
+                task = _mChartTaskRects.ElementAtOrDefault(row - 1).Key;
                 return true;
             }
             return false;
@@ -564,9 +571,11 @@ namespace Braincase.GanttChart
 
             this.Cursor = Cursors.Hand;
 
-            if (_mTaskToolTip.ContainsKey(e.Task))
+            var task = e.Task;
+            if (_mProject.IsPart(e.Task)) task = _mProject.SplitTaskOf(task);
+            if (_mTaskToolTip.ContainsKey(task))
             {
-                _mOverlay.ShowToolTip(_mViewport.DeviceToWorldCoord(e.Location), _mTaskToolTip[e.Task]);
+                _mOverlay.ShowToolTip(_mViewport.DeviceToWorldCoord(e.Location), _mTaskToolTip[task]);
                 this.Invalidate();
             }
         }
