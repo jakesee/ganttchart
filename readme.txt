@@ -14,7 +14,8 @@ CHANGE LOG
 - Added feature to split tasks and join tasks
 - Added mouse commands for split and join tasks
 - Added view instructions toggle
-- Added associated unit tests
+- Added associated unit tests. (117 total)
+- Task bars are now aligned to the middle of the chart rows
 
 3 Sep 2012 v1.2.0.2 (tagged)
 - Added save and open binary serializer in example application
@@ -64,11 +65,11 @@ CHANGE LOG
 =============================
 ISSUE TRACKER
 =============================
+- Middle align tasks (COMPLETE)
+- Split Tasks (BETA) 5 Sep 2012
 - Option to disable/enable mouse commands (lock chart)
-- Middle align tasks
 - Option to draw horizontal row lines
 - Add support down to hour
-- Split Tasks (COMPLETED)
 - Task schedule conflict events
 	- dependant start earlier than precedent end
 	- precedent end later than dependant start
@@ -76,4 +77,5 @@ ISSUE TRACKER
 - ProjectManager option to scale task schedules according to timescale changes
 - Collapsable rows
 - Resizable row heights
+- Print Page headers, page number etc.
 - PERT Chart

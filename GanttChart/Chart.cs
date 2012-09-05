@@ -75,6 +75,11 @@ namespace Braincase.GanttChart
         }
 
         /// <summary>
+        /// Delegate method for creating a new Task. Creates Task by default.
+        /// </summary>
+        public Func<Task> CreateTaskDelegate = delegate() { return new Task(); };
+
+        /// <summary>
         /// Get the selected tasks
         /// </summary>
         public IEnumerable<Task> SelectedTasks
@@ -655,8 +660,10 @@ namespace Braincase.GanttChart
                     {
                         // insert
                         int from;
-                        if (this.TryGetRow(e.Source, out from))
-                            _mProject.Move(e.Source, e.Row - from);
+                        Task source = e.Source;
+                        if(_mProject.IsPart(source)) source = _mProject.SplitTaskOf(source);
+                        if (this.TryGetRow(source, out from))
+                            _mProject.Move(source, e.Row - from);
                     }
                     else
                     {
@@ -673,13 +680,15 @@ namespace Braincase.GanttChart
                     }
                     else if (Control.ModifierKeys.HasFlag(Keys.Alt))
                     {
-                        if (_mProject.ParentOf(e.Source) == e.Target)
+                        var source = e.Source;
+                        if (_mProject.IsPart(source)) source = _mProject.SplitTaskOf(source);
+                        if (_mProject.ParentOf(source) == e.Target)
                         {
-                            _mProject.Ungroup(e.Source);
+                            _mProject.Ungroup(e.Target, e.Source);
                         }
                         else
                         {
-                            _mProject.Unrelate(e.Target, e.Source);
+                            _mProject.Unrelate(e.Target, source);
                         }
                     }
                     else
@@ -730,7 +739,7 @@ namespace Braincase.GanttChart
             {
                 if (ModifierKeys.HasFlag(Keys.Shift))
                 {
-                    var newtask = new Task();
+                    var newtask = CreateTaskDelegate();
                     _mProject.Add(newtask);
                     _mProject.SetStart(newtask, e.Task.Start);
                     _mProject.SetDuration(newtask, 5);
@@ -759,7 +768,7 @@ namespace Braincase.GanttChart
             {
                 int duration = (int)((_mViewport.DeviceToWorldCoord(e.Location).X - e.Rectangle.Left) / this.BarWidth);
                 if (_mProject.IsPart(e.Task)) _mProject.Split(e.Task, new Task(), duration);
-                else _mProject.Split(e.Task, new Task(), new Task(), duration);
+                else _mProject.Split(e.Task, CreateTaskDelegate(), CreateTaskDelegate(), duration);
             }
 
             this.Invalidate();
@@ -935,7 +944,7 @@ namespace Braincase.GanttChart
             {
                 if (!_mProject.AncestorsOf(task).Any(x => x.IsCollapsed))
                 {
-                    int y_coord = row * this.BarSpacing + this.HeaderTwoHeight + this.HeaderOneHeight;
+                    int y_coord = row * this.BarSpacing + this.HeaderTwoHeight + this.HeaderOneHeight + (this.BarSpacing - this.BarHeight) / 2;
                     RectangleF taskRect;
 
                     // Compute task rectangle
@@ -986,7 +995,7 @@ namespace Braincase.GanttChart
         {
             // only generate the necessary headers by determining of current viewport location
             var h1Rect = new RectangleF(_mViewport.X, _mViewport.Y, _mViewport.Rectangle.Width, this.HeaderOneHeight);
-            var h2Rect = new RectangleF(h1Rect.Left, h1Rect.Bottom, _mViewport.Rectangle.Width, this.BarHeight);
+            var h2Rect = new RectangleF(h1Rect.Left, h1Rect.Bottom, _mViewport.Rectangle.Width, this.HeaderTwoHeight);
             var h1LabelRects = new List<RectangleF>();
             var h2LabelRects = new List<RectangleF>();
             var columns = new List<RectangleF>();
@@ -1067,9 +1076,6 @@ namespace Braincase.GanttChart
 
                 // draw bar charts
                 row = this._DrawTasks(graphics, clipRect);
-
-                // Draw Task Parts
-                _DrawTaskParts(graphics);
 
                 // draw predecessor arrows
                 if (this.ShowRelations)
@@ -1214,6 +1220,8 @@ namespace Braincase.GanttChart
             var viewRect = _mViewport.Rectangle;
             int row = 0;
             var crit_task_set = new HashSet<Task>(_mProject.CriticalPaths.SelectMany(x => x));
+            var pen = new Pen(Color.Gray);
+            pen.DashStyle = DashStyle.Dot;
             TaskPaintEventArgs e;
             foreach (var task in _mChartTaskRects.Keys)
             {
@@ -1229,34 +1237,15 @@ namespace Braincase.GanttChart
                     else e = new TaskPaintEventArgs(graphics, clipRect, this, task, row, critical, this.Font, this.TaskFormat);
                     if (PaintTask != null) PaintTask(this, e);
 
-                    // Draw task bar
-                    if (viewRect.IntersectsWith(taskrect) && !_mProject.IsSplit(task))
+                    if (viewRect.IntersectsWith(taskrect))
                     {
-                        var fill = taskrect;
-                        fill.Width = (int)(fill.Width * task.Complete);
-                        graphics.FillRectangle(e.Format.BackFill, taskrect);
-                        graphics.FillRectangle(e.Format.ForeFill, fill);
-                        graphics.DrawRectangle(e.Format.Border, taskrect);
-
-                        // check if this is a parent task / group task, then draw the bracket
-                        if (_mProject.IsGroup(task))
+                        if (_mProject.IsSplit(task))
                         {
-                            var rod = new RectangleF(taskrect.Left, taskrect.Top, taskrect.Width, taskrect.Height / 2);
-                            graphics.FillRectangle(Brushes.Black, rod);
-
-                            if (!task.IsCollapsed)
-                            {
-                                // left bracket
-                                graphics.FillPolygon(Brushes.Black, new PointF[] {
-                                new PointF() { X = taskrect.Left, Y = taskrect.Top },
-                                new PointF() { X = taskrect.Left, Y = taskrect.Top + BarHeight },
-                                new PointF() { X = taskrect.Left + BarWidth, Y = taskrect.Top } });
-                                // right bracket
-                                graphics.FillPolygon(Brushes.Black, new PointF[] {
-                                new PointF() { X = taskrect.Right, Y = taskrect.Top },
-                                new PointF() { X = taskrect.Right, Y = taskrect.Top + BarHeight },
-                                new PointF() { X = taskrect.Right - BarWidth, Y = taskrect.Top } });
-                            }
+                            __DrawTaskParts(graphics, e, task, pen);
+                        }
+                        else
+                        {
+                            __DrawRegularTaskAndGroup(graphics, e, task, taskrect);
                         }
                     }
 
@@ -1327,36 +1316,57 @@ namespace Braincase.GanttChart
             }
         }
 
-        private void _DrawTaskParts(Graphics graphics)
+        private void __DrawRegularTaskAndGroup(Graphics graphics, TaskPaintEventArgs e, Task task, RectangleF taskRect)
         {
-            var pen = new Pen(Color.Gray);
-            pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
-            var viewRect = _mViewport.Rectangle;
-            foreach (var task in _mChartTaskPartRects.Keys)
+            var fill = taskRect;
+            fill.Width = (int)(fill.Width * task.Complete);
+            graphics.FillRectangle(e.Format.BackFill, taskRect);
+            graphics.FillRectangle(e.Format.ForeFill, fill);
+            graphics.DrawRectangle(e.Format.Border, taskRect);
+
+            // check if this is a parent task / group task, then draw the bracket
+            if (_mProject.IsGroup(task))
             {
-                if (viewRect.IntersectsWith(_mChartTaskRects[task]))
+                var rod = new RectangleF(taskRect.Left, taskRect.Top, taskRect.Width, taskRect.Height / 2);
+                graphics.FillRectangle(Brushes.Black, rod);
+
+                if (!task.IsCollapsed)
                 {
-                    var parts = _mChartTaskPartRects[task];
-
-                    // Draw line indicator
-                    var firstRect = parts[0].Value;
-                    var lastRect = parts[parts.Count - 1].Value;
-                    var y_coord = (firstRect.Top + firstRect.Bottom) / 2.0f;
-                    var point1 = new PointF(firstRect.Right, y_coord);
-                    var point2 = new PointF(lastRect.Left, y_coord);
-                    graphics.DrawLine(pen, point1, point2);
-
-                    // Draw Part Rectangles
-                    var taskRects = parts.Select(x => x.Value).ToArray();
-                    graphics.FillRectangles(this.TaskFormat.BackFill, taskRects);
-                    
-                    // Draw % complete indicators
-                    graphics.FillRectangles(this.TaskFormat.ForeFill, parts.Select(x => new RectangleF(x.Value.X, x.Value.Y, x.Value.Width * x.Key.Complete, x.Value.Height)).ToArray());
-
-                    // Draw border
-                    graphics.DrawRectangles(this.TaskFormat.Border, taskRects);
+                    // left bracket
+                    graphics.FillPolygon(Brushes.Black, new PointF[] {
+                                new PointF() { X = taskRect.Left, Y = taskRect.Top },
+                                new PointF() { X = taskRect.Left, Y = taskRect.Top + BarHeight },
+                                new PointF() { X = taskRect.Left + BarWidth, Y = taskRect.Top } });
+                    // right bracket
+                    graphics.FillPolygon(Brushes.Black, new PointF[] {
+                                new PointF() { X = taskRect.Right, Y = taskRect.Top },
+                                new PointF() { X = taskRect.Right, Y = taskRect.Top + BarHeight },
+                                new PointF() { X = taskRect.Right - BarWidth, Y = taskRect.Top } });
                 }
             }
+        }
+
+        private void __DrawTaskParts(Graphics graphics, TaskPaintEventArgs e, Task task, Pen pen)
+        {
+            var parts = _mChartTaskPartRects[task];
+
+            // Draw line indicator
+            var firstRect = parts[0].Value;
+            var lastRect = parts[parts.Count - 1].Value;
+            var y_coord = (firstRect.Top + firstRect.Bottom) / 2.0f;
+            var point1 = new PointF(firstRect.Right, y_coord);
+            var point2 = new PointF(lastRect.Left, y_coord);
+            graphics.DrawLine(pen, point1, point2);
+
+            // Draw Part Rectangles
+            var taskRects = parts.Select(x => x.Value).ToArray();
+            graphics.FillRectangles(e.Format.BackFill, taskRects);
+
+            // Draw % complete indicators
+            graphics.FillRectangles(e.Format.ForeFill, parts.Select(x => new RectangleF(x.Value.X, x.Value.Y, x.Value.Width * x.Key.Complete, x.Value.Height)).ToArray());
+
+            // Draw border
+            graphics.DrawRectangles(e.Format.Border, taskRects);
         }
 
         private RectangleF _TextAlignCenterMiddle(Graphics graphics, RectangleF rect, string text, Font font)

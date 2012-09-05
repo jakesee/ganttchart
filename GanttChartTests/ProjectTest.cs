@@ -397,6 +397,61 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IndexOf(g1t3) == 11, string.Format("{0} != {1}", 0, manager.IndexOf(g1t3)));
         }
 
+        [TestMethod]
+        public void MovePartBecomeMoveSplitTask()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var one = new Task();
+            var two = new Task();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            manager.Add(one);
+            manager.Add(two);
+            manager.Add(split);
+
+            // setup: create split task
+            manager.Split(split, part1, part2, 1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(manager.IndexOf(one) == 0);
+            Assert.IsTrue(manager.IndexOf(two) == 1);
+            Assert.IsTrue(manager.IndexOf(split) == 2);
+            Assert.IsTrue(manager.IndexOf(part1) == -1);
+            Assert.IsTrue(manager.IndexOf(part2) == -1);
+
+            // test: move part and expect split task to move instead
+            manager.Move(split, -1);
+            Assert.IsTrue(manager.IndexOf(one) == 0);
+            Assert.IsTrue(manager.IndexOf(split) == 1);
+            Assert.IsTrue(manager.IndexOf(two) == 2);
+
+            // test: move again
+            manager.Move(split, -1);
+            Assert.IsTrue(manager.IndexOf(split) == 0);
+            Assert.IsTrue(manager.IndexOf(one) == 1);
+            Assert.IsTrue(manager.IndexOf(two) == 2);
+
+            // test: move again (no effect, reached the top)
+            manager.Move(split, -1);
+            Assert.IsTrue(manager.IndexOf(split) == 0);
+            Assert.IsTrue(manager.IndexOf(one) == 1);
+            Assert.IsTrue(manager.IndexOf(two) == 2);
+
+            // test: move down
+            manager.Move(split, 1);
+            Assert.IsTrue(manager.IndexOf(one) == 0);
+            Assert.IsTrue(manager.IndexOf(split) == 1);
+            Assert.IsTrue(manager.IndexOf(two) == 2);
+
+            // test: move out of bounds
+            manager.Move(split, 2);
+            Assert.IsTrue(manager.IndexOf(one) == 0);
+            Assert.IsTrue(manager.IndexOf(two) == 1);
+            Assert.IsTrue(manager.IndexOf(split) == 2);
+        }
+
         #region groups
 
         [TestMethod]
@@ -636,10 +691,63 @@ namespace GanttChartTests
         }
 
         [TestMethod]
+        public void UngroupPartShouldUngroupSplitTask()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            var group = new Task();
+            manager.Add(group);
+            manager.Add(split);
+
+            // setup: create a group and split under it
+            manager.Split(split, part1, part2, 1);
+            manager.Group(group, part1); // intentionall group using part
+            Assert.IsTrue(manager.IsGroup(group));
+            Assert.IsTrue(manager.IsMember(split));
+            Assert.IsTrue(!manager.IsMember(part1));
+            Assert.IsTrue(!manager.IsMember(part2));
+
+            // test: ungroup part should ungroup split task
+            manager.Ungroup(group, part2);
+            Assert.IsTrue(!manager.IsGroup(group));
+            Assert.IsTrue(!manager.IsMember(split));
+            Assert.IsTrue(!manager.IsMember(part1));
+            Assert.IsTrue(!manager.IsMember(part2));
+        }
+        [TestMethod]
+        public void AdjustGroupDurationOnUngroup()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            var group = new Task();
+            var task = new Task();
+            manager.Add(group);
+            manager.Add(split);
+            manager.Add(task);
+
+            // setup: create a group and split under it
+            manager.Split(split, part1, part2, 1);
+            manager.Group(group, part1); // intentionall group using part
+            manager.Group(group, task);
+            manager.SetDuration(part1, 30);
+            manager.SetDuration(part2, 15);
+            manager.SetDuration(task, 20);
+            manager.SetStart(task, 50);
+            Assert.IsTrue(group.Duration == 70);
+
+            // test: ungroup part should ungroup split task
+            manager.Ungroup(group, part1);
+            Assert.IsTrue(group.Duration == 20);
+        }
+
+        [TestMethod]
         public void GroupNullTaskIntoGroup()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
-            
             var group1 = new Task();
             manager.Add(group1);
 
@@ -920,13 +1028,13 @@ namespace GanttChartTests
         public void GroupTaskLevelAndOrdering()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
-            
-            var zero = new Task();
-            var one = new Task();
-            var two = new Task();
-            var three = new Task();
-            var four = new Task();
-            var five = new Task();
+
+            var zero = new Task() { Name = "zero" };
+            var one = new Task() { Name = "one" };
+            var two = new Task() { Name = "two" };
+            var three = new Task() { Name = "three" };
+            var four = new Task() { Name = "four" };
+            var five = new Task() { Name = "five" };
 
             manager.Add(zero);
             manager.Add(one);
@@ -2261,7 +2369,7 @@ namespace GanttChartTests
         }
 
         [TestMethod]
-        public void CannotGroupParts()
+        public void GroupPartsBecomeGroupSplitTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
             var split = new Task() { Name = "split" };
@@ -2282,7 +2390,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IsGroup(group));
             Assert.IsTrue(manager.IsMember(task));
 
-            // test: group part into task (no effect);
+            // test: group part into task;
             manager.Group(group, part1);
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
@@ -2290,8 +2398,10 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IsGroup(group));
             Assert.IsTrue(manager.IsMember(task));
             Assert.IsTrue(!manager.IsMember(part1));
-            Assert.IsTrue(manager.ChildrenOf(group).Count() == 1);
+            Assert.IsTrue(manager.IsMember(split));
+            Assert.IsTrue(manager.ChildrenOf(group).Count() == 2);
             Assert.IsTrue(manager.ChildrenOf(group).Contains(task));
+            Assert.IsTrue(manager.ChildrenOf(group).Contains(split));
 
             // test: group task into part (no effect)
             manager.Group(part1, task);
@@ -2301,10 +2411,27 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IsGroup(group));
             Assert.IsTrue(manager.IsMember(task));
             Assert.IsTrue(!manager.IsMember(part1));
-            Assert.IsTrue(manager.ChildrenOf(group).Count() == 1);
+            Assert.IsTrue(!manager.IsGroup(part1));
+            Assert.IsTrue(manager.ChildrenOf(group).Count() == 2);
             Assert.IsTrue(manager.ChildrenOf(group).Contains(task));
+            Assert.IsTrue(manager.ChildrenOf(group).Contains(split));
+        }
+        [TestMethod]
+        public void UngroupPartBecomeUngroupSplitTask()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var split = new Task() { Name = "split" };
+            var part1 = new Task() { Name = "part1" };
+            var part2 = new Task() { Name = "part2" };
+            var group = new Task() { Name = "group" };
+            var task = new Task() { Name = "task" };
+            manager.Add(split);
+            manager.Add(group);
+            manager.Add(task);
 
-            // test: group split task into group (allowed)
+            // setup: group split task into group
+            manager.Split(split, part1, part2, 2);
+            manager.Group(group, task);
             manager.Group(group, split);
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
@@ -2312,9 +2439,23 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IsGroup(group));
             Assert.IsTrue(manager.IsMember(task));
             Assert.IsTrue(!manager.IsMember(part1));
+            Assert.IsTrue(manager.IsMember(split));
             Assert.IsTrue(manager.ChildrenOf(group).Count() == 2);
             Assert.IsTrue(manager.ChildrenOf(group).Contains(task));
             Assert.IsTrue(manager.ChildrenOf(group).Contains(split));
+
+            // test: ungroup part from group
+            manager.Ungroup(group, part1);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(manager.IsGroup(group));
+            Assert.IsTrue(manager.IsMember(task));
+            Assert.IsTrue(!manager.IsMember(part1));
+            Assert.IsTrue(!manager.IsMember(split));
+            Assert.IsTrue(manager.ChildrenOf(group).Count() == 1);
+            Assert.IsTrue(manager.ChildrenOf(group).Contains(task));
+            Assert.IsTrue(!manager.ChildrenOf(group).Contains(split));
         }
 
         [TestMethod]

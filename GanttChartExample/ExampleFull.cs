@@ -105,6 +105,9 @@ namespace Braincase.GanttChart
 
             // Initialize the Chart with our ProjectManager
             _mChart.Init(_mManager);
+            _mChart.CreateTaskDelegate = delegate() { return new MyTask(_mManager); };
+            _mChart.BarHeight = 15;
+            _mChart.BarSpacing = 19;
 
             // Attach event listeners for events we are interested in
             _mChart.TaskMouseOver += new EventHandler<TaskMouseEventArgs>(_mChart_TaskMouseOver);
@@ -131,7 +134,7 @@ namespace Braincase.GanttChart
 
         void _mChart_TaskSelected(object sender, TaskMouseEventArgs e)
         {
-            _mTaskGrid.SelectedObjects = _mChart.SelectedTasks.ToArray();
+            _mTaskGrid.SelectedObjects = _mChart.SelectedTasks.Select(x => _mManager.IsPart(x) ? _mManager.SplitTaskOf(x) : x).ToArray();
             _mResourceGrid.Items.Clear();
             _mResourceGrid.Items.AddRange(_mManager.ResourcesOf(e.Task).Select(x => new ListViewItem(((MyResource)x).Name)).ToArray());
         }

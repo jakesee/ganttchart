@@ -769,6 +769,12 @@ namespace GanttChartTests
             Assert.IsTrue(part1.End == 3);
             Assert.IsTrue(part2.End == 19);
             Assert.IsTrue(part3.End == 31);
+
+            // test: increase split task end and last part adjust accordingly
+            manager.SetEnd(split, 100);
+            Assert.IsTrue(part3.End == 100);
+            Assert.IsTrue(part3.Duration == 70);
+            Assert.IsTrue(part3.Start == 30);
         }
 
         [TestMethod]
