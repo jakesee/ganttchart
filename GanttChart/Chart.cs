@@ -19,6 +19,8 @@ namespace Braincase.GanttChart
         }
     }
 
+    
+
     /// <summary>
     /// Gantt Chart control
     /// </summary>

@@ -694,6 +694,12 @@ namespace GanttChartTests
             Assert.IsTrue(dependant.Start == 26);
             Assert.IsTrue(part2.End == 25);
             Assert.IsTrue(split.End == 25);
+
+            // test: adjust part2 start such that end beyond dependant start
+            manager.SetStart(part2, 30);
+            Assert.IsTrue(dependant.Start == 40);
+            Assert.IsTrue(part2.End == 39);
+            Assert.IsTrue(split.End == 39);
         }
         [TestMethod]
         public void SplitPartWithDependantAndAdjustDependantStart()

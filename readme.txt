@@ -10,6 +10,9 @@ Email: jakesee@gmail.com
 =============================
 CHANGE LOG
 =============================
+8 Sep 2012
+- Fix issue where modifying the start time of a task part such that it ends beyond the dependant start time, does not automatically update dependant start time.
+
 5 Sep 2012 v1.3.0.0(tagged)
 - Added feature to split tasks and join tasks
 - Added mouse commands for split and join tasks

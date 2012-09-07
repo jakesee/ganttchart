@@ -1160,6 +1160,8 @@ namespace Braincase.GanttChart
             split.Start = parts.First().Start; // recalculate the split task
             split.End = parts.Last().End;
             split.Duration = split.End - split.Start;
+
+            _RecalculateDependantsOf(split);
         }
 
         private void _SetPartEndHelper(T part, int value)

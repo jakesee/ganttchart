@@ -8,17 +8,58 @@ using System.Drawing.Drawing2D;
 
 namespace Braincase.GanttChart
 {
+    /// <summary>
+    /// IViewport moves in world coordinate and projects models to device coordinate space
+    /// </summary>
     interface IViewport
     {
+        /// <summary>
+        /// Get the projection matrix to transform world coordinates to device coordinates
+        /// </summary>
         Matrix Projection { get; }
+        /// <summary>
+        /// Get the rectangle boundary of the viewport in world coordinates
+        /// </summary>
         RectangleF Rectangle { get; }
+        /// <summary>
+        /// Request viewport to recalculate its get properties.
+        /// </summary>
         void Resize();
+        /// <summary>
+        /// Convert device coordinates to world coordinates
+        /// </summary>
+        /// <param name="screencoord"></param>
+        /// <returns></returns>
         PointF DeviceToWorldCoord(Point screencoord);
+        /// <summary>
+        /// Convert device coordinates to world coordinates
+        /// </summary>
+        /// <param name="screencoord"></param>
+        /// <returns></returns>
         PointF DeviceToWorldCoord(PointF screencoord);
-        float WorldHeight { get; set; }
+        /// <summary>
+        /// Convert world coordinates to device coordinates
+        /// </summary>
+        /// <param name="worldcoord"></param>
+        /// <returns></returns>
         PointF WorldToDeviceCoord(PointF worldcoord);
+        /// <summary>
+        /// Get or set the world height
+        /// </summary>
+        float WorldHeight { get; set; }
+        /// <summary>
+        /// Get or set the world width
+        /// </summary>
         float WorldWidth { get; set; }
+        /// <summary>
+        /// Get or set the X world-coordinate of the position of the viewport.
+        /// This is also the same as the IViewport.Rectangle.Left.
+        /// </summary>
         float X { get; set; }
+        /// <summary>
+        /// Get or set the Y world-coordinate of the position of the viewport.
+        /// This is also the same as the IViewport.Rectangle.Top.
+        /// </summary>
         float Y { get; set; }
     }
 
@@ -131,7 +172,6 @@ namespace Braincase.GanttChart
 
         int _mDeviceWidth, _mDeviceHeight;
         int _mMarginLeft, _mMarginTop;
-
         float _mScale = 1.0f;
     }
 
