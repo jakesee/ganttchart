@@ -47,7 +47,7 @@ namespace Braincase.GanttChart
 
             // Create another 1000 tasks for stress testing
             Random rand = new Random();
-            for (int i = 0; i < 50; i++)
+            for (int i = 0; i < 1000; i++)
             {
                 var task = new MyTask(_mManager) { Name = string.Format("New Task {0}", i.ToString()) };
                 _mManager.Add(task);

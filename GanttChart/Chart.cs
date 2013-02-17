@@ -19,8 +19,6 @@ namespace Braincase.GanttChart
         }
     }
 
-    
-
     /// <summary>
     /// Gantt Chart control
     /// </summary>
@@ -374,6 +372,19 @@ namespace Braincase.GanttChart
         {
             if (task != null && text != string.Empty)
                 _mTaskToolTip[task] = text;
+        }
+        /// <summary>
+        /// Get tool tip currently set for the specified task
+        /// </summary>
+        /// <param name="task"></param>
+        /// <param name="text"></param>
+        /// <returns></returns>
+        public string GetToolTip(Task task)
+        {
+            if (task != null)
+                return _mTaskToolTip[task];
+            else
+                return string.Empty;
         }
 
         /// <summary>
@@ -1232,6 +1243,7 @@ namespace Braincase.GanttChart
             int row = 0;
             var crit_task_set = new HashSet<Task>(_mProject.CriticalPaths.SelectMany(x => x));
             var pen = new Pen(Color.Gray);
+            float labelMargin = this.BarWidth / 2.0f + 3.0f;
             pen.DashStyle = DashStyle.Dot;
             TaskPaintEventArgs e;
             foreach (var task in _mChartTaskRects.Keys)
@@ -1264,7 +1276,7 @@ namespace Braincase.GanttChart
                     if (this.ShowTaskLabels && task.Name != string.Empty)
                     {
                         var name = task.Name;
-                        var txtrect = _TextAlignLeftMiddle(graphics, taskrect, name, e.Font);
+                        var txtrect = _TextAlignLeftMiddle(graphics, taskrect, name, e.Font, labelMargin);
                         txtrect.Offset(taskrect.Width, 0);
                         if (viewRect.IntersectsWith(txtrect))
                         {
@@ -1310,15 +1322,24 @@ namespace Braincase.GanttChart
                             var srect = _mChartTaskRects[dependant];
                             if (precedent.End <= dependant.Start)
                             {
+                                /*
                                 var p1 = new PointF(prect.Right, prect.Top + prect.Height / 2.0f);
                                 var p2 = new PointF(srect.Left - BarWidth / 2, prect.Top + prect.Height / 2.0f);
                                 var p3 = new PointF(srect.Left - BarWidth / 2, srect.Top + srect.Height / 2.0f);
+                                var p4 = new PointF(srect.Left, srect.Top + srect.Height / 2.0f);
+                                var size = new SizeF(Math.Abs(p4.X - p1.X), Math.Abs(p4.Y - p1.Y));
+                                var linerect = p1.Y < p4.Y ? new RectangleF(p1, size) : new RectangleF(new PointF(p1.X, p1.Y - size.Height), size); 
+                                 */
+                                var p1 = new PointF(prect.Right, prect.Top + prect.Height / 2.0f);
+                                var p2 = new PointF(prect.Right + BarWidth / 2, prect.Top + prect.Height / 2.0f);
+                                var p3 = new PointF(prect.Right + BarWidth / 2, srect.Top + srect.Height / 2.0f);
                                 var p4 = new PointF(srect.Left, srect.Top + srect.Height / 2.0f);
                                 var size = new SizeF(Math.Abs(p4.X - p1.X), Math.Abs(p4.Y - p1.Y));
                                 var linerect = p1.Y < p4.Y ? new RectangleF(p1, size) : new RectangleF(new PointF(p1.X, p1.Y - size.Height), size);
                                 if (clipRectF.IntersectsWith(linerect))
                                 {
                                     graphics.DrawLines(Pens.Black, new PointF[] { p1, p2, p3, p4 });
+                                    graphics.FillRectangle(Brushes.Black, p3.X - 1.5f, p3.Y - 1.5f, 3, 3);
                                 }
                             }
                         }
@@ -1767,5 +1788,17 @@ namespace Braincase.GanttChart
             DateTime = dateTime;
             Task = task;
         }
+    }
+
+    public class Row
+    {
+        public int Index { get; set; }
+        public float Height { get; set; }
+    }
+
+    public class Column
+    {
+        public int Index { get; set; }
+        public DateTime DateTime { get; set; }
     }
 }

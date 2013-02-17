@@ -10,6 +10,9 @@ Email: jakesee@gmail.com
 =============================
 CHANGE LOG
 =============================
+17 Feb 2013
+- Added method to GetToolTip for a specified task
+
 8 Sep 2012
 - Fix issue where modifying the start time of a task part such that it ends beyond the dependant start time, does not automatically update dependant start time.
 

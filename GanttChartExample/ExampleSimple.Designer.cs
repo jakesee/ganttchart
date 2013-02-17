@@ -33,12 +33,10 @@
             // 
             // _mChart
             // 
-            this._mChart.BarHeight = 20;
-            this._mChart.BarSpacing = 26;
-            this._mChart.BarWidth = 20;
             this._mChart.Dock = System.Windows.Forms.DockStyle.Fill;
             this._mChart.Font = new System.Drawing.Font("Segoe UI", 9F);
             this._mChart.Location = new System.Drawing.Point(0, 0);
+            this._mChart.Margin = new System.Windows.Forms.Padding(0);
             this._mChart.Name = "_mChart";
             this._mChart.Size = new System.Drawing.Size(671, 496);
             this._mChart.TabIndex = 0;
