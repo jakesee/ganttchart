@@ -10,7 +10,7 @@ Email: jakesee@gmail.com
 =============================
 CHANGE LOG
 =============================
-17 Feb 2013
+17 Feb 2013 v1.3.0.2(tagged)
 - Added method to GetToolTip for a specified task
 
 8 Sep 2012

@@ -73,12 +73,12 @@
             this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
             this.mnuViewRelationships = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuViewSlack = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem6 = new System.Windows.Forms.ToolStripSeparator();
+            this.mnuViewIntructions = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuHelpAbout = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.lblStatus = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripMenuItem6 = new System.Windows.Forms.ToolStripSeparator();
-            this.mnuViewIntructions = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this._mSplitter1)).BeginInit();
             this._mSplitter1.Panel1.SuspendLayout();
             this._mSplitter1.Panel2.SuspendLayout();
@@ -153,10 +153,10 @@
             this.tabPage2.Controls.Add(this.groupBox3);
             this.tabPage2.Controls.Add(this.groupBox2);
             this.tabPage2.Controls.Add(this.groupBox1);
-            this.tabPage2.Location = new System.Drawing.Point(4, 22);
+            this.tabPage2.Location = new System.Drawing.Point(4, 24);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(229, 638);
+            this.tabPage2.Size = new System.Drawing.Size(229, 636);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Timeline";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -224,10 +224,10 @@
             // tabPage3
             // 
             this.tabPage3.Controls.Add(this._mResourceGrid);
-            this.tabPage3.Location = new System.Drawing.Point(4, 22);
+            this.tabPage3.Location = new System.Drawing.Point(4, 24);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(229, 638);
+            this.tabPage3.Size = new System.Drawing.Size(229, 636);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Resources";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -239,7 +239,7 @@
             this._mResourceGrid.Dock = System.Windows.Forms.DockStyle.Fill;
             this._mResourceGrid.Location = new System.Drawing.Point(3, 3);
             this._mResourceGrid.Name = "_mResourceGrid";
-            this._mResourceGrid.Size = new System.Drawing.Size(223, 632);
+            this._mResourceGrid.Size = new System.Drawing.Size(223, 630);
             this._mResourceGrid.TabIndex = 0;
             this._mResourceGrid.UseCompatibleStateImageBehavior = false;
             this._mResourceGrid.View = System.Windows.Forms.View.List;
@@ -441,65 +441,79 @@
             this.mnuViewDays.Checked = true;
             this.mnuViewDays.CheckState = System.Windows.Forms.CheckState.Checked;
             this.mnuViewDays.Name = "mnuViewDays";
-            this.mnuViewDays.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewDays.Size = new System.Drawing.Size(149, 22);
             this.mnuViewDays.Text = "Days";
             this.mnuViewDays.Click += new System.EventHandler(this.mnuViewDays_Click);
             // 
             // mnuViewWeek
             // 
             this.mnuViewWeek.Name = "mnuViewWeek";
-            this.mnuViewWeek.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewWeek.Size = new System.Drawing.Size(149, 22);
             this.mnuViewWeek.Text = "Weeks";
             this.mnuViewWeek.Click += new System.EventHandler(this.mnuViewWeek_Click);
             // 
             // toolStripMenuItem5
             // 
             this.toolStripMenuItem5.Name = "toolStripMenuItem5";
-            this.toolStripMenuItem5.Size = new System.Drawing.Size(149, 6);
+            this.toolStripMenuItem5.Size = new System.Drawing.Size(146, 6);
             // 
             // mnuViewDayOfWeek
             // 
             this.mnuViewDayOfWeek.Checked = true;
             this.mnuViewDayOfWeek.CheckState = System.Windows.Forms.CheckState.Checked;
             this.mnuViewDayOfWeek.Name = "mnuViewDayOfWeek";
-            this.mnuViewDayOfWeek.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewDayOfWeek.Size = new System.Drawing.Size(149, 22);
             this.mnuViewDayOfWeek.Text = "Day Of Week";
             this.mnuViewDayOfWeek.Click += new System.EventHandler(this.mnuViewDayOfWeek_Click);
             // 
             // mnuViewDayOfMonth
             // 
             this.mnuViewDayOfMonth.Name = "mnuViewDayOfMonth";
-            this.mnuViewDayOfMonth.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewDayOfMonth.Size = new System.Drawing.Size(149, 22);
             this.mnuViewDayOfMonth.Text = "Day Of Month";
             this.mnuViewDayOfMonth.Click += new System.EventHandler(this.mnuViewDayOfMonth_Click);
             // 
             // mnuViewWeekOfYear
             // 
             this.mnuViewWeekOfYear.Name = "mnuViewWeekOfYear";
-            this.mnuViewWeekOfYear.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewWeekOfYear.Size = new System.Drawing.Size(149, 22);
             this.mnuViewWeekOfYear.Text = "Week Of Year";
             this.mnuViewWeekOfYear.Click += new System.EventHandler(this.mnuViewWeekOfYear_Click);
             // 
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(149, 6);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(146, 6);
             // 
             // mnuViewRelationships
             // 
             this.mnuViewRelationships.Checked = true;
             this.mnuViewRelationships.CheckState = System.Windows.Forms.CheckState.Checked;
             this.mnuViewRelationships.Name = "mnuViewRelationships";
-            this.mnuViewRelationships.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewRelationships.Size = new System.Drawing.Size(149, 22);
             this.mnuViewRelationships.Text = "Relationships";
             this.mnuViewRelationships.Click += new System.EventHandler(this.mnuViewRelationships_Click);
             // 
             // mnuViewSlack
             // 
             this.mnuViewSlack.Name = "mnuViewSlack";
-            this.mnuViewSlack.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewSlack.Size = new System.Drawing.Size(149, 22);
             this.mnuViewSlack.Text = "Slack";
             this.mnuViewSlack.Click += new System.EventHandler(this.mnuViewSlack_Click);
+            // 
+            // toolStripMenuItem6
+            // 
+            this.toolStripMenuItem6.Name = "toolStripMenuItem6";
+            this.toolStripMenuItem6.Size = new System.Drawing.Size(146, 6);
+            // 
+            // mnuViewIntructions
+            // 
+            this.mnuViewIntructions.Checked = true;
+            this.mnuViewIntructions.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.mnuViewIntructions.Name = "mnuViewIntructions";
+            this.mnuViewIntructions.Size = new System.Drawing.Size(149, 22);
+            this.mnuViewIntructions.Text = "Instructions";
+            this.mnuViewIntructions.Click += new System.EventHandler(this.mnuViewIntructions_Click);
             // 
             // helpToolStripMenuItem
             // 
@@ -531,20 +545,6 @@
             this.lblStatus.Name = "lblStatus";
             this.lblStatus.Size = new System.Drawing.Size(814, 17);
             this.lblStatus.Spring = true;
-            // 
-            // toolStripMenuItem6
-            // 
-            this.toolStripMenuItem6.Name = "toolStripMenuItem6";
-            this.toolStripMenuItem6.Size = new System.Drawing.Size(149, 6);
-            // 
-            // mnuViewIntructions
-            // 
-            this.mnuViewIntructions.Checked = true;
-            this.mnuViewIntructions.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.mnuViewIntructions.Name = "mnuViewIntructions";
-            this.mnuViewIntructions.Size = new System.Drawing.Size(152, 22);
-            this.mnuViewIntructions.Text = "Instructions";
-            this.mnuViewIntructions.Click += new System.EventHandler(this.mnuViewIntructions_Click);
             // 
             // ExampleFull
             // 
