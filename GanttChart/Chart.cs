@@ -108,6 +108,12 @@ namespace Braincase.GanttChart
         public int HeaderOneHeight { get; set; }
 
         /// <summary>
+        /// Get or set the DateTime string format. Default value is D/M/YYYY
+        /// </summary>
+        [DefaultValue("D/M/YYYY")]
+        public string FullDateStringFormat { get; set; }
+
+        /// <summary>
         /// Get or set header2 pixel height
         /// </summary>
         [DefaultValue(20)]
@@ -1199,7 +1205,7 @@ namespace Braincase.GanttChart
                     var columnsinlabel = _mProject.TimeScale == TimeScale.Day ? 7 : 1;
                     h1labelrect = new RectangleF(h2labelrect.X, _mViewport.Y, columnsinlabel * BarWidth, this.HeaderOneHeight);
                     var h1textrect = _TextAlignLeftMiddle(graphics, h1labelrect, date.ToShortDateString(), e.Font, h2textrect.X - h2labelrect.X);
-                    graphics.DrawString(date.ToShortDateString(), e.Font, e.Format.Color, h1textrect);
+                    graphics.DrawString(date.ToString(this.FullDateStringFormat), e.Font, e.Format.Color, h1textrect);
                     __DrawMarker(graphics, (h2labelrect.Left + h2labelrect.Right) / 2f, _mHeaderInfo.H1Rect.Bottom - 5f);
                 }
             }
