@@ -1,5 +1,5 @@
 .NET C# Winforms Gantt Chart Control
-Copyright 2012 Jake See 
+Copyright 2013 Jake See 
 
 Blog: http://www.jakesee.com/net-c-winforms-gantt-chart-control/
 Doxygen Documentation: http://jakesee.com/docs/ganttchart/
@@ -10,6 +10,9 @@ Email: jakesee@gmail.com
 =============================
 CHANGE LOG
 =============================
+11 Aug 2013 v1.3.0.3
+- Added funcationality and example to print to image
+
 17 Feb 2013 v1.3.0.2(tagged)
 - Added method to GetToolTip for a specified task
 
