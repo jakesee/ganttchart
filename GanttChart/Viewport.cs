@@ -482,12 +482,12 @@ namespace Braincase.GanttChart
         public float WorldWidth { get; set; }
 
         /// <summary>
-        /// No effect of ImageViewport. X and Y world-coordinate offset is always at (0,0).
+        /// No effect for ImageViewport. X and Y world-coordinate offset is always at (0,0).
         /// </summary>
         public float X { get; set; }
 
         /// <summary>
-        /// No effect of ImageViewport. X and Y world-coordinate offset is always at (0,0).
+        /// No effect for ImageViewport. X and Y world-coordinate offset is always at (0,0).
         /// </summary>
         public float Y { get; set; }
     }

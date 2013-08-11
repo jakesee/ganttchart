@@ -67,12 +67,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ExampleGanttTreeView.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="ExampleGanttTreeView.Designer.cs">
-      <DependentUpon>ExampleGanttTreeView.cs</DependentUpon>
-    </Compile>
     <Compile Include="ExampleSimple.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -87,9 +81,6 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <EmbeddedResource Include="ExampleGanttTreeView.resx">
-      <DependentUpon>ExampleGanttTreeView.cs</DependentUpon>
-    </EmbeddedResource>
     <EmbeddedResource Include="ExampleSimple.resx">
       <DependentUpon>ExampleSimple.cs</DependentUpon>
     </EmbeddedResource>
