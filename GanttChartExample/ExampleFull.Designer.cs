@@ -61,6 +61,10 @@
             this.mnuFilePrint50 = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuFilePrint25 = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuFilePrint10 = new System.Windows.Forms.ToolStripMenuItem();
+            this.printImageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuFileImgPrint100 = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuFileImgPrint50 = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuFileImgPrint10 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
             this.mnuFileExit = new System.Windows.Forms.ToolStripMenuItem();
             this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -285,6 +289,7 @@
             this._mChart.AllowTaskDragDrop = false;
             this._mChart.Dock = System.Windows.Forms.DockStyle.Fill;
             this._mChart.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this._mChart.FullDateStringFormat = null;
             this._mChart.Location = new System.Drawing.Point(0, 0);
             this._mChart.Margin = new System.Windows.Forms.Padding(0);
             this._mChart.Name = "_mChart";
@@ -313,6 +318,7 @@
             this.mnuFileOpen,
             this.toolStripMenuItem4,
             this.mnuFilePrint,
+            this.printImageToolStripMenuItem,
             this.toolStripMenuItem1,
             this.mnuFileExit});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
@@ -322,33 +328,33 @@
             // mnuFileNew
             // 
             this.mnuFileNew.Name = "mnuFileNew";
-            this.mnuFileNew.Size = new System.Drawing.Size(306, 22);
+            this.mnuFileNew.Size = new System.Drawing.Size(365, 22);
             this.mnuFileNew.Text = "New";
             this.mnuFileNew.Click += new System.EventHandler(this.mnuFileNew_Click);
             // 
             // toolStripMenuItem3
             // 
             this.toolStripMenuItem3.Name = "toolStripMenuItem3";
-            this.toolStripMenuItem3.Size = new System.Drawing.Size(303, 6);
+            this.toolStripMenuItem3.Size = new System.Drawing.Size(362, 6);
             // 
             // mnuFileSave
             // 
             this.mnuFileSave.Name = "mnuFileSave";
-            this.mnuFileSave.Size = new System.Drawing.Size(306, 22);
+            this.mnuFileSave.Size = new System.Drawing.Size(365, 22);
             this.mnuFileSave.Text = "Save...";
             this.mnuFileSave.Click += new System.EventHandler(this.mnuFileSave_Click);
             // 
             // mnuFileOpen
             // 
             this.mnuFileOpen.Name = "mnuFileOpen";
-            this.mnuFileOpen.Size = new System.Drawing.Size(306, 22);
+            this.mnuFileOpen.Size = new System.Drawing.Size(365, 22);
             this.mnuFileOpen.Text = "Open...";
             this.mnuFileOpen.Click += new System.EventHandler(this.mnuFileOpen_Click);
             // 
             // toolStripMenuItem4
             // 
             this.toolStripMenuItem4.Name = "toolStripMenuItem4";
-            this.toolStripMenuItem4.Size = new System.Drawing.Size(303, 6);
+            this.toolStripMenuItem4.Size = new System.Drawing.Size(362, 6);
             // 
             // mnuFilePrint
             // 
@@ -361,8 +367,8 @@
             this.mnuFilePrint25,
             this.mnuFilePrint10});
             this.mnuFilePrint.Name = "mnuFilePrint";
-            this.mnuFilePrint.Size = new System.Drawing.Size(306, 22);
-            this.mnuFilePrint.Text = "Print (Printing to PDF is advised for this test)";
+            this.mnuFilePrint.Size = new System.Drawing.Size(365, 22);
+            this.mnuFilePrint.Text = "Print Document (Printing to PDF is advised for this test)";
             // 
             // mnuFilePrint200
             // 
@@ -406,15 +412,43 @@
             this.mnuFilePrint10.Size = new System.Drawing.Size(102, 22);
             this.mnuFilePrint10.Text = "10%";
             // 
+            // printImageToolStripMenuItem
+            // 
+            this.printImageToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.mnuFileImgPrint100,
+            this.mnuFileImgPrint50,
+            this.mnuFileImgPrint10});
+            this.printImageToolStripMenuItem.Name = "printImageToolStripMenuItem";
+            this.printImageToolStripMenuItem.Size = new System.Drawing.Size(365, 22);
+            this.printImageToolStripMenuItem.Text = "Print Image (Warning: Large file sizes)";
+            // 
+            // mnuFileImgPrint100
+            // 
+            this.mnuFileImgPrint100.Name = "mnuFileImgPrint100";
+            this.mnuFileImgPrint100.Size = new System.Drawing.Size(152, 22);
+            this.mnuFileImgPrint100.Text = "100% (707 MB)";
+            // 
+            // mnuFileImgPrint50
+            // 
+            this.mnuFileImgPrint50.Name = "mnuFileImgPrint50";
+            this.mnuFileImgPrint50.Size = new System.Drawing.Size(102, 22);
+            this.mnuFileImgPrint50.Text = "50%";
+            // 
+            // mnuFileImgPrint10
+            // 
+            this.mnuFileImgPrint10.Name = "mnuFileImgPrint10";
+            this.mnuFileImgPrint10.Size = new System.Drawing.Size(102, 22);
+            this.mnuFileImgPrint10.Text = "10%";
+            // 
             // toolStripMenuItem1
             // 
             this.toolStripMenuItem1.Name = "toolStripMenuItem1";
-            this.toolStripMenuItem1.Size = new System.Drawing.Size(303, 6);
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(362, 6);
             // 
             // mnuFileExit
             // 
             this.mnuFileExit.Name = "mnuFileExit";
-            this.mnuFileExit.Size = new System.Drawing.Size(306, 22);
+            this.mnuFileExit.Size = new System.Drawing.Size(365, 22);
             this.mnuFileExit.Text = "Exit";
             this.mnuFileExit.Click += new System.EventHandler(this.mnuFileExit_Click);
             // 
@@ -633,6 +667,10 @@
         private System.Windows.Forms.ToolStripMenuItem mnuFileOpen;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem6;
         private System.Windows.Forms.ToolStripMenuItem mnuViewIntructions;
+        private System.Windows.Forms.ToolStripMenuItem printImageToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem mnuFileImgPrint100;
+        private System.Windows.Forms.ToolStripMenuItem mnuFileImgPrint50;
+        private System.Windows.Forms.ToolStripMenuItem mnuFileImgPrint10;
 
     }
 }

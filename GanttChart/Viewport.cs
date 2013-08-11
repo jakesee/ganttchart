@@ -18,7 +18,7 @@ namespace Braincase.GanttChart
         /// </summary>
         Matrix Projection { get; }
         /// <summary>
-        /// Get the rectangle boundary of the viewport in world coordinates
+        /// Get the rectangle boundary in world coordinates to be captured and projected onto viewport
         /// </summary>
         RectangleF Rectangle { get; }
         /// <summary>
@@ -401,5 +401,94 @@ namespace Braincase.GanttChart
         RectangleF _mRectangle = RectangleF.Empty;
         Matrix _mMatrix = new Matrix();
         float _mWorldHeight, _mWorldWidth;
+    }
+
+    /// <summary>
+    /// IViewport for printing to image. The full chart in the world is printed as-is.
+    /// </summary>
+    class ImageViewport : IViewport
+    {
+        private float _mScale;
+
+        public ImageViewport(float scale, float worldWidth, float worldHeight)
+        {
+            _mScale = scale;
+            WorldWidth = worldWidth;
+            WorldHeight = worldHeight;
+        }
+
+        /// <summary>
+        /// Get the projection matrix to transform world coordinates to device coordinates
+        /// </summary>
+        public Matrix Projection
+        {
+            get
+            {
+                Matrix projection = new Matrix();
+                projection.Scale(_mScale, _mScale);
+                return projection;
+            }
+        }
+
+        /// <summary>
+        /// The device rectangle boundary in the world to capture and project onto device is the same rectangle of the world for ImageViewport
+        /// So that the entire world is projected onto the ImageViewport
+        /// </summary>
+        public RectangleF Rectangle
+        {
+            get
+            {
+                return new RectangleF(0, 0, this.WorldWidth, this.WorldHeight);
+            }
+        }
+
+        public void Resize()
+        {
+            
+        }
+
+        /// <summary>
+        /// The device and world coordinates are the same for ImageViewport
+        /// </summary>
+        public PointF DeviceToWorldCoord(Point screencoord)
+        {
+            return screencoord;
+        }
+
+        /// <summary>
+        /// The device and world coordinates are the same for ImageViewport
+        /// </summary>
+        public PointF DeviceToWorldCoord(PointF screencoord)
+        {
+            return screencoord;
+        }
+
+        /// <summary>
+        /// The device and world coordinates are the same for ImageViewport
+        /// </summary>
+        public PointF WorldToDeviceCoord(PointF worldcoord)
+        {
+            return worldcoord;
+        }
+
+        /// <summary>
+        /// Get or set the world height
+        /// </summary>
+        public float WorldHeight { get; set; }
+
+        /// <summary>
+        /// Get or set the world width
+        /// </summary>
+        public float WorldWidth { get; set; }
+
+        /// <summary>
+        /// No effect of ImageViewport. X and Y world-coordinate offset is always at (0,0).
+        /// </summary>
+        public float X { get; set; }
+
+        /// <summary>
+        /// No effect of ImageViewport. X and Y world-coordinate offset is always at (0,0).
+        /// </summary>
+        public float Y { get; set; }
     }
 }

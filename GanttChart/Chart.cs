@@ -357,6 +357,25 @@ namespace Braincase.GanttChart
         }
 
         /// <summary>
+        /// Print the Chart to the specified Image
+        /// </summary>
+        /// <param name="scale">Scale to print the image at.</param>
+        public Bitmap Print(float scale = 1.0f)
+        {
+            var viewport = _mViewport;
+            _mViewport = new ImageViewport(scale, viewport.WorldWidth, viewport.WorldHeight);
+
+            Bitmap image = new Bitmap((int)Math.Ceiling(viewport.WorldWidth * scale), (int)Math.Ceiling(viewport.WorldHeight * scale));
+            var graphics = Graphics.FromImage(image);
+
+            _Draw(graphics, Rectangle.Ceiling(viewport.Rectangle));
+
+            _mViewport = viewport;
+
+            return image;
+        }
+
+        /// <summary>
         /// Get information about the chart area at the mouse coordinate of the chart
         /// </summary>
         /// <param name="mouse"></param>
@@ -379,6 +398,7 @@ namespace Braincase.GanttChart
             if (task != null && text != string.Empty)
                 _mTaskToolTip[task] = text;
         }
+
         /// <summary>
         /// Get tool tip currently set for the specified task
         /// </summary>

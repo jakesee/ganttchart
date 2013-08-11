@@ -154,13 +154,17 @@ namespace Braincase.GanttChart
         private void _InitExampleUI()
         {
             TaskGridView.DataSource = new BindingSource(_mManager.Tasks, null);
-            mnuFilePrint200.Click += (s, e) => _Print(2.0f);
-            mnuFilePrint150.Click += (s, e) => _Print(1.5f);
-            mnuFilePrint100.Click += (s, e) => _Print(1.0f);
-            mnuFilePrint80.Click += (s, e) => _Print(0.8f);
-            mnuFilePrint50.Click += (s, e) => _Print(0.5f);
-            mnuFilePrint25.Click += (s, e) => _Print(0.25f);
-            mnuFilePrint10.Click += (s, e) => _Print(0.1f);
+            mnuFilePrint200.Click += (s, e) => _PrintDocument(2.0f);
+            mnuFilePrint150.Click += (s, e) => _PrintDocument(1.5f);
+            mnuFilePrint100.Click += (s, e) => _PrintDocument(1.0f);
+            mnuFilePrint80.Click += (s, e) => _PrintDocument(0.8f);
+            mnuFilePrint50.Click += (s, e) => _PrintDocument(0.5f);
+            mnuFilePrint25.Click += (s, e) => _PrintDocument(0.25f);
+            mnuFilePrint10.Click += (s, e) => _PrintDocument(0.1f);
+
+            mnuFileImgPrint100.Click += (s, e) => _PrintImage(1.0f);
+            mnuFileImgPrint50.Click += (s, e) => _PrintImage(0.5f);
+            mnuFileImgPrint10.Click += (s, e) => _PrintImage(0.1f);            
         }
 
         #region Main Menu
@@ -343,7 +347,7 @@ namespace Braincase.GanttChart
 
         #region Print
 
-        private void _Print(float scale)
+        private void _PrintDocument(float scale)
         {
             using (var dialog = new PrintDialog())
             {
@@ -360,7 +364,28 @@ namespace Braincase.GanttChart
             }
         }
 
+        private void _PrintImage(float scale)
+        {
+            using (var dialog = new SaveFileDialog())
+            {
+                dialog.Filter = "Bitmap (*.bmp) | *.bmp";
+                if (dialog.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                {
+                    // set the print mode for the custom overlay painter so that we skip printing instructions
+                    _mOverlay.PrintMode = true;
+                    // tell chart to print to the document at the specified scale
+
+                    var bitmap = _mChart.Print(scale);
+                    _mOverlay.PrintMode = false; // restore printing overlays
+
+                    bitmap.Save(dialog.FileName, System.Drawing.Imaging.ImageFormat.Bmp);
+                }
+            }
+        }
+
         #endregion Print        
+
+        
     }
 
     #region overlay painter
