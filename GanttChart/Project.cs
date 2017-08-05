@@ -25,13 +25,13 @@ namespace Braincase.GanttChart
     {
         HashSet<T> _mRegister = new HashSet<T>();
         List<T> _mRootTasks = new List<T>();
-        Dictionary<T, List<T>> _mTaskGroups = new Dictionary<T, List<T>>();
-        Dictionary<T, HashSet<T>> _mDependents = new Dictionary<T, HashSet<T>>();
-        Dictionary<T, HashSet<R>> _mResources = new Dictionary<T, HashSet<R>>();
-        Dictionary<T, List<T>> _mSplitTasks = new Dictionary<T, List<T>>();
-        Dictionary<T, T> _mSplitTaskOfPart = new Dictionary<T, T>();
-        Dictionary<T, T> _mParentOfChild = new Dictionary<T, T>();
-        Dictionary<T, int> _mTaskIndices = new Dictionary<T, int>();
+        Dictionary<T, List<T>> _mMembersOfGroup = new Dictionary<T, List<T>>(); // Map group to list of members
+        Dictionary<T, HashSet<T>> _mDependantsOfPrecedent = new Dictionary<T, HashSet<T>>(); // Map precendent to list of dependents
+        Dictionary<T, HashSet<R>> _mResourcesOfTask = new Dictionary<T, HashSet<R>>(); // Map task to list of resources
+        Dictionary<T, List<T>> _mPartsOfSplitTask = new Dictionary<T, List<T>>(); // Map split task to list of task parts
+        Dictionary<T, T> _mSplitTaskOfPart = new Dictionary<T, T>(); // Map a task part to the original split task
+        Dictionary<T, T> _mGroupOfMember = new Dictionary<T, T>(); // Map member task to parent group task
+        Dictionary<T, int> _mTaskIndices = new Dictionary<T, int>(); // Map the task to its zero-based index order position
 
         /// <summary>
         /// Create a new Project
@@ -72,10 +72,10 @@ namespace Braincase.GanttChart
             {
                 _mRegister.Add(task);
                 _mRootTasks.Add(task);
-                _mTaskGroups[task] = new List<T>();
-                _mDependents[task] = new HashSet<T>();
-                _mResources[task] = new HashSet<R>();
-                _mParentOfChild[task] = null;
+                _mMembersOfGroup[task] = new List<T>();
+                _mDependantsOfPrecedent[task] = new HashSet<T>();
+                _mResourcesOfTask[task] = new HashSet<R>();
+                _mGroupOfMember[task] = null;
             }
         }
 
@@ -98,13 +98,13 @@ namespace Braincase.GanttChart
 
                 // Really delete all references
                 _mRootTasks.Remove(task);
-                _mTaskGroups.Remove(task);
-                _mDependents.Remove(task);
-                _mResources.Remove(task);
-                _mParentOfChild.Remove(task);
-                _mSplitTasks.Remove(task);
-                foreach (var g in _mTaskGroups) g.Value.Remove(task); // optimised: no need to check for contains
-                foreach (var g in _mDependents) g.Value.Remove(task);
+                _mMembersOfGroup.Remove(task);
+                _mDependantsOfPrecedent.Remove(task);
+                _mResourcesOfTask.Remove(task);
+                _mGroupOfMember.Remove(task);
+                _mPartsOfSplitTask.Remove(task);
+                foreach (var g in _mMembersOfGroup) g.Value.Remove(task); // optimised: no need to check for contains
+                foreach (var g in _mDependantsOfPrecedent) g.Value.Remove(task);
                 _mRegister.Remove(task);
             }
             else if (task != null
@@ -112,12 +112,12 @@ namespace Braincase.GanttChart
                 )
             {
                 var split = _mSplitTaskOfPart[task];
-                var parts = _mSplitTasks[split];
+                var parts = _mPartsOfSplitTask[split];
                 if (parts.Count > 2)
                 {
                     parts.Remove(task); // remove the part from the split task
                     _mRegister.Remove(task); // unregister the part
-                    _mResources.Remove(task);
+                    _mResourcesOfTask.Remove(task);
                     _mSplitTaskOfPart.Remove(task); // remove the reverse lookup
                     
                     split.Start = parts.First().Start; // recalculate the split task
@@ -148,15 +148,15 @@ namespace Braincase.GanttChart
 
                 if (_mRegister.Contains(member)
                     && !group.Equals(member)
-                    && !_mSplitTasks.ContainsKey(group) // group cannot be split task
+                    && !_mPartsOfSplitTask.ContainsKey(group) // group cannot be split task
                     && !_mSplitTaskOfPart.ContainsKey(group) // group cannot be parts
-                    && !this.DecendantsOf(member).Contains(group)
+                    && !this.MembersOf(member).Contains(group)
                     && !this.HasRelations(group)
                     )
                 {
-                    _LeaveParent(member);
-                    _mTaskGroups[group].Add(member);
-                    _mParentOfChild[member] = group;
+                    _LeaveGroup(member);
+                    _mMembersOfGroup[group].Add(member);
+                    _mGroupOfMember[member] = group;
 
                     _RecalculateAncestorsSchedule();
                     _RecalculateSlack();
@@ -181,13 +181,13 @@ namespace Braincase.GanttChart
                 if (_mSplitTaskOfPart.ContainsKey(member)) member = _mSplitTaskOfPart[member];
                 if (_mRegister.Contains(member) && this.IsGroup(group))
                 {
-                    var ancestor = this.AncestorsOf(group).LastOrDefault();
+                    var ancestor = this.GroupsOf(group).LastOrDefault();
                     if(ancestor == null) // group is in root
                         _mRootTasks.Insert(_mRootTasks.IndexOf(group) + 1, member);
                     else // group is not in root, we get the ancestor that is in root
                         _mRootTasks.Insert(_mRootTasks.IndexOf(ancestor) + 1, member);
-                    _mTaskGroups[group].Remove(member);
-                    _mParentOfChild[member] = null;
+                    _mMembersOfGroup[group].Remove(member);
+                    _mGroupOfMember[member] = null;
 
                     _RecalculateAncestorsSchedule();
                 }
@@ -203,23 +203,23 @@ namespace Braincase.GanttChart
             List<T> list;
             if (group != null
                 //&& _mRegister.Contains(group)
-                && _mTaskGroups.TryGetValue(group, out list))
+                && _mMembersOfGroup.TryGetValue(group, out list))
             {
-                var newgroup = this.ParentOf(group);
+                var newgroup = this.DirectGroupOf(group);
                 if (newgroup == null)
                 {
                     foreach (var member in list)
                     {
                         _mRootTasks.Add(member);
-                        _mParentOfChild[member] = null;
+                        _mGroupOfMember[member] = null;
                     }
                 }
                 else
                 {
                     foreach (var member in list)
                     {
-                        _mTaskGroups[newgroup].Add(member);
-                        _mParentOfChild[member] = null;
+                        _mMembersOfGroup[newgroup].Add(member);
+                        _mGroupOfMember[member] = null;
                     }
                 }
 
@@ -277,7 +277,7 @@ namespace Braincase.GanttChart
                     if (displacedtask == null)
                     {
                         // adding to the end of the task list
-                        _LeaveParent(task);
+                        _LeaveGroup(task);
                         _mRootTasks.Add(task);
 
                         // clear indices since positions changed
@@ -286,20 +286,20 @@ namespace Braincase.GanttChart
                     else if (!displacedtask.Equals(task))
                     {
                         int indexofdestinationtask;
-                        var displacedtaskparent = this.ParentOf(displacedtask);
+                        var displacedtaskparent = this.DirectGroupOf(displacedtask);
                         if (displacedtaskparent == null) // displacedtask is in root
                         {
                             indexofdestinationtask = _mRootTasks.IndexOf(displacedtask);
-                            _LeaveParent(task);
+                            _LeaveGroup(task);
                             _mRootTasks.Insert(indexofdestinationtask, task);
                         }
                         else if (!displacedtaskparent.Equals(task)) // displaced task is not under the moving task
                         {
-                            var memberlist = _mTaskGroups[displacedtaskparent];
+                            var memberlist = _mMembersOfGroup[displacedtaskparent];
                             indexofdestinationtask = memberlist.IndexOf(displacedtask);
-                            _LeaveParent(task);
+                            _LeaveGroup(task);
                             memberlist.Insert(indexofdestinationtask, task);
-                            _mParentOfChild[task] = displacedtaskparent;
+                            _mGroupOfMember[task] = displacedtaskparent;
                         }
 
                         // clear indices since positions changed
@@ -330,7 +330,7 @@ namespace Braincase.GanttChart
                         var visited = stack.Pop();
                         yield return visited;
 
-                        foreach (var member in _mTaskGroups[visited])
+                        foreach (var member in _mMembersOfGroup[visited])
                             rstack.Push(member);
 
                         while (rstack.Count > 0) stack.Push(rstack.Pop());
@@ -342,28 +342,28 @@ namespace Braincase.GanttChart
         /// <summary>
         /// Enumerate through all the parents and grandparents of the specified task
         /// </summary>
-        public IEnumerable<T> AncestorsOf(T task)
+        public IEnumerable<T> GroupsOf(T member)
         {
-            T parent = ParentOf(task);
+            T parent = DirectGroupOf(member);
             while (parent != null)
             {
                 yield return parent;
-                parent = ParentOf(parent);
+                parent = DirectGroupOf(parent);
             }
         }
 
         /// <summary>
         /// Enumerate through all the children and grandchildren of the specified group
         /// </summary>
-        /// <param name="task"></param>
+        /// <param name="group"></param>
         /// <returns></returns>
-        public IEnumerable<T> DecendantsOf(T task)
+        public IEnumerable<T> MembersOf(T group)
         {
-            if (_mRegister.Contains(task))
+            if (_mRegister.Contains(group))
             {
                 Stack<T> stack = new Stack<T>(20);
                 Stack<T> rstack = new Stack<T>(10);
-                foreach (var child in _mTaskGroups[task])
+                foreach (var child in _mMembersOfGroup[group])
                 {
                     stack.Push(child);
                     while (stack.Count > 0)
@@ -373,7 +373,7 @@ namespace Braincase.GanttChart
 
                         // push the grandchild
                         rstack.Clear();
-                        foreach (var grandchild in _mTaskGroups[visitedchild])
+                        foreach (var grandchild in _mMembersOfGroup[visitedchild])
                             rstack.Push(grandchild);
 
                         // put in the right visiting order
@@ -385,16 +385,33 @@ namespace Braincase.GanttChart
         }
 
         /// <summary>
+        /// Get the parent group of the specified task
+        /// </summary>
+        /// <param name="member"></param>
+        /// <returns></returns>
+        public T DirectGroupOf(T member)
+        {
+            if (_mGroupOfMember.ContainsKey(member)) // _mRegister.Contains(task))
+            {
+                return _mGroupOfMember[member];
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Enumerate through all the direct children of the specified group
         /// </summary>
         /// <param name="group"></param>
         /// <returns></returns>
-        public IEnumerable<T> ChildrenOf(T group)
+        public IEnumerable<T> DirectMembersOf(T group)
         {
             if (group == null) yield break;
 
             List<T> list;
-            if (_mTaskGroups.TryGetValue(group, out list))
+            if (_mMembersOfGroup.TryGetValue(group, out list))
             {
                 var iter = list.GetEnumerator();
                 while (iter.MoveNext()) yield return iter.Current;
@@ -404,14 +421,14 @@ namespace Braincase.GanttChart
         /// <summary>
         /// Enumerate through all the direct precedents and indirect precedents of the specified task
         /// </summary>
-        /// <param name="task"></param>
+        /// <param name="dependant"></param>
         /// <returns></returns>
-        public IEnumerable<T> PrecedentsOf(T task)
+        public IEnumerable<T> PrecedentsOf(T dependant)
         {
-            if (_mRegister.Contains(task))
+            if (_mRegister.Contains(dependant))
             {
                 var stack = new Stack<T>(20);
-                foreach (var p in DirectPrecedentsOf(task))
+                foreach (var p in DirectPrecedentsOf(dependant))
                 {
                     stack.Push(p);
                     while (stack.Count > 0)
@@ -428,21 +445,21 @@ namespace Braincase.GanttChart
         /// <summary>
         /// Enumerate through all the direct dependants and indirect dependants of the specified task
         /// </summary>
-        /// <param name="task"></param>
+        /// <param name="precendent"></param>
         /// <returns></returns>
-        public IEnumerable<T> DependantsOf(T task)
+        public IEnumerable<T> DependantsOf(T precendent)
         {
-            if (!_mDependents.ContainsKey(task)) yield break;
+            if (!_mDependantsOfPrecedent.ContainsKey(precendent)) yield break;
 
             var stack = new Stack<T>(20);
-            foreach (var d in _mDependents[task])
+            foreach (var d in _mDependantsOfPrecedent[precendent])
             {
                 stack.Push(d);
                 while (stack.Count > 0)
                 {
                     var visited = stack.Pop();
                     yield return visited;
-                    foreach (var grandd in _mDependents[visited])
+                    foreach (var grandd in _mDependantsOfPrecedent[visited])
                         stack.Push(grandd);
                 }
             }
@@ -451,24 +468,24 @@ namespace Braincase.GanttChart
         /// <summary>
         /// Enumerate through all the direct precedents of the specified task
         /// </summary>
-        /// <param name="task"></param>
+        /// <param name="dependants"></param>
         /// <returns></returns>
-        public IEnumerable<T> DirectPrecedentsOf(T task)
+        public IEnumerable<T> DirectPrecedentsOf(T dependants)
         {
-            return _mDependents.Where(x => x.Value.Contains(task)).Select(x => x.Key);
+            return _mDependantsOfPrecedent.Where(x => x.Value.Contains(dependants)).Select(x => x.Key);
         }
 
         /// <summary>
         /// Enumerate through all the direct dependants of the specified task
         /// </summary>
-        /// <param name="task"></param>
+        /// <param name="precedent"></param>
         /// <returns></returns>
-        public IEnumerable<T> DirectDependantsOf(T task)
+        public IEnumerable<T> DirectDependantsOf(T precedent)
         {
-            if (task == null) yield break;
+            if (precedent == null) yield break;
 
             HashSet<T> list;
-            if (_mDependents.TryGetValue(task, out list))
+            if (_mDependantsOfPrecedent.TryGetValue(precedent, out list))
             {
                 var iter = list.GetEnumerator();
                 while (iter.MoveNext()) yield return iter.Current;
@@ -480,7 +497,7 @@ namespace Braincase.GanttChart
         /// </summary>
         public IEnumerable<T> Precedents
         {
-            get { return _mDependents.Where(x => _mDependents[x.Key].Count > 0).Select(x => x.Key); }
+            get { return _mDependantsOfPrecedent.Where(x => _mDependantsOfPrecedent[x.Key].Count > 0).Select(x => x.Key); }
         }
 
         /// <summary>
@@ -513,23 +530,6 @@ namespace Braincase.GanttChart
         }
 
         /// <summary>
-        /// Get the parent group of the specified task
-        /// </summary>
-        /// <param name="task"></param>
-        /// <returns></returns>
-        public T ParentOf(T task)
-        {
-            if (_mParentOfChild.ContainsKey(task)) // _mRegister.Contains(task))
-            {
-                return _mParentOfChild[task];
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        /// <summary>
         /// Get whether the specified task is a group
         /// </summary>
         /// <param name="task"></param>
@@ -537,7 +537,7 @@ namespace Braincase.GanttChart
         public bool IsGroup(T task)
         {
             List<T> list;
-            if (_mTaskGroups.TryGetValue(task, out list))
+            if (_mMembersOfGroup.TryGetValue(task, out list))
                 return list.Count > 0;
             else
                 return false;
@@ -550,7 +550,7 @@ namespace Braincase.GanttChart
         /// <returns></returns>
         public bool IsMember(T task)
         {
-            return this.ParentOf(task) != null;
+            return this.DirectGroupOf(task) != null;
         }
 
         /// <summary>
@@ -560,9 +560,9 @@ namespace Braincase.GanttChart
         /// <returns></returns>
         public bool HasRelations(T task)
         {
-            if (_mRegister.Contains(task) && _mDependents.ContainsKey(task))
+            if (_mRegister.Contains(task) && _mDependantsOfPrecedent.ContainsKey(task))
             {
-                return _mDependents[task].Count > 0 || DirectPrecedentsOf(task).FirstOrDefault() != null;
+                return _mDependantsOfPrecedent[task].Count > 0 || DirectPrecedentsOf(task).FirstOrDefault() != null;
             }
             else
             {
@@ -590,7 +590,7 @@ namespace Braincase.GanttChart
                     && !this.IsGroup(dependant)
                     )
                 {
-                    _mDependents[precedent].Add(dependant);
+                    _mDependantsOfPrecedent[precedent].Add(dependant);
 
                     _RecalculateDependantsOf(precedent);
                     _RecalculateAncestorsSchedule();
@@ -611,7 +611,7 @@ namespace Braincase.GanttChart
                 if (_mSplitTaskOfPart.ContainsKey(precedent)) precedent = _mSplitTaskOfPart[precedent];
                 if (_mSplitTaskOfPart.ContainsKey(dependant)) dependant = _mSplitTaskOfPart[dependant];
 
-                _mDependents[precedent].Remove(dependant);
+                _mDependantsOfPrecedent[precedent].Remove(dependant);
 
                 _RecalculateSlack();
             }
@@ -628,7 +628,7 @@ namespace Braincase.GanttChart
                 if (_mSplitTaskOfPart.ContainsKey(precedent))
                     precedent = _mSplitTaskOfPart[precedent];
 
-                _mDependents[precedent].Clear();
+                _mDependantsOfPrecedent[precedent].Clear();
 
                 _RecalculateSlack();
             }
@@ -641,8 +641,8 @@ namespace Braincase.GanttChart
         /// <param name="resource"></param>
         public void Assign(T task, R resource)
         {
-            if (_mRegister.Contains(task) && !_mResources[task].Contains(resource))
-                _mResources[task].Add(resource);
+            if (_mRegister.Contains(task) && !_mResourcesOfTask[task].Contains(resource))
+                _mResourcesOfTask[task].Add(resource);
         }
 
         /// <summary>
@@ -652,7 +652,7 @@ namespace Braincase.GanttChart
         /// <param name="resource"></param>
         public void Unassign(T task, R resource)
         {
-            _mResources[task].Remove(resource);
+            _mResourcesOfTask[task].Remove(resource);
         }
 
         /// <summary>
@@ -662,7 +662,7 @@ namespace Braincase.GanttChart
         public void Unassign(T task)
         {
             if(_mRegister.Contains(task))
-                _mResources[task].Clear();
+                _mResourcesOfTask[task].Clear();
         }
 
         /// <summary>
@@ -671,7 +671,7 @@ namespace Braincase.GanttChart
         /// <param name="resource"></param>
         public void Unassign(R resource)
         {
-            foreach (var r in _mResources.Where(x => x.Value.Contains(resource)))
+            foreach (var r in _mResourcesOfTask.Where(x => x.Value.Contains(resource)))
                 r.Value.Remove(resource);
         }
 
@@ -682,7 +682,7 @@ namespace Braincase.GanttChart
         {
             get
             {
-                return _mResources.SelectMany(x => x.Value).Distinct();
+                return _mResourcesOfTask.SelectMany(x => x.Value).Distinct();
             }
         }
 
@@ -697,7 +697,7 @@ namespace Braincase.GanttChart
                 yield break;
 
             HashSet<R> list;
-            if (_mResources.TryGetValue(task, out list))
+            if (_mResourcesOfTask.TryGetValue(task, out list))
             {
                 foreach (var item in list)
                     yield return item;
@@ -711,7 +711,7 @@ namespace Braincase.GanttChart
         /// <returns></returns>
         public IEnumerable<T> TasksOf(R resource)
         {
-            return _mResources.Where(x => x.Value.Contains(resource)).Select(x => x.Key);
+            return _mResourcesOfTask.Where(x => x.Value.Contains(resource)).Select(x => x.Key);
         }
 
         /// <summary>
@@ -771,7 +771,7 @@ namespace Braincase.GanttChart
             if (_mRegister.Contains(task)
                 && complete != task.Complete
                 && !this.IsGroup(task) // not a group
-                && !_mSplitTasks.ContainsKey(task) // not a split task
+                && !_mPartsOfSplitTask.ContainsKey(task) // not a split task
                 )
             {
                 _SetCompleteHelper(task, complete);
@@ -807,19 +807,19 @@ namespace Braincase.GanttChart
                 && part2 != null
                 && !part1.Equals(part2) // parts cannot be the same
                 && _mRegister.Contains(task) // task must be registered
-                && !_mSplitTasks.ContainsKey(task) // task must not already be a split task
+                && !_mPartsOfSplitTask.ContainsKey(task) // task must not already be a split task
                 && !_mSplitTaskOfPart.ContainsKey(task) // task must not be a task part
-                && _mTaskGroups[task].Count == 0 // task cannot be a group
+                && _mMembersOfGroup[task].Count == 0 // task cannot be a group
                 && !_mRegister.Contains(part1) // part1 and part2 must have never existed
                 && !_mRegister.Contains(part2)
                 )
             {
                 _mRegister.Add(part1);  // register part1
-                _mResources[part1] = new HashSet<R>(); // create container for holding resource
+                _mResourcesOfTask[part1] = new HashSet<R>(); // create container for holding resource
                 
                 // add part1 to split task
                 task.Complete = 0.0f; // reset the complete status
-                var parts = _mSplitTasks[task] = new List<T>(2); 
+                var parts = _mPartsOfSplitTask[task] = new List<T>(2); 
                 parts.Add(part1);
                 _mSplitTaskOfPart[part1] = task; // make a reverse lookup
 
@@ -849,10 +849,10 @@ namespace Braincase.GanttChart
                 )
             {
                 _mRegister.Add(other); // register other part
-                _mResources[other] = new HashSet<R>(); // create container for holding resource
+                _mResourcesOfTask[other] = new HashSet<R>(); // create container for holding resource
 
                 var split = _mSplitTaskOfPart[part]; // get the split task
-                var parts = _mSplitTasks[split]; // get the list of ordered parts
+                var parts = _mPartsOfSplitTask[split]; // get the list of ordered parts
 
                 parts.Insert(parts.IndexOf(part) + 1, other); // insert the other part after the existing part
                 _mSplitTaskOfPart[other] = split; // set the reverse lookup
@@ -902,7 +902,7 @@ namespace Braincase.GanttChart
             {
 
                 var split = _mSplitTaskOfPart[part1];
-                var parts = _mSplitTasks[split];
+                var parts = _mPartsOfSplitTask[split];
                 if (parts.Count > 2)
                 {
                     // Aggregate part2 into part1, and determine join type
@@ -923,7 +923,7 @@ namespace Braincase.GanttChart
 
                     // remove all traces of part2
                     parts.Remove(part2);
-                    _mResources.Remove(part2);
+                    _mResourcesOfTask.Remove(part2);
                     _mSplitTaskOfPart.Remove(part2);
                     _mRegister.Remove(part2);
 
@@ -952,25 +952,25 @@ namespace Braincase.GanttChart
         public void Merge(T split)
         {
             if (split != null
-                && _mSplitTasks.ContainsKey(split) // must be existing split task
+                && _mPartsOfSplitTask.ContainsKey(split) // must be existing split task
                 )
             {
                 TimeSpan duration = TimeSpan.Zero;
-                _mSplitTasks[split].ForEach(x => {
+                _mPartsOfSplitTask[split].ForEach(x => {
 
                     // sum durations
                     duration += x.Duration;
 
                     // merge resources onto split task
-                    foreach (var r in _mResources[x])
+                    foreach (var r in _mResourcesOfTask[x])
                         this.Assign(split, r);
 
                     // remove traces of all parts
                     _mSplitTaskOfPart.Remove(x);
                     _mRegister.Remove(x);
-                    _mResources.Remove(x);
+                    _mResourcesOfTask.Remove(x);
                 });
-                _mSplitTasks.Remove(split); // remove split as a split task
+                _mPartsOfSplitTask.Remove(split); // remove split as a split task
 
                 // set the duration
                 this.SetDuration(split, duration);
@@ -985,10 +985,10 @@ namespace Braincase.GanttChart
         public IEnumerable<T> PartsOf(T split)
         {
             if (split != null
-                && _mSplitTasks.ContainsKey(split) // must be existing split task
+                && _mPartsOfSplitTask.ContainsKey(split) // must be existing split task
                 )
             {
-                return _mSplitTasks[split].Select(x => x);
+                return _mPartsOfSplitTask[split].Select(x => x);
             }
             else
             {
@@ -1015,7 +1015,7 @@ namespace Braincase.GanttChart
         /// <returns></returns>
         public bool IsSplit(T task)
         {
-            return task != null && _mSplitTasks.ContainsKey(task);
+            return task != null && _mPartsOfSplitTask.ContainsKey(task);
         }
         
         /// <summary>
@@ -1032,15 +1032,15 @@ namespace Braincase.GanttChart
         /// Leave the parent group if task is a member, but remain registered in ProjectManager
         /// </summary>
         /// <param name="task"></param>
-        private void _LeaveParent(T task)
+        private void _LeaveGroup(T task)
         {
-            var parent = this.ParentOf(task);
+            var parent = this.DirectGroupOf(task);
             if (parent == null)
                 _mRootTasks.Remove(task);
             else
             {
-                _mTaskGroups[parent].Remove(task);
-                _mParentOfChild[task] = null;
+                _mMembersOfGroup[parent].Remove(task);
+                _mGroupOfMember[task] = null;
             }
         }
 
@@ -1077,9 +1077,9 @@ namespace Braincase.GanttChart
                     _RecalculateDependantsOf(task);
 
                     // shift the task parts accordingly if task was a split task
-                    if (_mSplitTasks.ContainsKey(task))
+                    if (_mPartsOfSplitTask.ContainsKey(task))
                     {
-                        _mSplitTasks[task].ForEach(x => {
+                        _mPartsOfSplitTask[task].ForEach(x => {
                             x.Start += offset;
                             x.End += offset;
                         });
@@ -1099,7 +1099,7 @@ namespace Braincase.GanttChart
             {
                 bool earlier = value < group.Start;
                 TimeSpan offset = value - group.Start;
-                var decendants = earlier ? DecendantsOf(group).OrderBy((t) => t.Start) : DecendantsOf(group).OrderByDescending((t) => t.Start);
+                var decendants = earlier ? MembersOf(group).OrderBy((t) => t.Start) : MembersOf(group).OrderByDescending((t) => t.Start);
 
                 foreach(T decendant in decendants)
                 {
@@ -1110,7 +1110,7 @@ namespace Braincase.GanttChart
 
                     if (this.IsSplit(decendant))
                     {
-                        var parts = _mSplitTasks[decendant];
+                        var parts = _mPartsOfSplitTask[decendant];
                         foreach (T part in parts)
                         {
                             part.Start += offset;
@@ -1138,11 +1138,11 @@ namespace Braincase.GanttChart
                 else // regular task or a split task, which we will treat normally
                 {
                     // check bounds
-                    bool isSplitTask = _mSplitTasks.ContainsKey(task);
+                    bool isSplitTask = _mPartsOfSplitTask.ContainsKey(task);
                     T last_part = null;
                     if (isSplitTask)
                     {
-                        last_part = _mSplitTasks[task].Last();
+                        last_part = _mPartsOfSplitTask[task].Last();
                         if (value <= last_part.Start) value = last_part.Start + TimeSpan.FromMinutes(30);
                     }
                     if (value <= task.Start) value = task.Start + TimeSpan.FromMinutes(30); // end cannot be less than start
@@ -1165,7 +1165,7 @@ namespace Braincase.GanttChart
         private void _SetPartStartHelper(T part, TimeSpan value)
         {
             var split = _mSplitTaskOfPart[part];
-            var parts = _mSplitTasks[split];
+            var parts = _mPartsOfSplitTask[split];
 
             // check bounds
             if (this.DirectPrecedentsOf(split).Any())
@@ -1198,7 +1198,7 @@ namespace Braincase.GanttChart
         private void _SetPartEndHelper(T part, TimeSpan value)
         {
             var split = _mSplitTaskOfPart[part];
-            var parts = _mSplitTasks[split];
+            var parts = _mPartsOfSplitTask[split];
 
             // check for bounds
             if (value <= part.Start) value = part.Start + TimeSpan.FromMinutes(30);
@@ -1263,7 +1263,7 @@ namespace Braincase.GanttChart
                 if (_mSplitTaskOfPart.ContainsKey(task))
                 {
                     var split = _mSplitTaskOfPart[task];
-                    var parts = _mSplitTasks[split];
+                    var parts = _mPartsOfSplitTask[split];
                     float complete = 0;
                     TimeSpan duration = TimeSpan.Zero;
                     foreach (var part in parts)
@@ -1290,9 +1290,9 @@ namespace Braincase.GanttChart
             float t_complete = 0;
             TimeSpan t_duration = TimeSpan.Zero;
 
-            if (_mSplitTasks.ContainsKey(groupOrSplit))
+            if (_mPartsOfSplitTask.ContainsKey(groupOrSplit))
             {
-                foreach (var part in _mSplitTasks[groupOrSplit])
+                foreach (var part in _mPartsOfSplitTask[groupOrSplit])
                 {
                     t_complete += part.Complete * part.Duration.Ticks;
                     t_duration += part.Duration;
@@ -1300,7 +1300,7 @@ namespace Braincase.GanttChart
             }
             else
             {
-                foreach (var member in this.ChildrenOf(groupOrSplit))
+                foreach (var member in this.DirectMembersOf(groupOrSplit))
                 {
                     t_duration += member.Duration;
                     if (this.IsGroup(member)) t_complete += _RecalculateCompletedHelper(member) * member.Duration.Ticks;
@@ -1339,7 +1339,7 @@ namespace Braincase.GanttChart
             TimeSpan t_duration = TimeSpan.Zero;
             var start = TimeSpan.MaxValue;
             var end = TimeSpan.MinValue;
-            foreach (var member in this.ChildrenOf(group))
+            foreach (var member in this.DirectMembersOf(group))
             {
                 if (this.IsGroup(member))
                     _RecalculateAncestorsScheduleHelper(member);

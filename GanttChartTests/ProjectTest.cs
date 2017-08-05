@@ -18,7 +18,7 @@ namespace GanttChartTests
             var first = new Task();
             manager.Add(first);
             Assert.IsTrue(manager.Tasks.Count() == 1, string.Format("{0} != {1}", 1, manager.Tasks.Count()));
-            Assert.IsTrue(manager.ParentOf(first) == null);
+            Assert.IsTrue(manager.DirectGroupOf(first) == null);
 
             // create second task, remove first task
             var second = new Task();
@@ -54,16 +54,16 @@ namespace GanttChartTests
             manager.Group(group1, one);
             manager.Group(group1, two);
             Assert.IsTrue(manager.Tasks.Count() == 3);
-            Assert.IsTrue(manager.ChildrenOf(group1).Count() == 2);
-            Assert.IsTrue(manager.ParentOf(one).Equals(group1));
-            Assert.IsTrue(manager.ParentOf(two).Equals(group1));
+            Assert.IsTrue(manager.DirectMembersOf(group1).Count() == 2);
+            Assert.IsTrue(manager.DirectGroupOf(one).Equals(group1));
+            Assert.IsTrue(manager.DirectGroupOf(two).Equals(group1));
             
             // delete group task
             manager.Delete(group1);
             Assert.IsTrue(manager.Tasks.Count() == 2);
-            Assert.IsTrue(manager.ChildrenOf(group1).Count() == 0);
-            Assert.IsTrue(manager.ParentOf(one) == null);
-            Assert.IsTrue(manager.ParentOf(two) == null);   
+            Assert.IsTrue(manager.DirectMembersOf(group1).Count() == 0);
+            Assert.IsTrue(manager.DirectGroupOf(one) == null);
+            Assert.IsTrue(manager.DirectGroupOf(two) == null);   
         }
 
         [TestMethod]
@@ -82,9 +82,9 @@ namespace GanttChartTests
             var alien = new Task();
 
             // test: Enumerators should at least return empty sets
-            Assert.IsNotNull(manager.ChildrenOf(alien), "ChildrenOf is null");
-            Assert.IsNotNull(manager.AncestorsOf(alien), "AncestorsOf is null");
-            Assert.IsNotNull(manager.DecendantsOf(alien), "DecendantsOf is null");
+            Assert.IsNotNull(manager.DirectMembersOf(alien), "ChildrenOf is null");
+            Assert.IsNotNull(manager.GroupsOf(alien), "AncestorsOf is null");
+            Assert.IsNotNull(manager.MembersOf(alien), "DecendantsOf is null");
             Assert.IsNotNull(manager.DependantsOf(alien), "DependantsOf is null");
             Assert.IsNotNull(manager.PrecedentsOf(alien), "PrecedentsOf is null");
             Assert.IsNotNull(manager.DirectDependantsOf(alien), "DirectDependantsOf is null");
@@ -100,9 +100,9 @@ namespace GanttChartTests
             var local = new Task();
             manager.Add(local);
 
-            Assert.IsNotNull(manager.ChildrenOf(local));
-            Assert.IsNotNull(manager.AncestorsOf(local));
-            Assert.IsNotNull(manager.DecendantsOf(local));
+            Assert.IsNotNull(manager.DirectMembersOf(local));
+            Assert.IsNotNull(manager.GroupsOf(local));
+            Assert.IsNotNull(manager.MembersOf(local));
             Assert.IsNotNull(manager.DependantsOf(local));
             Assert.IsNotNull(manager.PrecedentsOf(local));
             Assert.IsNotNull(manager.DirectDependantsOf(local));
@@ -264,18 +264,18 @@ namespace GanttChartTests
             manager.Group(group3, g3t3);
 
             // confirm parents
-            Assert.IsTrue(manager.ParentOf(group1) == null);
-            Assert.IsTrue(manager.ParentOf(group2) == null);
-            Assert.IsTrue(manager.ParentOf(group3) == null);
-            Assert.IsTrue(manager.ParentOf(g1t1) == group1);
-            Assert.IsTrue(manager.ParentOf(g1t2) == group1);
-            Assert.IsTrue(manager.ParentOf(g1t3) == group1);
-            Assert.IsTrue(manager.ParentOf(g2t1) == group2);
-            Assert.IsTrue(manager.ParentOf(g2t2) == group2);
-            Assert.IsTrue(manager.ParentOf(g2t3) == group2);
-            Assert.IsTrue(manager.ParentOf(g3t1) == group3);
-            Assert.IsTrue(manager.ParentOf(g3t2) == group3);
-            Assert.IsTrue(manager.ParentOf(g3t3) == group3);
+            Assert.IsTrue(manager.DirectGroupOf(group1) == null);
+            Assert.IsTrue(manager.DirectGroupOf(group2) == null);
+            Assert.IsTrue(manager.DirectGroupOf(group3) == null);
+            Assert.IsTrue(manager.DirectGroupOf(g1t1) == group1);
+            Assert.IsTrue(manager.DirectGroupOf(g1t2) == group1);
+            Assert.IsTrue(manager.DirectGroupOf(g1t3) == group1);
+            Assert.IsTrue(manager.DirectGroupOf(g2t1) == group2);
+            Assert.IsTrue(manager.DirectGroupOf(g2t2) == group2);
+            Assert.IsTrue(manager.DirectGroupOf(g2t3) == group2);
+            Assert.IsTrue(manager.DirectGroupOf(g3t1) == group3);
+            Assert.IsTrue(manager.DirectGroupOf(g3t2) == group3);
+            Assert.IsTrue(manager.DirectGroupOf(g3t3) == group3);
 
             // confirm order
             Assert.IsTrue(manager.IndexOf(group1) == 0);
@@ -494,16 +494,16 @@ namespace GanttChartTests
             Assert.IsTrue(manager.Tasks.Contains(six));
 
             // test: check decendants
-            Assert.IsTrue(manager.DecendantsOf(four).Contains(five));
-            Assert.IsTrue(manager.DecendantsOf(one).Contains(two));
-            Assert.IsTrue(manager.DecendantsOf(one).Contains(three));
-            Assert.IsTrue(manager.DecendantsOf(one).Contains(six));
-            Assert.IsTrue(manager.DecendantsOf(one).Count() == 3);
+            Assert.IsTrue(manager.MembersOf(four).Contains(five));
+            Assert.IsTrue(manager.MembersOf(one).Contains(two));
+            Assert.IsTrue(manager.MembersOf(one).Contains(three));
+            Assert.IsTrue(manager.MembersOf(one).Contains(six));
+            Assert.IsTrue(manager.MembersOf(one).Count() == 3);
 
             // test: check ancestors
-            Assert.IsTrue(manager.AncestorsOf(six).Contains(two));
-            Assert.IsTrue(manager.AncestorsOf(six).Contains(one));
-            Assert.IsTrue(manager.AncestorsOf(six).Count() == 2);
+            Assert.IsTrue(manager.GroupsOf(six).Contains(two));
+            Assert.IsTrue(manager.GroupsOf(six).Contains(one));
+            Assert.IsTrue(manager.GroupsOf(six).Count() == 2);
         }
 
         [TestMethod]
@@ -631,8 +631,8 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IsGroup(group2));
             Assert.IsTrue(!manager.IsGroup(one));
             Assert.IsTrue(!manager.IsGroup(two));
-            Assert.IsTrue(manager.ChildrenOf(group1).Count() == 0);
-            Assert.IsTrue(manager.ChildrenOf(group2).Count() == 2);
+            Assert.IsTrue(manager.DirectMembersOf(group1).Count() == 0);
+            Assert.IsTrue(manager.DirectMembersOf(group2).Count() == 2);
             Assert.IsTrue(manager.Tasks.Count() == 4);
         }
 
@@ -779,7 +779,7 @@ namespace GanttChartTests
             // test: group into self (no effect)
             manager.Group(group1, group1);
             Assert.IsTrue(!manager.IsGroup(group1));
-            Assert.IsTrue(manager.ParentOf(group1) == null);
+            Assert.IsTrue(manager.DirectGroupOf(group1) == null);
         }
 
         [TestMethod]
@@ -797,7 +797,7 @@ namespace GanttChartTests
             // test: group into self (no effect)
             manager.Group(one, one);
             Assert.IsTrue(!manager.IsGroup(one));
-            Assert.IsTrue(manager.ParentOf(one) == group1);
+            Assert.IsTrue(manager.DirectGroupOf(one) == group1);
         }
 
         [TestMethod]
@@ -816,7 +816,7 @@ namespace GanttChartTests
             manager.Group(one, group1);
             Assert.IsTrue(manager.IsGroup(group1));
             Assert.IsTrue(!manager.IsGroup(one));
-            Assert.IsTrue(manager.ParentOf(one).Equals(group1));
+            Assert.IsTrue(manager.DirectGroupOf(one).Equals(group1));
         }
 
         [TestMethod]
@@ -838,9 +838,9 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsGroup(group1), string.Format("{0} != {1}", true, manager.IsGroup(group1)));
             Assert.IsTrue(manager.IsGroup(group2));
             Assert.IsTrue(!manager.IsGroup(one));
-            Assert.IsTrue(manager.ParentOf(one).Equals(group2));
-            Assert.IsTrue(manager.ChildrenOf(group1).Count() == 0);
-            Assert.IsTrue(manager.ChildrenOf(group2).Count() == 1);
+            Assert.IsTrue(manager.DirectGroupOf(one).Equals(group2));
+            Assert.IsTrue(manager.DirectMembersOf(group1).Count() == 0);
+            Assert.IsTrue(manager.DirectMembersOf(group2).Count() == 1);
         }
 
         [TestMethod]
@@ -882,15 +882,15 @@ namespace GanttChartTests
             manager.Group(d2, e3);
 
             // test: check sub groups are correct
-            Assert.IsTrue(manager.ChildrenOf(a).Contains(b));
-            Assert.IsTrue(manager.ChildrenOf(b).Contains(c1));
-            Assert.IsTrue(manager.ChildrenOf(b).Contains(c2));
-            Assert.IsTrue(manager.ChildrenOf(c1).Contains(d1));
-            Assert.IsTrue(manager.ChildrenOf(c1).Contains(d2));
-            Assert.IsTrue(manager.ChildrenOf(c2).Contains(d3));
-            Assert.IsTrue(manager.ChildrenOf(d1).Contains(e1));
-            Assert.IsTrue(manager.ChildrenOf(d2).Contains(e2));
-            Assert.IsTrue(manager.ChildrenOf(d2).Contains(e3));
+            Assert.IsTrue(manager.DirectMembersOf(a).Contains(b));
+            Assert.IsTrue(manager.DirectMembersOf(b).Contains(c1));
+            Assert.IsTrue(manager.DirectMembersOf(b).Contains(c2));
+            Assert.IsTrue(manager.DirectMembersOf(c1).Contains(d1));
+            Assert.IsTrue(manager.DirectMembersOf(c1).Contains(d2));
+            Assert.IsTrue(manager.DirectMembersOf(c2).Contains(d3));
+            Assert.IsTrue(manager.DirectMembersOf(d1).Contains(e1));
+            Assert.IsTrue(manager.DirectMembersOf(d2).Contains(e2));
+            Assert.IsTrue(manager.DirectMembersOf(d2).Contains(e3));
         }
 
         [TestMethod]
@@ -973,9 +973,9 @@ namespace GanttChartTests
 
             // group into grandchild (no effect)
             manager.Group(one, group1);
-            Assert.IsTrue(manager.ChildrenOf(group1).Contains(group2));
-            Assert.IsTrue(manager.ChildrenOf(group2).Contains(one));
-            Assert.IsTrue(manager.ChildrenOf(one).Count() == 0);
+            Assert.IsTrue(manager.DirectMembersOf(group1).Contains(group2));
+            Assert.IsTrue(manager.DirectMembersOf(group2).Contains(one));
+            Assert.IsTrue(manager.DirectMembersOf(one).Count() == 0);
         }
 
         [TestMethod]
@@ -998,9 +998,9 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IsGroup(group1));
             Assert.IsTrue(!manager.IsGroup(group2));
             Assert.IsTrue(!manager.IsGroup(one));
-            Assert.IsTrue(manager.ParentOf(one).Equals(group1));
-            Assert.IsTrue(manager.ParentOf(group2).Equals(group1));
-            Assert.IsTrue(manager.ParentOf(group1) == null);
+            Assert.IsTrue(manager.DirectGroupOf(one).Equals(group1));
+            Assert.IsTrue(manager.DirectGroupOf(group2).Equals(group1));
+            Assert.IsTrue(manager.DirectGroupOf(group1) == null);
         }
 
         [TestMethod]
@@ -1017,9 +1017,9 @@ namespace GanttChartTests
 
             // test: group into child (no effect)
             manager.Group(one, group1);
-            Assert.IsTrue(manager.DecendantsOf(group1).Contains(one));
-            Assert.IsTrue(manager.ParentOf(one).Equals(group1));
-            Assert.IsTrue(manager.ParentOf(group1) == null);
+            Assert.IsTrue(manager.MembersOf(group1).Contains(one));
+            Assert.IsTrue(manager.DirectGroupOf(one).Equals(group1));
+            Assert.IsTrue(manager.DirectGroupOf(group1) == null);
         }
 
         #endregion groups
@@ -1094,12 +1094,12 @@ namespace GanttChartTests
             Assert.IsTrue(manager.Tasks.Count() == 6, string.Format("{0} != {1}", 6, manager.Tasks.Count()));
 
             // check parents
-            Assert.IsTrue(manager.ParentOf(zero).Equals(five));
-            Assert.IsTrue(manager.ParentOf(one).Equals(four));
-            Assert.IsTrue(manager.ParentOf(two).Equals(zero));
-            Assert.IsTrue(manager.ParentOf(three).Equals(zero));
-            Assert.IsTrue(manager.ParentOf(four).Equals(two));
-            Assert.IsTrue(manager.ParentOf(five) == null);
+            Assert.IsTrue(manager.DirectGroupOf(zero).Equals(five));
+            Assert.IsTrue(manager.DirectGroupOf(one).Equals(four));
+            Assert.IsTrue(manager.DirectGroupOf(two).Equals(zero));
+            Assert.IsTrue(manager.DirectGroupOf(three).Equals(zero));
+            Assert.IsTrue(manager.DirectGroupOf(four).Equals(two));
+            Assert.IsTrue(manager.DirectGroupOf(five) == null);
         }
 
         [TestMethod]
@@ -2401,9 +2401,9 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IsMember(task));
             Assert.IsTrue(!manager.IsMember(part1));
             Assert.IsTrue(manager.IsMember(split));
-            Assert.IsTrue(manager.ChildrenOf(group).Count() == 2);
-            Assert.IsTrue(manager.ChildrenOf(group).Contains(task));
-            Assert.IsTrue(manager.ChildrenOf(group).Contains(split));
+            Assert.IsTrue(manager.DirectMembersOf(group).Count() == 2);
+            Assert.IsTrue(manager.DirectMembersOf(group).Contains(task));
+            Assert.IsTrue(manager.DirectMembersOf(group).Contains(split));
 
             // test: group task into part (no effect)
             manager.Group(part1, task);
@@ -2414,9 +2414,9 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IsMember(task));
             Assert.IsTrue(!manager.IsMember(part1));
             Assert.IsTrue(!manager.IsGroup(part1));
-            Assert.IsTrue(manager.ChildrenOf(group).Count() == 2);
-            Assert.IsTrue(manager.ChildrenOf(group).Contains(task));
-            Assert.IsTrue(manager.ChildrenOf(group).Contains(split));
+            Assert.IsTrue(manager.DirectMembersOf(group).Count() == 2);
+            Assert.IsTrue(manager.DirectMembersOf(group).Contains(task));
+            Assert.IsTrue(manager.DirectMembersOf(group).Contains(split));
         }
         [TestMethod]
         public void UngroupPartBecomeUngroupSplitTask()
@@ -2442,9 +2442,9 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IsMember(task));
             Assert.IsTrue(!manager.IsMember(part1));
             Assert.IsTrue(manager.IsMember(split));
-            Assert.IsTrue(manager.ChildrenOf(group).Count() == 2);
-            Assert.IsTrue(manager.ChildrenOf(group).Contains(task));
-            Assert.IsTrue(manager.ChildrenOf(group).Contains(split));
+            Assert.IsTrue(manager.DirectMembersOf(group).Count() == 2);
+            Assert.IsTrue(manager.DirectMembersOf(group).Contains(task));
+            Assert.IsTrue(manager.DirectMembersOf(group).Contains(split));
 
             // test: ungroup part from group
             manager.Ungroup(group, part1);
@@ -2455,9 +2455,9 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IsMember(task));
             Assert.IsTrue(!manager.IsMember(part1));
             Assert.IsTrue(!manager.IsMember(split));
-            Assert.IsTrue(manager.ChildrenOf(group).Count() == 1);
-            Assert.IsTrue(manager.ChildrenOf(group).Contains(task));
-            Assert.IsTrue(!manager.ChildrenOf(group).Contains(split));
+            Assert.IsTrue(manager.DirectMembersOf(group).Count() == 1);
+            Assert.IsTrue(manager.DirectMembersOf(group).Contains(task));
+            Assert.IsTrue(!manager.DirectMembersOf(group).Contains(split));
         }
 
         [TestMethod]

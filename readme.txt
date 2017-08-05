@@ -6,10 +6,18 @@ Doxygen Documentation: http://jakesee.com/docs/ganttchart/
 Source/Download: http://ganttchart.codeplex.com
 Email: jakesee@gmail.com
 
-
 =============================
 CHANGE LOG
 =============================
+5 Aug 2017 v2.0.0.0
+- Upgraded to .NET framework 4.6.1
+- Changed all timeline specifications to DateTime and TimeSpan to support all time resolutions
+- Added support for custom drawing of timeline header via event handling
+- Updated all unit tests to use new TimeSpan specification
+- TODO: Add example for customer header drawing
+- TODO: Draw relationship lines between group task and other task types
+- TODO: Enable changing the start time of entire group and sub-groups
+
 11 Aug 2013 v1.3.0.3
 - Added funcationality and example to print to image
 

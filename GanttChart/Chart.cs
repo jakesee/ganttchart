@@ -817,7 +817,7 @@ namespace Braincase.GanttChart
                     {
                         var source = e.Source;
                         if (_mProject.IsPart(source)) source = _mProject.SplitTaskOf(source);
-                        if (_mProject.ParentOf(source) == e.Target)
+                        if (_mProject.DirectGroupOf(source) == e.Target)
                         {
                             _mProject.Ungroup(e.Target, e.Source);
                         }
@@ -1140,14 +1140,14 @@ namespace Braincase.GanttChart
             int row = 0;
             foreach (var task in _mProject.Tasks)
             {
-                if (!_mProject.AncestorsOf(task).Any(x => x.IsCollapsed))
+                if (!_mProject.GroupsOf(task).Any(x => x.IsCollapsed))
                 {
                     int y_coord = row * this.BarSpacing + this.HeaderTwoHeight + this.HeaderOneHeight + (this.BarSpacing - this.BarHeight) / 2;
                     RectangleF taskRect;
 
                     // Compute task rectangle
                     taskRect = new RectangleF(GetSpan(task.Start) + this.MinorWidth / 2, y_coord, GetSpan(task.Duration), this.BarHeight);
-                    _mChartTaskRects.Add(task, taskRect);
+                    _mChartTaskRects.Add(task, taskRect); // NOTE: groups and split tasks (not just task parts) are added to this list
                     
                     if(!_mProject.IsSplit(task))
                     {

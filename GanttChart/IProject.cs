@@ -238,19 +238,19 @@ namespace Braincase.GanttChart
         /// </summary>
         /// <param name="task"></param>
         /// <returns></returns>
-        IEnumerable<T> AncestorsOf(T task);
+        IEnumerable<T> GroupsOf(T task);
         /// <summary>
         /// Enumerate through all the children and grandchildren of the specified group
         /// </summary>
         /// <param name="group"></param>
         /// <returns></returns>
-        IEnumerable<T> DecendantsOf(T group);
+        IEnumerable<T> MembersOf(T group);
         /// <summary>
         /// Enumerate through all the direct children of the specified group
         /// </summary>
         /// <param name="group"></param>
         /// <returns></returns>
-        IEnumerable<T> ChildrenOf(T group);
+        IEnumerable<T> DirectMembersOf(T group);
         /// <summary>
         /// Enumerate through all the direct precedents and indirect precedents of the specified task
         /// </summary>
@@ -284,7 +284,7 @@ namespace Braincase.GanttChart
         /// </summary>
         /// <param name="task"></param>
         /// <returns></returns>
-        T ParentOf(T task);
+        T DirectGroupOf(T task);
         /// <summary>
         /// Get whether the specified task is a group
         /// </summary>

@@ -1,6 +1,8 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 11.00
-# Visual Studio 2010
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.26403.0
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GanttChart", "GanttChart\GanttChart.csproj", "{F98F97D5-4F29-4531-AD05-D90F8E84C9AA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GanttChartExample", "GanttChartExample\GanttChartExample.csproj", "{03AED807-CA2D-4823-B321-41C470174F0B}"
