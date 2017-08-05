@@ -17,10 +17,10 @@ namespace Braincase.GanttChart
         public Task()
         {
             Complete = 0.0f;
-            Start = 0;
-            End = 1;
-            Duration = 1;
-            Slack = 0;
+            Start = TimeSpan.Zero;
+            End = new TimeSpan(1, 0, 0, 0);
+            Duration = new TimeSpan(1, 0, 0, 0);
+            Slack = TimeSpan.Zero;
         }
 
         /// <summary>
@@ -41,22 +41,22 @@ namespace Braincase.GanttChart
         /// <summary>
         /// Get the start time of this Task relative to the project start
         /// </summary>
-        public int Start { get; internal set; }
+        public TimeSpan Start { get; internal set; }
 
         /// <summary>
         /// Get the end time of this Task relative to the project start
         /// </summary>
-        public int End { get; internal set; }
+        public TimeSpan End { get; internal set; }
 
         /// <summary>
-        /// Get the duration of this Task
+        /// Get the duration of this Task in days
         /// </summary>
-        public int Duration { get; internal set; }
+        public TimeSpan Duration { get; internal set; }
 
         /// <summary>
         /// Get the amount of slack (free float)
         /// </summary>
-        public int Slack { get; internal set; }
+        public TimeSpan Slack { get; internal set; }
 
         /// <summary>
         /// Convert this Task to a descriptive string
@@ -66,21 +66,6 @@ namespace Braincase.GanttChart
         {
             return string.Format("[Name = {0}, Start = {1}, End = {2}, Duration = {3}, Complete = {4}]", Name, Start, End, Duration, Complete);
         }
-    }
-
-    /// <summary>
-    /// Time scale in which the time units represent
-    /// </summary>
-    public enum TimeScale
-    {
-        /// <summary>
-        /// Unit time in Days
-        /// </summary>
-        Day,
-        /// <summary>
-        /// Unit time in Weeks
-        /// </summary>
-        Week
     }
 
     /// <summary>
@@ -121,14 +106,14 @@ namespace Braincase.GanttChart
         /// <param name="part1">New Task part (1) of the split task, with the start time of the original task and the specified duration value.</param>
         /// <param name="part2">New Task part (2) of the split task, starting 1 time unit after part (1) ends and having the remaining of the duration of the origina task.</param>
         /// <param name="duration">The duration of part (1) will be set to the specified duration value but will also be adjusted to approperiate value if necessary.</param>
-        void Split(T task, T part1, T part2, int duration);
+        void Split(T task, T part1, T part2, TimeSpan duration);
         /// <summary>
         /// Split the specified part and obtain another part from it.
         /// </summary>
         /// <param name="part">The task part to split which has duration of at least 2 to make two parts of 1 time unit duration each. Its duration will be set to the specified duration value.</param>
         /// <param name="another">New Task part of the original part, starting 1 time unit after it ends and having the remaining of the duration of the original part.</param>
         /// <param name="duration">The duration of part (1) will be set to the specified duration value but will also be adjusted to approperiate value if necessary.</param>
-        void Split(T part, T another, int duration);
+        void Split(T part, T another, TimeSpan duration);
         /// <summary>
         /// Join part1 and part2 in a split task into a single part represented by part1, and part2 will be deleted from the ProjectManager.
         /// The resulting part will have a duration total of the two parts. Schedule of other parts will be packed according to direction of join.
@@ -208,19 +193,19 @@ namespace Braincase.GanttChart
         /// </summary>
         /// <param name="task"></param>
         /// <param name="start">Number of timescale units after ProjectManager.Start</param>
-        void SetStart(T task, int start);
+        void SetStart(T task, TimeSpan start);
         /// <summary>
         /// Set the end time of the specified task. Duration is automatically adjusted to satisfy.
         /// </summary>
         /// <param name="task"></param>
         /// <param name="end">Number of timescale units after ProjectManager.Start</param>
-        void SetEnd(T task, int end);
+        void SetEnd(T task, TimeSpan end);
         /// <summary>
         /// Set the duration of the specified task from start to end.
         /// </summary>
         /// <param name="task"></param>
         /// <param name="duration">Number of timescale units between ProjectManager.Start</param>
-        void SetDuration(T task, int duration);
+        void SetDuration(T task, TimeSpan duration);
         /// <summary>
         /// Set the percentage complete of the specified task from 0.0f to 1.0f.
         /// No effect on group tasks as they will get the aggregated percentage complete of all child tasks
@@ -237,7 +222,7 @@ namespace Braincase.GanttChart
         /// <summary>
         /// Set the "now" time. Its value is the number of timescale units after the start time.
         /// </summary>
-        int Now { get; }
+        TimeSpan Now { get; }
         /// <summary>
         /// Set the start date of the project.
         /// </summary>

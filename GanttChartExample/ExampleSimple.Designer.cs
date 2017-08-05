@@ -40,7 +40,7 @@
             this._mChart.Name = "_mChart";
             this._mChart.Size = new System.Drawing.Size(671, 496);
             this._mChart.TabIndex = 0;
-            this._mChart.TimeScaleDisplay = Braincase.GanttChart.TimeScaleDisplay.DayOfMonth;
+            this._mChart.TimeResolution = Braincase.GanttChart.TimeResolution.Day;
             // 
             // ExampleSimple
             // 

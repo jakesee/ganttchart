@@ -17,6 +17,23 @@ namespace Braincase.GanttChart
         {
             graphics.DrawRectangle(pen, rectangle.X, rectangle.Y, rectangle.Width, rectangle.Height);
         }
+
+        public static RectangleF TextBoxAlign(this Graphics graphics, string text, ChartTextAlign align, Font font, RectangleF textbox, float margin = 0)
+        {
+            var size = graphics.MeasureString(text, font);
+            if (align == ChartTextAlign.MiddleCenter)
+            {
+                return new RectangleF(new PointF(textbox.Left + (textbox.Width - size.Width) / 2, textbox.Top + (textbox.Height - size.Height) / 2), size);
+            }
+            else if (align == ChartTextAlign.MiddleLeft)
+            {
+                return new RectangleF(new PointF(textbox.Left + margin, textbox.Top + (textbox.Height - size.Height) / 2), size);
+            }
+            else
+            {
+                throw new NotImplementedException("Need to implement more alignment types");
+            }
+        }
     }
 
     /// <summary>
@@ -24,6 +41,8 @@ namespace Braincase.GanttChart
     /// </summary>
     public partial class Chart : UserControl
     {
+        #region Public Methods
+
         /// <summary>
         /// Construct a gantt chart
         /// </summary>
@@ -35,14 +54,13 @@ namespace Braincase.GanttChart
             // Factory values
             HeaderOneHeight = 32;
             HeaderTwoHeight = 20;
-            BarSpacing = 26;
+            BarSpacing = 32;
             BarHeight = 20;
-            BarWidth = 20;
+            MajorWidth = 140;
+            MinorWidth = 20;
+            TimeResolution = TimeResolution.Day;
             this.DoubleBuffered = true;
-            var viewport = new ControlViewport(this);
-            viewport.WheelDelta = BarSpacing;
-            _mViewport = viewport;
-            TimeScaleDisplay = GanttChart.TimeScaleDisplay.DayOfWeek;
+            _mViewport = new ControlViewport(this) { WheelDelta = BarSpacing };
             AllowTaskDragDrop = true;
             ShowRelations = true;
             ShowSlack = false;
@@ -108,12 +126,6 @@ namespace Braincase.GanttChart
         public int HeaderOneHeight { get; set; }
 
         /// <summary>
-        /// Get or set the DateTime string format. Default value is D/M/YYYY
-        /// </summary>
-        [DefaultValue("D/M/YYYY")]
-        public string FullDateStringFormat { get; set; }
-
-        /// <summary>
         /// Get or set header2 pixel height
         /// </summary>
         [DefaultValue(20)]
@@ -122,7 +134,7 @@ namespace Braincase.GanttChart
         /// <summary>
         /// Get or set pixel distance from top of each Task to the next
         /// </summary>
-        [DefaultValue(26)]
+        [DefaultValue(32)]
         public int BarSpacing { get; set; }
 
         /// <summary>
@@ -132,10 +144,22 @@ namespace Braincase.GanttChart
         public int BarHeight { get; set; }
 
         /// <summary>
-        /// Get or set pixel width of each unit of period
+        /// Get or set the time scale display format
+        /// </summary>
+        [DefaultValue(TimeResolution.Day)]
+        public TimeResolution TimeResolution { get; set; }
+
+        /// <summary>
+        /// Get or set the pixel width of each step of the time scale e.g. if TimeScale is TimeScale.Day, then each Day will be TimeWidth pixels apart
         /// </summary>
         [DefaultValue(20)]
-        public int BarWidth { get; set; }
+        public int MinorWidth { get; set; }
+
+        /// <summary>
+        /// Get or set pixel width between major tick marks.
+        /// </summary>
+        [DefaultValue(140)]
+        public int MajorWidth { get; set; }
 
         /// <summary>
         /// Get or set format for Tasks
@@ -186,12 +210,6 @@ namespace Braincase.GanttChart
         /// </summary>
         [DefaultValue(false)]
         public bool ShowSlack { get; set; }
-
-        /// <summary>
-        /// Get or set the time scale display format
-        /// </summary>
-        [DefaultValue(TimeScaleDisplay.DayOfWeek)]
-        public TimeScaleDisplay TimeScaleDisplay { get; set; }
 
         /// <summary>
         /// Occurs when the mouse is moving over a Task
@@ -247,6 +265,11 @@ namespace Braincase.GanttChart
         /// Occurs before the header gets painted
         /// </summary>
         public event EventHandler<HeaderPaintEventArgs> PaintHeader = null;
+
+        /// <summary>
+        /// Occurs before the header date tick mark gets painted
+        /// </summary>
+        public event EventHandler<TimelinePaintEventArgs> PaintTimeline = null;
 
         /// <summary>
         /// Get the line number of the specified task
@@ -357,7 +380,7 @@ namespace Braincase.GanttChart
         }
 
         /// <summary>
-        /// Print the Chart to the specified Image
+        /// Print the Chart to an Image
         /// </summary>
         /// <param name="scale">Scale to print the image at.</param>
         public Bitmap Print(float scale = 1.0f)
@@ -385,7 +408,7 @@ namespace Braincase.GanttChart
             var row = _ChartCoordToChartRow(mouse.Y);
             var col = _GetDeviceColumnUnderMouse(mouse);
             var task = _GetTaskUnderMouse(mouse);
-            return new ChartInfo(row, _mHeaderInfo.Dates[col], task);
+            return new ChartInfo(row, _mHeaderInfo.DateTimes[col], task);
         }
 
         /// <summary>
@@ -403,7 +426,6 @@ namespace Braincase.GanttChart
         /// Get tool tip currently set for the specified task
         /// </summary>
         /// <param name="task"></param>
-        /// <param name="text"></param>
         /// <returns></returns>
         public string GetToolTip(Task task)
         {
@@ -438,7 +460,7 @@ namespace Braincase.GanttChart
         public void ScrollTo(DateTime datetime)
         {
             TimeSpan span = datetime - _mProject.Start;
-            _mViewport.X = span.Days * this.BarWidth;
+            _mViewport.X = GetSpan(span);
         }
 
         /// <summary>
@@ -450,7 +472,7 @@ namespace Braincase.GanttChart
             if (_mChartTaskRects.ContainsKey(task))
             {
                 var rect = _mChartTaskRects[task];
-                _mViewport.X = rect.Left - this.BarWidth;
+                _mViewport.X = rect.Left - this.MinorWidth;
                 _mViewport.Y = rect.Top - this.HeaderOneHeight - this.HeaderTwoHeight;
             }
         }
@@ -472,6 +494,56 @@ namespace Braincase.GanttChart
         {
             graphics.Transform = _mViewport.Projection;
         }
+
+        /// <summary>
+        /// Convert the specified timespan to pixels units of the Chart x-coordinates
+        /// </summary>
+        /// <param name="span"></param>
+        /// <returns></returns>
+        public float GetSpan(TimeSpan span)
+        {
+            double pixels = 0;
+            switch (TimeResolution)
+            {
+                case TimeResolution.Day:
+                    pixels = span.TotalDays * (double)MinorWidth;
+                    break;
+                case TimeResolution.Week:
+                    pixels = span.TotalDays / 7f * (double)MinorWidth;
+                    break;
+                case TimeResolution.Hour:
+                    pixels = span.TotalHours * (double)MinorWidth;
+                    break;
+            }
+
+            return (float)pixels;
+        }
+
+        /// <summary>
+        /// Convert the pixel units of the Chart x-coordinates to TimeSpan
+        /// </summary>
+        /// <param name="dx"></param>
+        /// <returns></returns>
+        public TimeSpan GetSpan(float dx)
+        {
+            TimeSpan span = TimeSpan.MinValue;
+            switch (TimeResolution)
+            {
+                case TimeResolution.Day:
+                    span = TimeSpan.FromDays(dx / MinorWidth);
+                    break;
+                case TimeResolution.Week:
+                    span = TimeSpan.FromDays(dx / MinorWidth * 7f);
+                    break;
+                case TimeResolution.Hour:
+                    span = TimeSpan.FromHours(dx / MinorWidth);
+                    break;
+            }
+            return span;
+        }
+
+        #endregion Public Methods
+
 
         #region UserControl Events
 
@@ -508,14 +580,21 @@ namespace Braincase.GanttChart
             }
 
             // Dragging
-            if (AllowTaskDragDrop && _mDragSource != null)
+            if (AllowTaskDragDrop && _mDraggedTask != null)
             {
                 Task target = task;
-                if (target == _mDragSource) target = null;
+                if (target == _mDraggedTask) target = null;
                 RectangleF targetRect = target == null ? RectangleF.Empty : _mChartTaskHitRects[target];
                 int row = _DeviceCoordToChartRow(e.Location.Y);
-                OnTaskMouseDrag(new TaskDragDropEventArgs(_mDragStartLocation, _mDragLastLocation, _mDragSource, _mChartTaskHitRects[_mDragSource], target, targetRect, row, e.Button, e.Clicks, e.X, e.Y, e.Delta));
-                _mDragLastLocation = e.Location;
+                OnTaskMouseDrag(new TaskDragDropEventArgs(_mDragTaskStartLocation, _mDragTaskLastLocation, _mDraggedTask, _mChartTaskHitRects[_mDraggedTask], target, targetRect, row, e.Button, e.Clicks, e.X, e.Y, e.Delta));
+                _mDragTaskLastLocation = e.Location;
+            }
+            else if(_mDraggedTask == null && e.Button == MouseButtons.Middle) // panning mode
+            {
+                this.Cursor = Cursors.SizeAll;
+                _mViewport.X -= e.X - _mPanViewLastLocation.X;
+                _mViewport.Y -= e.Y - _mPanViewLastLocation.Y;
+                _mPanViewLastLocation = e.Location;
             }
 
             base.OnMouseMove(e);
@@ -546,14 +625,18 @@ namespace Braincase.GanttChart
         protected override void OnMouseDown(MouseEventArgs e)
         {
             // Begin Drag
+            _mDragTaskStartLocation = e.Location;
+            _mDragTaskLastLocation = e.Location;
+            _mPanViewLastLocation = e.Location;
+
             if (AllowTaskDragDrop)
             {
-                _mDragSource = _GetTaskUnderMouse(e.Location);
-                if (_mDragSource != null)
-                {
-                    _mDragStartLocation = e.Location;
-                    _mDragLastLocation = e.Location;
-                }
+                _mDraggedTask = _GetTaskUnderMouse(e.Location);
+                //if (_mDragSource != null)
+                //{
+                //    _mDragStartLocation = e.Location;
+                //    _mDragLastLocation = e.Location;
+                //}
             }
 
             base.OnMouseDown(e);
@@ -565,17 +648,20 @@ namespace Braincase.GanttChart
         /// <param name="e"></param>
         protected override void OnMouseUp(MouseEventArgs e)
         {
+            // reset cursor to handle end of panning mode;
+            this.Cursor = Cursors.Default;
+
             // Drop task
-            if (AllowTaskDragDrop && _mDragSource != null)
+            if (AllowTaskDragDrop && _mDraggedTask != null)
             {
                 var target = _GetTaskUnderMouse(e.Location);
-                if (target == _mDragSource) target = null;
+                if (target == _mDraggedTask) target = null;
                 var targetRect = target == null ? RectangleF.Empty : _mChartTaskHitRects[target];
                 int row = _DeviceCoordToChartRow(e.Location.Y);
-                OnTaskMouseDrop(new TaskDragDropEventArgs(_mDragStartLocation, _mDragLastLocation, _mDragSource, _mChartTaskHitRects[_mDragSource], target, targetRect, row, e.Button, e.Clicks, e.X, e.Y, e.Delta));
-                _mDragSource = null;
-                _mDragLastLocation = Point.Empty;
-                _mDragStartLocation = Point.Empty;
+                OnTaskMouseDrop(new TaskDragDropEventArgs(_mDragTaskStartLocation, _mDragTaskLastLocation, _mDraggedTask, _mChartTaskHitRects[_mDraggedTask], target, targetRect, row, e.Button, e.Clicks, e.X, e.Y, e.Delta));
+                _mDraggedTask = null;
+                _mDragTaskLastLocation = Point.Empty;
+                _mDragTaskStartLocation = Point.Empty;
             }
 
             base.OnMouseUp(e);
@@ -599,6 +685,7 @@ namespace Braincase.GanttChart
         #endregion UserControl Events
 
         #region Chart Events
+
         /// <summary>
         /// Raises the TaskMouseOver event
         /// </summary>
@@ -645,7 +732,7 @@ namespace Braincase.GanttChart
             // Default drag behaviors **********************************
             if (e.Button == System.Windows.Forms.MouseButtons.Middle)
             {
-                var complete = e.Source.Complete + (float)(e.X - e.PreviousLocation.X) / (e.Source.Duration * this.BarWidth);
+                var complete = e.Source.Complete + (float)(e.X - e.PreviousLocation.X) / GetSpan(e.Source.Duration);
                 _mProject.SetComplete(e.Source, complete);
             }
             else if (e.Button == System.Windows.Forms.MouseButtons.Right)
@@ -677,7 +764,7 @@ namespace Braincase.GanttChart
                     {
                         // displacing horizontally
                         _mOverlay.DraggedRect = e.SourceRect;
-                        _mOverlay.DraggedRect.Offset((e.X - e.StartLocation.X) / this.BarWidth * this.BarWidth, 0);
+                        _mOverlay.DraggedRect.Offset((e.X - e.StartLocation.X), 0);
                     }
                 }
                 else // drop targetting (subtask / predecessor)
@@ -698,7 +785,7 @@ namespace Braincase.GanttChart
             if (TaskMouseDrop != null)
                 TaskMouseDrop(this, e);
 
-            var delta = (e.PreviousLocation.X - e.StartLocation.X) / this.BarWidth;
+            var delta = (e.PreviousLocation.X - e.StartLocation.X);
 
             if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
@@ -716,7 +803,7 @@ namespace Braincase.GanttChart
                     else
                     {
                         // displace horizontally
-                        var start = e.Source.Start + delta;
+                        var start = e.Source.Start + GetSpan(delta);
                         _mProject.SetStart(e.Source, start);
                     }
                 }
@@ -749,7 +836,7 @@ namespace Braincase.GanttChart
             {
                 if (e.Target == null)
                 {
-                    var duration = e.Source.Duration + delta;
+                    var duration = e.Source.Duration + GetSpan(delta);
                     _mProject.SetDuration(e.Source, duration);
                 }
                 else // have target then we do a join
@@ -790,7 +877,7 @@ namespace Braincase.GanttChart
                     var newtask = CreateTaskDelegate();
                     _mProject.Add(newtask);
                     _mProject.SetStart(newtask, e.Task.Start);
-                    _mProject.SetDuration(newtask, 5);
+                    _mProject.SetDuration(newtask, new TimeSpan(5, 0, 0, 0));
                     if (_mProject.IsPart(e.Task)) _mProject.Move(newtask, _mProject.IndexOf(_mProject.SplitTaskOf(e.Task)) + 1 - _mProject.IndexOf(newtask));
                     else _mProject.Move(newtask, _mProject.IndexOf(e.Task) + 1 - _mProject.IndexOf(newtask));
                 }
@@ -814,8 +901,8 @@ namespace Braincase.GanttChart
             }
             else if (e.Button == System.Windows.Forms.MouseButtons.Right)
             {
-                int duration = (int)((_mViewport.DeviceToWorldCoord(e.Location).X - e.Rectangle.Left) / this.BarWidth);
-                if (_mProject.IsPart(e.Task)) _mProject.Split(e.Task, new Task(), duration);
+                TimeSpan duration = GetSpan(_mViewport.DeviceToWorldCoord(e.Location).X - e.Rectangle.Left);
+                if (_mProject.IsPart(e.Task)) _mProject.Split(e.Task, CreateTaskDelegate(), duration);
                 else _mProject.Split(e.Task, CreateTaskDelegate(), CreateTaskDelegate(), duration);
             }
 
@@ -851,7 +938,25 @@ namespace Braincase.GanttChart
             if (this.PaintOverlay != null)
                 PaintOverlay(this, e);
         }
-
+        /// <summary>
+        /// Raises the PaintTickMark event
+        /// </summary>
+        /// <param name="e"></param>
+        protected virtual void OnPaintTimeline(TimelinePaintEventArgs e)
+        {
+            if (this.PaintTimeline != null)
+                this.PaintTimeline(this, e);
+        }
+        /// <summary>
+        /// Raises the PaintHeader event
+        /// </summary>
+        /// <param name="e"></param>
+        protected virtual void OnPaintHeader(HeaderPaintEventArgs e)
+        {
+            if(PaintHeader != null)
+                PaintHeader(this, e);
+        }
+        
         #endregion Chart Events
 
         #region OverlayPainter
@@ -972,138 +1077,7 @@ namespace Braincase.GanttChart
         }
 
         /// <summary>
-        /// Generate the task models and resize the world accordingly
-        /// </summary>
-        private void _GenerateModels()
-        {
-            // Clear Models
-            _mChartTaskRects.Clear();
-            _mChartTaskHitRects.Clear();
-            _mChartSlackRects.Clear();
-            _mChartTaskPartRects.Clear();
-
-            var pHeight = this.Parent == null ? this.Width : this.Parent.Height;
-            var pWidth = this.Parent == null ? this.Height : this.Parent.Width;
-
-            // loop over the tasks and pick up items
-            int end = int.MinValue;
-            int row = 0;
-            foreach (var task in _mProject.Tasks)
-            {
-                if (!_mProject.AncestorsOf(task).Any(x => x.IsCollapsed))
-                {
-                    int y_coord = row * this.BarSpacing + this.HeaderTwoHeight + this.HeaderOneHeight + (this.BarSpacing - this.BarHeight) / 2;
-                    RectangleF taskRect;
-
-                    // Compute task rectangle
-                    taskRect = new RectangleF(task.Start * this.BarWidth + this.BarWidth / 2, y_coord, task.Duration * this.BarWidth, this.BarHeight);
-                    _mChartTaskRects.Add(task, taskRect);
-                    
-                    if(!_mProject.IsSplit(task))
-                    {
-                        // Add normal Task Rectangles to hitRect collection for hit testing
-                        _mChartTaskHitRects.Add(task, taskRect);
-                    }
-                    else // Compute task part rectangles if task is a split task
-                    {
-                        var parts = new List<KeyValuePair<Task, RectangleF>>();
-                        _mChartTaskPartRects.Add(task, parts);
-                        foreach (var part in _mProject.PartsOf(task))
-                        {
-                            taskRect = new RectangleF(part.Start * this.BarWidth + this.BarWidth / 2, y_coord, part.Duration * this.BarWidth, this.BarHeight);
-                            parts.Add(new KeyValuePair<Task,RectangleF>(part, taskRect));
-
-                            // Parts are mouse enabled, add to hitRect collection
-                            _mChartTaskHitRects.Add(part, taskRect);
-                        }
-                    }
-
-                    // Compute Slack Rectangles
-                    if (this.ShowSlack)
-                    {
-                        var slackRect = new RectangleF(task.End * this.BarWidth + this.BarWidth / 2, y_coord, task.Slack * this.BarWidth, this.BarHeight);
-                        _mChartSlackRects.Add(task, slackRect);
-                    }
-
-                    // Find maximum end time
-                    if (task.End > end) end = task.End;
-
-                    row++;
-                }
-            }
-            row += 5;
-            _mViewport.WorldHeight = Math.Max(pHeight, row * this.BarSpacing + this.BarHeight);
-            _mViewport.WorldWidth = Math.Max(pWidth, end * this.BarWidth + 200);
-        }
-        
-        /// <summary>
-        /// Generate Header rectangles and dates
-        /// </summary>
-        private void _GenerateHeaders()
-        {
-            // only generate the necessary headers by determining of current viewport location
-            var h1Rect = new RectangleF(_mViewport.X, _mViewport.Y, _mViewport.Rectangle.Width, this.HeaderOneHeight);
-            var h2Rect = new RectangleF(h1Rect.Left, h1Rect.Bottom, _mViewport.Rectangle.Width, this.HeaderTwoHeight);
-            var h1LabelRects = new List<RectangleF>();
-            var h2LabelRects = new List<RectangleF>();
-            var columns = new List<RectangleF>();
-            var h1labels = new List<string>();
-            var h2labels = new List<string>();
-            var dates = new List<DateTime>();
-            
-            // generate columns across the viewport area
-            var curDate = __CalculateViewportStart();
-            var h2LabelRect_Y = _mViewport.Y + this.HeaderOneHeight;
-            var columns_Y = h2LabelRect_Y + this.HeaderTwoHeight;
-            for (int x = (int)(_mViewport.X - _mViewport.X % this.BarWidth); x < _mViewport.Rectangle.Right; x += this.BarWidth)
-            {
-                dates.Add(curDate);
-                h2LabelRects.Add(new RectangleF(x, h2LabelRect_Y, this.BarWidth, this.HeaderTwoHeight));
-                columns.Add(new RectangleF(x, columns_Y, this.BarWidth, _mViewport.Rectangle.Height));
-
-                __NextColumn(ref curDate);
-            }
-
-            _mHeaderInfo.H1Rect = h1Rect;
-            _mHeaderInfo.H2Rect = h2Rect;
-            _mHeaderInfo.H1LabelRects = h1LabelRects;
-            _mHeaderInfo.H2LabelRects = h2LabelRects;
-            _mHeaderInfo.Columns = columns;
-            _mHeaderInfo.Dates = dates;
-        }
-
-        /// <summary>
-        /// Calculate the date in the first visible column in the viewport
-        /// </summary>
-        /// <returns></returns>
-        private DateTime __CalculateViewportStart()
-        {
-            int vpTime = (int)(_mViewport.X / this.BarWidth);
-            if (_mProject.TimeScale == TimeScale.Day)
-            {
-                return _mProject.Start.AddDays(vpTime);
-            }
-            else /* if (_mProject.TimeScale == TimeScale.Week) */
-            {
-                var startWeek = _mProject.Start.AddDays(-(int)_mProject.Start.DayOfWeek);
-                return startWeek.AddDays(vpTime * 7);
-            }
-        }
-
-        /// <summary>
-        /// Integrates the current DateTime by one column of TimeScale
-        /// </summary>
-        /// <param name="current"></param>
-        private void __NextColumn(ref DateTime current)
-        {
-            if (_mProject.TimeScale == TimeScale.Day)
-                current = current.AddDays(1);
-            else // if (_mProject.TimeScale == TimeScale.Week)
-                current = current.AddDays(7);
-        }
-
-        /// <summary>
-        /// Draw the Chart using the specified graphics
+        /// Draw the Chart using the specified graphics. Only object within the clipRect are drawn, the rest are culled away.
         /// </summary>
         private void _Draw(Graphics graphics, Rectangle clipRect)
         {
@@ -1147,45 +1121,135 @@ namespace Braincase.GanttChart
             graphics.Flush();
         }
 
-        private void _DrawHeader(Graphics graphics, Rectangle clipRect)
+        /// <summary>
+        /// Generate the task models and resize the world accordingly
+        /// </summary>
+        private void _GenerateModels()
         {
-            var info = _mHeaderInfo;
-            var viewRect = _mViewport.Rectangle;
-            var e = new HeaderPaintEventArgs(graphics, clipRect, this, this.Font, this.HeaderFormat);
-            if (PaintHeader != null)
-                PaintHeader(this, e);
+            // Clear Models
+            _mChartTaskRects.Clear();
+            _mChartTaskHitRects.Clear();
+            _mChartSlackRects.Clear();
+            _mChartTaskPartRects.Clear();
 
-            // Draw header backgrounds
-            var gradient = new System.Drawing.Drawing2D.LinearGradientBrush(info.H1Rect, e.Format.GradientLight, e.Format.GradientDark, System.Drawing.Drawing2D.LinearGradientMode.Vertical);
-            graphics.FillRectangles(gradient, new RectangleF[] { info.H1Rect, info.H2Rect });
-            graphics.DrawRectangles(e.Format.Border, new RectangleF[] { info.H1Rect, info.H2Rect });
+            var pHeight = this.Parent == null ? this.Height : this.Parent.Height;
+            var pWidth = this.Parent == null ? this.Width : this.Parent.Width;
 
-            // draw h2 labels
-            string label = string.Empty;
-            System.Globalization.GregorianCalendar cal = new System.Globalization.GregorianCalendar(System.Globalization.GregorianCalendarTypes.Localized);
-            for (int i = 0; i < info.H2LabelRects.Count; i++)
+            // loop over the tasks and pick up items
+            var end = TimeSpan.MinValue;
+            int row = 0;
+            foreach (var task in _mProject.Tasks)
             {
-                var h2labelrect = info.H2LabelRects[i];
-                var date = info.Dates[i];
-                if (this.TimeScaleDisplay == GanttChart.TimeScaleDisplay.DayOfWeek)
-                    label = Chart.ShortDays[date.DayOfWeek];
-                else if (this.TimeScaleDisplay == GanttChart.TimeScaleDisplay.DayOfMonth)
-                    label = date.Day.ToString();
-                else if (this.TimeScaleDisplay == GanttChart.TimeScaleDisplay.WeekOfYear)
-                    label = cal.GetWeekOfYear(date, System.Globalization.CalendarWeekRule.FirstFullWeek, DayOfWeek.Sunday).ToString();
+                if (!_mProject.AncestorsOf(task).Any(x => x.IsCollapsed))
+                {
+                    int y_coord = row * this.BarSpacing + this.HeaderTwoHeight + this.HeaderOneHeight + (this.BarSpacing - this.BarHeight) / 2;
+                    RectangleF taskRect;
 
-                var h2textrect = _TextAlignCenterMiddle(graphics, h2labelrect, label, e.Font);
-                graphics.DrawString(label, e.Font, e.Format.Color, h2textrect);
+                    // Compute task rectangle
+                    taskRect = new RectangleF(GetSpan(task.Start) + this.MinorWidth / 2, y_coord, GetSpan(task.Duration), this.BarHeight);
+                    _mChartTaskRects.Add(task, taskRect);
+                    
+                    if(!_mProject.IsSplit(task))
+                    {
+                        // Add normal Task Rectangles to hitRect collection for hit testing
+                        _mChartTaskHitRects.Add(task, taskRect);
+                    }
+                    else // Compute task part rectangles if task is a split task
+                    {
+                        var parts = new List<KeyValuePair<Task, RectangleF>>();
+                        _mChartTaskPartRects.Add(task, parts);
+                        foreach (var part in _mProject.PartsOf(task))
+                        {
+                            taskRect = new RectangleF(GetSpan(part.Start) + this.MinorWidth / 2, y_coord, GetSpan(part.Duration), this.BarHeight);
+                            parts.Add(new KeyValuePair<Task,RectangleF>(part, taskRect));
 
-                // draw h1 label and rects
-                __DrawHeaderOne(graphics, i, e, h2textrect);
+                            // Parts are mouse enabled, add to hitRect collection
+                            _mChartTaskHitRects.Add(part, taskRect);
+                        }
+                    }
+
+                    // Compute Slack Rectangles
+                    if (this.ShowSlack)
+                    {
+                        var slackRect = new RectangleF(GetSpan(task.End) + this.MinorWidth / 2, y_coord, GetSpan(task.Slack), this.BarHeight);
+                        _mChartSlackRects.Add(task, slackRect);
+                    }
+
+                    // Find maximum end time
+                    if (task.End > end) end = task.End;
+
+                    row++;
+                }
+            }
+            row += 5;
+            _mViewport.WorldHeight = Math.Max(pHeight, row * this.BarSpacing + this.BarHeight);
+            _mViewport.WorldWidth = Math.Max(pWidth, GetSpan(end) + 200);
+        }
+        
+        /// <summary>
+        /// Generate Header rectangles and dates
+        /// </summary>
+        private void _GenerateHeaders()
+        {
+            // only generate the necessary headers by determining the current viewport location
+            var h1Rect = new RectangleF(_mViewport.X, _mViewport.Y, _mViewport.Rectangle.Width, this.HeaderOneHeight);
+            var h2Rect = new RectangleF(h1Rect.Left, h1Rect.Bottom, _mViewport.Rectangle.Width, this.HeaderTwoHeight);
+            var labelRects = new List<RectangleF>();
+            var columns = new List<RectangleF>();
+            var datetimes = new List<DateTime>();
+
+            // generate columns across the viewport area           
+            var minorDate = __CalculateViewportStart(); // start date of chart
+            var minorInterval = GetSpan(MinorWidth);
+            // calculate coordinates of rectangles
+            var labelRect_Y = _mViewport.Y + this.HeaderOneHeight;
+            var labelRect_X = (int)(_mViewport.X / MinorWidth) * MinorWidth;
+            var columns_Y = labelRect_Y + this.HeaderTwoHeight;
+
+            // From second column onwards,
+            // loop over the number of <TimeScaleDisplay> each with width of MajorWidth,
+            // creating the Major and Minor header rects and generating respective date time information
+            while (labelRect_X < _mViewport.Rectangle.Right) // keep creating H1 labels until we are out of the viewport
+            {
+                datetimes.Add(minorDate);
+                labelRects.Add(new RectangleF(labelRect_X, labelRect_Y, MinorWidth, HeaderTwoHeight));
+                columns.Add(new RectangleF(labelRect_X, columns_Y, MinorWidth, _mViewport.Rectangle.Height));
+                minorDate += minorInterval;
+                labelRect_X += MinorWidth;
             }
 
-            // draw "Now" line
-            float xf = (_mProject.Now + 0.5f) * BarWidth;
-            var pen = new Pen(e.Format.Border.Color);
-            pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
-            graphics.DrawLine(pen, new PointF(xf, _mViewport.Y), new PointF(xf, _mViewport.Rectangle.Bottom));
+            _mHeaderInfo.H1Rect = h1Rect;
+            _mHeaderInfo.H2Rect = h2Rect;
+            _mHeaderInfo.LabelRects = labelRects;
+            _mHeaderInfo.Columns = columns;
+            _mHeaderInfo.DateTimes = datetimes;
+        }
+
+        /// <summary>
+        /// Calculate the date in the first visible column in the viewport
+        /// </summary>
+        /// <returns></returns>
+        private DateTime __CalculateViewportStart()
+        {
+            float vpTime = (int)(_mViewport.X / this.MinorWidth);
+            if(this.TimeResolution == GanttChart.TimeResolution.Week)
+            {
+                return _mProject.Start.AddDays(vpTime * 7);
+            }
+            else if (this.TimeResolution == GanttChart.TimeResolution.Day)
+            {
+                return _mProject.Start.AddDays(vpTime);
+            }
+            else if (this.TimeResolution == GanttChart.TimeResolution.Hour)
+            {
+                return _mProject.Start.AddHours(vpTime);
+            }
+            else if (this.TimeResolution == TimeResolution.Minute)
+            {
+                return _mProject.Start.AddMinutes(vpTime);
+            }
+
+            throw new NotImplementedException("Unable to determine TimeResolution.");
         }
 
         private void _DrawColumns(Graphics graphics)
@@ -1194,66 +1258,101 @@ namespace Braincase.GanttChart
             graphics.DrawRectangles(this.HeaderFormat.Border, _mHeaderInfo.Columns.ToArray());
 
             // fill weekend columns
-            if(_mProject.TimeScale == TimeScale.Day)
+            for (int i = 0; i < _mHeaderInfo.DateTimes.Count; i++)
             {
-                for (int i = 0; i < _mHeaderInfo.Dates.Count; i++)
+                var date = _mHeaderInfo.DateTimes[i];
+                // highlight weekends for day time scale
+                if (date.DayOfWeek == DayOfWeek.Sunday || date.DayOfWeek == DayOfWeek.Saturday)
                 {
-                    var date = _mHeaderInfo.Dates[i];
-                    // highlight weekends for day time scale
-                    if (date.DayOfWeek == DayOfWeek.Sunday || date.DayOfWeek == DayOfWeek.Saturday)
-                    {
-                        var pattern = new System.Drawing.Drawing2D.HatchBrush(System.Drawing.Drawing2D.HatchStyle.Percent20, this.HeaderFormat.Border.Color, Color.Transparent);
-                        graphics.FillRectangle(pattern, _mHeaderInfo.Columns[i]);
-                    }
+                    var pattern = new System.Drawing.Drawing2D.HatchBrush(System.Drawing.Drawing2D.HatchStyle.Percent20, this.HeaderFormat.Border.Color, Color.Transparent);
+                    graphics.FillRectangle(pattern, _mHeaderInfo.Columns[i]);
                 }
             }
         }
 
-        private void __DrawHeaderOne(Graphics graphics, int columnIndex, HeaderPaintEventArgs e, RectangleF h2textrect)
+        private void _DrawHeader(Graphics graphics, Rectangle clipRect)
         {
             var info = _mHeaderInfo;
-            var h2labelrect = info.H2LabelRects[columnIndex];
-            var date = info.Dates[columnIndex];
-            var h1labelrect = RectangleF.Empty;
+            var viewRect = _mViewport.Rectangle;
 
-            // draw h1 labels for day of week
-            if (this.TimeScaleDisplay == GanttChart.TimeScaleDisplay.DayOfWeek)
+            // Draw header backgrounds
+            var e = new HeaderPaintEventArgs(graphics, clipRect, this, this.Font, this.HeaderFormat);
+            OnPaintHeader(e);
+            var gradient = new System.Drawing.Drawing2D.LinearGradientBrush(info.H1Rect, e.Format.GradientLight, e.Format.GradientDark, System.Drawing.Drawing2D.LinearGradientMode.Vertical);
+            graphics.FillRectangles(gradient, new RectangleF[] { info.H1Rect, info.H2Rect });
+            graphics.DrawRectangles(e.Format.Border, new RectangleF[] { info.H1Rect, info.H2Rect });
+
+            // Draw the header scales
+            __DrawScale(graphics, clipRect, e.Font, e.Format, info.LabelRects, info.DateTimes);
+
+            // draw "Now" line
+            float xf = GetSpan(_mProject.Now) + this.MinorWidth / 2;
+            var pen = new Pen(e.Format.Border.Color);
+            pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
+            graphics.DrawLine(pen, new PointF(xf, _mViewport.Y), new PointF(xf, _mViewport.Rectangle.Bottom));
+        }
+
+        private void __DrawScale(Graphics graphics, Rectangle clipRect, Font font, HeaderFormat headerformat, List<RectangleF> labelRects, List<DateTime> dates)
+        {
+            LabelFormat minor, major;
+            TimelinePaintEventArgs e = null;
+            DateTime datetime = dates[0]; // these initialisation values matter
+            DateTime datetimeprev = dates[0]; // these initialisation values matter
+            for (int i = 0; i < labelRects.Count; i++)
             {
-                // put a date on every sunday
-                if (date.DayOfWeek == DayOfWeek.Sunday)
+                // Give user a chance to format the tickmark that is to be drawn
+                // https://blog.nicholasrogoff.com/2012/05/05/c-datetime-tostring-formats-quick-reference/
+                datetime = dates[i];
+                ___GetLabelFormat(datetime, datetimeprev, out minor, out major);
+                e = new TimelinePaintEventArgs(graphics, clipRect, this, datetime, datetimeprev, minor, major);
+                OnPaintTimeline(e);
+
+                // Draw the label if not already handled by the user
+                if (!e.Handled)
                 {
-                    var columnsinlabel = _mProject.TimeScale == TimeScale.Day ? 7 : 1;
-                    h1labelrect = new RectangleF(h2labelrect.X, _mViewport.Y, columnsinlabel * BarWidth, this.HeaderOneHeight);
-                    var h1textrect = _TextAlignLeftMiddle(graphics, h1labelrect, date.ToShortDateString(), e.Font, h2textrect.X - h2labelrect.X);
-                    graphics.DrawString(date.ToString(this.FullDateStringFormat), e.Font, e.Format.Color, h1textrect);
-                    __DrawMarker(graphics, (h2labelrect.Left + h2labelrect.Right) / 2f, _mHeaderInfo.H1Rect.Bottom - 5f);
-                }
-            }
-            else if (this.TimeScaleDisplay == GanttChart.TimeScaleDisplay.DayOfMonth || this.TimeScaleDisplay == GanttChart.TimeScaleDisplay.WeekOfYear)
-            {
-                // put a month
-                if (columnIndex == 0 || (date.Month != info.Dates[columnIndex - 1].Month))
-                {
-                    var h1label = _mProject.TimeScale == TimeScale.Day ? date.ToString("MMMM yyyy") : date.ToString("MMM yy");
-                    var columnsinlabel = _mProject.TimeScale == TimeScale.Day
-                        ? DateTime.DaysInMonth(date.Year, date.Month)
-                        : Enumerable.Range(1, DateTime.DaysInMonth(date.Year, date.Month)).Select(day => new DateTime(date.Year, date.Month, day)).Count(d => d.DayOfWeek == DayOfWeek.Sunday);
-                    if (columnIndex == 0)
+                    if (!string.IsNullOrEmpty(minor.Text))
                     {
-                        var leftcolshiftcount = _mProject.TimeScale == TimeScale.Day ? (date.Day - 1) : date.Day / 7;
-                        h1labelrect = new RectangleF(h2labelrect.X - leftcolshiftcount * BarWidth, _mViewport.Y, columnsinlabel * BarWidth, this.HeaderOneHeight);
+                        // Draw minor label
+                        var textbox = graphics.TextBoxAlign(minor.Text, minor.TextAlign, minor.Font, labelRects[i], minor.Margin);
+                        graphics.DrawString(minor.Text, minor.Font, minor.Color, textbox);
                     }
-                    else h1labelrect = new RectangleF(h2labelrect.X, _mViewport.Y, columnsinlabel * BarWidth, this.HeaderOneHeight);
-                    var h1textrect = _TextAlignCenterMiddle(graphics, h1labelrect, h1label, e.Font);
-                    graphics.DrawString(h1label, e.Font, e.Format.Color, h1textrect);
-                    graphics.DrawRectangle(e.Format.Border, h1labelrect);
-                }
-            }
 
-            // ****************************************
-            // Add the H1 Label rect to our header info
-            // *****************************************
-            _mHeaderInfo.H1LabelRects.Add(h1labelrect);
+                    if (!string.IsNullOrEmpty(major.Text))
+                    {
+                        // Draw major label
+                        var majorLabelRect = new RectangleF(labelRects[i].X, _mViewport.Y, this.MajorWidth, this.HeaderOneHeight);
+                        var textbox = graphics.TextBoxAlign(major.Text, major.TextAlign, major.Font, majorLabelRect, major.Margin);
+                        graphics.DrawString(major.Text, major.Font, major.Color, textbox);
+                        __DrawMarker(graphics, labelRects[i].X + MinorWidth / 2f, _mViewport.Y + HeaderOneHeight - 2f);
+                    }
+                }
+
+                // set prev datetime
+                datetimeprev = datetime;
+            }
+        }
+
+        private void ___GetLabelFormat(DateTime datetime, DateTime datetimeprev, out LabelFormat minor, out LabelFormat major)
+        {
+            minor = new LabelFormat() { Text = string.Empty, Font = this.Font, Color = HeaderFormat.Color, Margin = 3, TextAlign = ChartTextAlign.MiddleCenter };
+            major = new LabelFormat() { Text = string.Empty, Font = this.Font, Color = HeaderFormat.Color, Margin = 3, TextAlign = ChartTextAlign.MiddleLeft };
+
+            System.Globalization.GregorianCalendar calendar = new System.Globalization.GregorianCalendar();
+            switch (TimeResolution)
+            {
+                case TimeResolution.Week:
+                    minor.Text = calendar.GetWeekOfYear(datetime, System.Globalization.CalendarWeekRule.FirstFullWeek, DayOfWeek.Monday).ToString();
+                    if(datetime.Month != datetimeprev.Month) major.Text = datetime.ToString("MMMM");
+                    break;
+                case TimeResolution.Day:
+                    minor.Text = ShortDays[datetime.DayOfWeek]; // datetime.ToString("dddd").Substring(0, 1).ToUpper();
+                    if (datetime.DayOfWeek == DayOfWeek.Sunday) major.Text = datetime.ToString("dd MMM yyyy");
+                    break;
+                case TimeResolution.Hour:
+                    minor.Text = datetime.Hour.ToString();
+                    if (datetime.Day != datetimeprev.Day) major.Text = datetime.ToString("dd MMM yyyy");
+                    break;
+            }
         }
 
         private void __DrawMarker(Graphics graphics, float offsetX, float offsetY)
@@ -1269,7 +1368,7 @@ namespace Braincase.GanttChart
             int row = 0;
             var crit_task_set = new HashSet<Task>(_mProject.CriticalPaths.SelectMany(x => x));
             var pen = new Pen(Color.Gray);
-            float labelMargin = this.BarWidth / 2.0f + 3.0f;
+            float labelMargin = this.MinorWidth / 2.0f + 3.0f;
             pen.DashStyle = DashStyle.Dot;
             TaskPaintEventArgs e;
             foreach (var task in _mChartTaskRects.Keys)
@@ -1284,7 +1383,7 @@ namespace Braincase.GanttChart
                     bool critical = crit_task_set.Contains(task);
                     if (critical) e = new TaskPaintEventArgs(graphics, clipRect, this, task, row, critical, this.Font, this.CriticalTaskFormat);
                     else e = new TaskPaintEventArgs(graphics, clipRect, this, task, row, critical, this.Font, this.TaskFormat);
-                    if (PaintTask != null) PaintTask(this, e);
+                    PaintTask?.Invoke(this, e);
 
                     if (viewRect.IntersectsWith(taskrect))
                     {
@@ -1302,7 +1401,7 @@ namespace Braincase.GanttChart
                     if (this.ShowTaskLabels && task.Name != string.Empty)
                     {
                         var name = task.Name;
-                        var txtrect = _TextAlignLeftMiddle(graphics, taskrect, name, e.Font, labelMargin);
+                        var txtrect = graphics.TextBoxAlign(name, ChartTextAlign.MiddleLeft, e.Font, taskrect, labelMargin);
                         txtrect.Offset(taskrect.Width, 0);
                         if (viewRect.IntersectsWith(txtrect))
                         {
@@ -1329,44 +1428,36 @@ namespace Braincase.GanttChart
         {
             var viewRect = _mViewport.Rectangle;
             RectangleF clipRectF = new RectangleF(viewRect.X, viewRect.Y, viewRect.Width, viewRect.Height);
-            foreach (var p in _mProject.Precedents)
+            foreach (var p in _mProject.Precedents.Intersect(_mChartTaskRects.Keys))
             {
                 var precedent = p;
                 IEnumerable<Task> dependants = _mProject.DirectDependantsOf(precedent);
 
-                // check with _mTaskRects that the precedent was drawn; this is needed to connect the lines
-                if (_mChartTaskRects.ContainsKey(precedent))
+                foreach (var d in dependants)
                 {
-                    foreach (var d in dependants)
-                    {
-                        var dependant = d;
+                    var dependant = d;
 
-                        // check with _mTaskRects that the dependant was drawn; this is needed to connect the lines
-                        if (_mChartTaskRects.ContainsKey(dependant))
+                    // check with _mTaskRects that the dependant was drawn; this is needed to connect the lines
+                    if (_mChartTaskRects.ContainsKey(dependant))
+                    {
+                        var prect = _mChartTaskRects[precedent];
+                        var srect = _mChartTaskRects[dependant];
+                        if (precedent.End <= dependant.Start)
                         {
-                            var prect = _mChartTaskRects[precedent];
-                            var srect = _mChartTaskRects[dependant];
-                            if (precedent.End <= dependant.Start)
+                            // plot and draw lines
+                            var p1 = new PointF(prect.Right, prect.Top + prect.Height / 2.0f);
+                            var p2 = new PointF(srect.Left, p1.Y);
+                            bool isPointingDown = p1.Y < srect.Top;
+                            var p3 = new PointF(srect.Left, isPointingDown ? srect.Top : srect.Bottom);
+                            var size = new SizeF(Math.Abs(p3.X - p1.X), Math.Abs(p3.Y - p1.Y));
+                            var linerect = p1.Y < p3.Y ? new RectangleF(p1, size) : new RectangleF(new PointF(p1.X, p1.Y - size.Height), size);
+                            if (clipRectF.IntersectsWith(linerect))
                             {
-                                /*
-                                var p1 = new PointF(prect.Right, prect.Top + prect.Height / 2.0f);
-                                var p2 = new PointF(srect.Left - BarWidth / 2, prect.Top + prect.Height / 2.0f);
-                                var p3 = new PointF(srect.Left - BarWidth / 2, srect.Top + srect.Height / 2.0f);
-                                var p4 = new PointF(srect.Left, srect.Top + srect.Height / 2.0f);
-                                var size = new SizeF(Math.Abs(p4.X - p1.X), Math.Abs(p4.Y - p1.Y));
-                                var linerect = p1.Y < p4.Y ? new RectangleF(p1, size) : new RectangleF(new PointF(p1.X, p1.Y - size.Height), size); 
-                                 */
-                                var p1 = new PointF(prect.Right, prect.Top + prect.Height / 2.0f);
-                                var p2 = new PointF(prect.Right + BarWidth / 2, prect.Top + prect.Height / 2.0f);
-                                var p3 = new PointF(prect.Right + BarWidth / 2, srect.Top + srect.Height / 2.0f);
-                                var p4 = new PointF(srect.Left, srect.Top + srect.Height / 2.0f);
-                                var size = new SizeF(Math.Abs(p4.X - p1.X), Math.Abs(p4.Y - p1.Y));
-                                var linerect = p1.Y < p4.Y ? new RectangleF(p1, size) : new RectangleF(new PointF(p1.X, p1.Y - size.Height), size);
-                                if (clipRectF.IntersectsWith(linerect))
-                                {
-                                    graphics.DrawLines(Pens.Black, new PointF[] { p1, p2, p3, p4 });
-                                    graphics.FillRectangle(Brushes.Black, p3.X - 1.5f, p3.Y - 1.5f, 3, 3);
-                                }
+                                graphics.DrawLines(Pens.Black, new PointF[] { p1, p2, p3 });
+                                // draw arrowhead
+                                var p4 = new PointF(p3.X - 3f, p3.Y + (isPointingDown ? -6f : 6f));
+                                var p5 = new PointF(p3.X + 3f, p4.Y);
+                                graphics.FillPolygon(Brushes.Black, new PointF[] { p3, p4, p5 });
                             }
                         }
                     }
@@ -1394,12 +1485,12 @@ namespace Braincase.GanttChart
                     graphics.FillPolygon(Brushes.Black, new PointF[] {
                                 new PointF() { X = taskRect.Left, Y = taskRect.Top },
                                 new PointF() { X = taskRect.Left, Y = taskRect.Top + BarHeight },
-                                new PointF() { X = taskRect.Left + BarWidth, Y = taskRect.Top } });
+                                new PointF() { X = taskRect.Left + MinorWidth / 2f, Y = taskRect.Top } });
                     // right bracket
                     graphics.FillPolygon(Brushes.Black, new PointF[] {
                                 new PointF() { X = taskRect.Right, Y = taskRect.Top },
                                 new PointF() { X = taskRect.Right, Y = taskRect.Top + BarHeight },
-                                new PointF() { X = taskRect.Right - BarWidth, Y = taskRect.Top } });
+                                new PointF() { X = taskRect.Right - MinorWidth / 2f, Y = taskRect.Top } });
                 }
             }
         }
@@ -1425,18 +1516,6 @@ namespace Braincase.GanttChart
 
             // Draw border
             graphics.DrawRectangles(e.Format.Border, taskRects);
-        }
-
-        private RectangleF _TextAlignCenterMiddle(Graphics graphics, RectangleF rect, string text, Font font)
-        {
-            var size = graphics.MeasureString(text, font);
-            return new RectangleF(new PointF(rect.Left + (rect.Width - size.Width) / 2, rect.Top + (rect.Height - size.Height) / 2), size);
-        }
-
-        private RectangleF _TextAlignLeftMiddle(Graphics graphics, RectangleF rect, string text, Font font, float leftMargin = 0.0f)
-        {
-            var size = graphics.MeasureString(text, font);
-            return new RectangleF(new PointF(rect.Left + leftMargin, rect.Top + (rect.Height - size.Height) / 2), size);
         }
 
         #endregion Private Helper Methods
@@ -1471,17 +1550,17 @@ namespace Braincase.GanttChart
         {
             public RectangleF H1Rect;
             public RectangleF H2Rect;
-            public List<RectangleF> H1LabelRects;
-            public List<RectangleF> H2LabelRects;
+            public List<RectangleF> LabelRects;
             public List<RectangleF> Columns;
-            public List<DateTime> Dates;
+            public List<DateTime> DateTimes;
         }
 
         ProjectManager<Task, object> _mProject = null; // The project to be visualised / rendered as a Gantt Chart
         IViewport _mViewport = null;
-        Task _mDragSource = null; // The dragged source Task
-        Point _mDragLastLocation = Point.Empty; // Record the dragging mouse offset
-        Point _mDragStartLocation = Point.Empty;
+        Task _mDraggedTask = null; // The dragged source Task
+        Point _mDragTaskLastLocation = Point.Empty; // Record the task dragging mouse offset
+        Point _mDragTaskStartLocation = Point.Empty;
+        Point _mPanViewLastLocation = Point.Empty;
         List<Task> _mSelectedTasks = new List<Task>(); // List of selected tasks
         Dictionary<Task, RectangleF> _mChartTaskHitRects = new Dictionary<Task, RectangleF>(); // list of hitareas for Task Rectangles
         Dictionary<Task, RectangleF> _mChartTaskRects = new Dictionary<Task, RectangleF>();
@@ -1496,22 +1575,15 @@ namespace Braincase.GanttChart
     #region Chart Formatting
 
     /// <summary>
-    /// Time scale display format
+    /// Time resolution for the minor tick marks which are spaced Chart.TimeWidth apart
     /// </summary>
-    public enum TimeScaleDisplay
+    public enum TimeResolution
     {
-        /// <summary>
-        /// Day of the week: S, M, T, W, T, F, S
-        /// </summary>
-        DayOfWeek,
-        /// <summary>
-        /// Day of month; 1 to 31
-        /// </summary>
-        DayOfMonth,
-        /// <summary>
-        /// Week of the year: 1 to 52; or 53 in case of leap year
-        /// </summary>
-        WeekOfYear
+        Week,
+        Day,
+        Hour,
+        Minute,
+        Second,
     }
 
     /// <summary>
@@ -1577,6 +1649,15 @@ namespace Braincase.GanttChart
         /// Get or set the darker color in the gradient
         /// </summary>
         public Color GradientDark { get; set; }
+    }
+
+    public struct LabelFormat
+    {
+        public string Text;
+        public Font Font;
+        public Brush Color;
+        public ChartTextAlign TextAlign;
+        public float Margin;
     }
     #endregion Chart Formatting
 
@@ -1717,7 +1798,7 @@ namespace Braincase.GanttChart
         {
             get
             {
-                return new RectangleF(this.Task.Start * this.Chart.BarWidth, this.Row * this.Chart.BarSpacing + this.Chart.BarSpacing + this.Chart.HeaderOneHeight, this.Task.Duration * this.Chart.BarWidth, this.Chart.BarHeight);
+                return new RectangleF(this.Chart.GetSpan(this.Task.Start), this.Row * this.Chart.BarSpacing + this.Chart.BarSpacing + this.Chart.HeaderOneHeight, this.Chart.GetSpan(this.Task.Duration), this.Chart.BarHeight);
             }    
         }
         /// <summary>
@@ -1782,6 +1863,43 @@ namespace Braincase.GanttChart
         }
     }
 
+    /// <summary>
+    /// Provides data for ScalePaintEvent
+    /// </summary>
+    public class TimelinePaintEventArgs : ChartPaintEventArgs
+    {
+        /// <summary>
+        /// Get the datetime value of the tick mark
+        /// </summary>
+        public DateTime DateTime { get; private set; }
+        /// <summary>
+        /// Get the dateimte value of the preview mark
+        /// </summary>
+        public DateTime DateTimePrev { get; private set; }
+        /// <summary>
+        /// Get or set whether painting of the tick mark has already been handled. If it is already handled, Chart will not paint the tick mark.
+        /// </summary>
+        public bool Handled { get; private set; }
+        /// <summary>
+        /// Get or set the label for the minor scale
+        /// </summary>
+        LabelFormat Minor { get; set; }
+        /// <summary>
+        /// Get or set the label for the major scale
+        /// </summary>
+        LabelFormat Major { get; set; }
+
+        public TimelinePaintEventArgs(Graphics graphics, Rectangle clipRect, Chart chart, DateTime datetime, DateTime datetimeprev, LabelFormat minor, LabelFormat major)
+            : base(graphics, clipRect, chart)
+        {
+            Handled = false;
+            DateTime = datetime;
+            DateTimePrev = datetimeprev;
+            Minor = minor;
+            Major = major;
+        }
+    }
+
     #endregion EventArgs
 
     /// <summary>
@@ -1826,5 +1944,12 @@ namespace Braincase.GanttChart
     {
         public int Index { get; set; }
         public DateTime DateTime { get; set; }
+    }
+
+    public enum ChartTextAlign
+    {
+        TopLeft, TopCenter, TopRight,
+        MiddleLeft, MiddleCenter, MiddleRight,
+        BottomLeft, BottomCenter, BottomRight
     }
 }

@@ -83,6 +83,7 @@
             this.mnuHelpAbout = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.lblStatus = new System.Windows.Forms.ToolStripStatusLabel();
+            this.mnuViewHours = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this._mSplitter1)).BeginInit();
             this._mSplitter1.Panel1.SuspendLayout();
             this._mSplitter1.Panel2.SuspendLayout();
@@ -147,6 +148,7 @@
             // _mTaskGrid
             // 
             this._mTaskGrid.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._mTaskGrid.LineColor = System.Drawing.SystemColors.ControlDark;
             this._mTaskGrid.Location = new System.Drawing.Point(3, 3);
             this._mTaskGrid.Name = "_mTaskGrid";
             this._mTaskGrid.Size = new System.Drawing.Size(223, 630);
@@ -179,7 +181,7 @@
             // _mScrollDatePicker
             // 
             this._mScrollDatePicker.Dock = System.Windows.Forms.DockStyle.Top;
-            this._mScrollDatePicker.Location = new System.Drawing.Point(3, 16);
+            this._mScrollDatePicker.Location = new System.Drawing.Point(3, 19);
             this._mScrollDatePicker.Name = "_mScrollDatePicker";
             this._mScrollDatePicker.Size = new System.Drawing.Size(217, 23);
             this._mScrollDatePicker.TabIndex = 1;
@@ -199,7 +201,7 @@
             // _mNowDatePicker
             // 
             this._mNowDatePicker.Dock = System.Windows.Forms.DockStyle.Top;
-            this._mNowDatePicker.Location = new System.Drawing.Point(3, 16);
+            this._mNowDatePicker.Location = new System.Drawing.Point(3, 19);
             this._mNowDatePicker.Name = "_mNowDatePicker";
             this._mNowDatePicker.Size = new System.Drawing.Size(217, 23);
             this._mNowDatePicker.TabIndex = 1;
@@ -219,7 +221,7 @@
             // _mStartDatePicker
             // 
             this._mStartDatePicker.Dock = System.Windows.Forms.DockStyle.Top;
-            this._mStartDatePicker.Location = new System.Drawing.Point(3, 16);
+            this._mStartDatePicker.Location = new System.Drawing.Point(3, 19);
             this._mStartDatePicker.Name = "_mStartDatePicker";
             this._mStartDatePicker.Size = new System.Drawing.Size(217, 23);
             this._mStartDatePicker.TabIndex = 0;
@@ -268,9 +270,9 @@
             // 
             this.TaskGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.TaskGridView.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.TaskGridView.Location = new System.Drawing.Point(3, 16);
+            this.TaskGridView.Location = new System.Drawing.Point(3, 18);
             this.TaskGridView.Name = "TaskGridView";
-            this.TaskGridView.Size = new System.Drawing.Size(223, 619);
+            this.TaskGridView.Size = new System.Drawing.Size(223, 617);
             this.TaskGridView.TabIndex = 0;
             this.TaskGridView.SelectionChanged += new System.EventHandler(this._mTaskGridView_SelectionChanged);
             // 
@@ -289,8 +291,8 @@
             this._mChart.AllowTaskDragDrop = false;
             this._mChart.Dock = System.Windows.Forms.DockStyle.Fill;
             this._mChart.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this._mChart.FullDateStringFormat = null;
             this._mChart.Location = new System.Drawing.Point(0, 0);
+            this._mChart.MajorWidth = 140;
             this._mChart.Margin = new System.Windows.Forms.Padding(0);
             this._mChart.Name = "_mChart";
             this._mChart.Padding = new System.Windows.Forms.Padding(5);
@@ -431,13 +433,13 @@
             // mnuFileImgPrint50
             // 
             this.mnuFileImgPrint50.Name = "mnuFileImgPrint50";
-            this.mnuFileImgPrint50.Size = new System.Drawing.Size(102, 22);
+            this.mnuFileImgPrint50.Size = new System.Drawing.Size(152, 22);
             this.mnuFileImgPrint50.Text = "50%";
             // 
             // mnuFileImgPrint10
             // 
             this.mnuFileImgPrint10.Name = "mnuFileImgPrint10";
-            this.mnuFileImgPrint10.Size = new System.Drawing.Size(102, 22);
+            this.mnuFileImgPrint10.Size = new System.Drawing.Size(152, 22);
             this.mnuFileImgPrint10.Text = "10%";
             // 
             // toolStripMenuItem1
@@ -461,6 +463,7 @@
             this.mnuViewDayOfWeek,
             this.mnuViewDayOfMonth,
             this.mnuViewWeekOfYear,
+            this.mnuViewHours,
             this.toolStripMenuItem2,
             this.mnuViewRelationships,
             this.mnuViewSlack,
@@ -475,77 +478,77 @@
             this.mnuViewDays.Checked = true;
             this.mnuViewDays.CheckState = System.Windows.Forms.CheckState.Checked;
             this.mnuViewDays.Name = "mnuViewDays";
-            this.mnuViewDays.Size = new System.Drawing.Size(149, 22);
+            this.mnuViewDays.Size = new System.Drawing.Size(152, 22);
             this.mnuViewDays.Text = "Days";
             this.mnuViewDays.Click += new System.EventHandler(this.mnuViewDays_Click);
             // 
             // mnuViewWeek
             // 
             this.mnuViewWeek.Name = "mnuViewWeek";
-            this.mnuViewWeek.Size = new System.Drawing.Size(149, 22);
+            this.mnuViewWeek.Size = new System.Drawing.Size(152, 22);
             this.mnuViewWeek.Text = "Weeks";
             this.mnuViewWeek.Click += new System.EventHandler(this.mnuViewWeek_Click);
             // 
             // toolStripMenuItem5
             // 
             this.toolStripMenuItem5.Name = "toolStripMenuItem5";
-            this.toolStripMenuItem5.Size = new System.Drawing.Size(146, 6);
+            this.toolStripMenuItem5.Size = new System.Drawing.Size(149, 6);
             // 
             // mnuViewDayOfWeek
             // 
             this.mnuViewDayOfWeek.Checked = true;
             this.mnuViewDayOfWeek.CheckState = System.Windows.Forms.CheckState.Checked;
             this.mnuViewDayOfWeek.Name = "mnuViewDayOfWeek";
-            this.mnuViewDayOfWeek.Size = new System.Drawing.Size(149, 22);
+            this.mnuViewDayOfWeek.Size = new System.Drawing.Size(152, 22);
             this.mnuViewDayOfWeek.Text = "Day Of Week";
             this.mnuViewDayOfWeek.Click += new System.EventHandler(this.mnuViewDayOfWeek_Click);
             // 
             // mnuViewDayOfMonth
             // 
             this.mnuViewDayOfMonth.Name = "mnuViewDayOfMonth";
-            this.mnuViewDayOfMonth.Size = new System.Drawing.Size(149, 22);
+            this.mnuViewDayOfMonth.Size = new System.Drawing.Size(152, 22);
             this.mnuViewDayOfMonth.Text = "Day Of Month";
             this.mnuViewDayOfMonth.Click += new System.EventHandler(this.mnuViewDayOfMonth_Click);
             // 
             // mnuViewWeekOfYear
             // 
             this.mnuViewWeekOfYear.Name = "mnuViewWeekOfYear";
-            this.mnuViewWeekOfYear.Size = new System.Drawing.Size(149, 22);
+            this.mnuViewWeekOfYear.Size = new System.Drawing.Size(152, 22);
             this.mnuViewWeekOfYear.Text = "Week Of Year";
             this.mnuViewWeekOfYear.Click += new System.EventHandler(this.mnuViewWeekOfYear_Click);
             // 
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(146, 6);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(149, 6);
             // 
             // mnuViewRelationships
             // 
             this.mnuViewRelationships.Checked = true;
             this.mnuViewRelationships.CheckState = System.Windows.Forms.CheckState.Checked;
             this.mnuViewRelationships.Name = "mnuViewRelationships";
-            this.mnuViewRelationships.Size = new System.Drawing.Size(149, 22);
+            this.mnuViewRelationships.Size = new System.Drawing.Size(152, 22);
             this.mnuViewRelationships.Text = "Relationships";
             this.mnuViewRelationships.Click += new System.EventHandler(this.mnuViewRelationships_Click);
             // 
             // mnuViewSlack
             // 
             this.mnuViewSlack.Name = "mnuViewSlack";
-            this.mnuViewSlack.Size = new System.Drawing.Size(149, 22);
+            this.mnuViewSlack.Size = new System.Drawing.Size(152, 22);
             this.mnuViewSlack.Text = "Slack";
             this.mnuViewSlack.Click += new System.EventHandler(this.mnuViewSlack_Click);
             // 
             // toolStripMenuItem6
             // 
             this.toolStripMenuItem6.Name = "toolStripMenuItem6";
-            this.toolStripMenuItem6.Size = new System.Drawing.Size(146, 6);
+            this.toolStripMenuItem6.Size = new System.Drawing.Size(149, 6);
             // 
             // mnuViewIntructions
             // 
             this.mnuViewIntructions.Checked = true;
             this.mnuViewIntructions.CheckState = System.Windows.Forms.CheckState.Checked;
             this.mnuViewIntructions.Name = "mnuViewIntructions";
-            this.mnuViewIntructions.Size = new System.Drawing.Size(149, 22);
+            this.mnuViewIntructions.Size = new System.Drawing.Size(152, 22);
             this.mnuViewIntructions.Text = "Instructions";
             this.mnuViewIntructions.Click += new System.EventHandler(this.mnuViewIntructions_Click);
             // 
@@ -579,6 +582,13 @@
             this.lblStatus.Name = "lblStatus";
             this.lblStatus.Size = new System.Drawing.Size(814, 17);
             this.lblStatus.Spring = true;
+            // 
+            // mnuViewHours
+            // 
+            this.mnuViewHours.Name = "mnuViewHours";
+            this.mnuViewHours.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewHours.Text = "Hours";
+            this.mnuViewHours.Click += new System.EventHandler(this.mnuViewHours_Click);
             // 
             // ExampleFull
             // 
@@ -671,7 +681,7 @@
         private System.Windows.Forms.ToolStripMenuItem mnuFileImgPrint100;
         private System.Windows.Forms.ToolStripMenuItem mnuFileImgPrint50;
         private System.Windows.Forms.ToolStripMenuItem mnuFileImgPrint10;
-
+        private System.Windows.Forms.ToolStripMenuItem mnuViewHours;
     }
 }
 

@@ -51,20 +51,20 @@ namespace Braincase.GanttChart
             {
                 var task = new MyTask(_mManager) { Name = string.Format("New Task {0}", i.ToString()) };
                 _mManager.Add(task);
-                _mManager.SetStart(task, rand.Next(300));
-                _mManager.SetDuration(task, rand.Next(50));
+                _mManager.SetStart(task, TimeSpan.FromDays(rand.Next(300)));
+                _mManager.SetDuration(task, TimeSpan.FromDays(rand.Next(50)));
             }
 
             // Set task durations, e.g. using ProjectManager methods 
-            _mManager.SetDuration(wake, 3);
-            _mManager.SetDuration(teeth, 5);
-            _mManager.SetDuration(shower, 7);
-            _mManager.SetDuration(clothes, 4);
-            _mManager.SetDuration(hair, 3);
-            _mManager.SetDuration(pack, 5);
+            _mManager.SetDuration(wake, TimeSpan.FromDays(3));
+            _mManager.SetDuration(teeth, TimeSpan.FromDays(5));
+            _mManager.SetDuration(shower, TimeSpan.FromDays(7));
+            _mManager.SetDuration(clothes, TimeSpan.FromDays(4));
+            _mManager.SetDuration(hair, TimeSpan.FromDays(3));
+            _mManager.SetDuration(pack, TimeSpan.FromDays(5));
 
             // demostrate splitting a task
-            _mManager.Split(pack, new MyTask(_mManager), new MyTask(_mManager), 2);
+            _mManager.Split(pack, new MyTask(_mManager), new MyTask(_mManager), TimeSpan.FromDays(2));
 
             // Set task complete status, e.g. using newly created properties
             wake.Complete = 0.9f;
@@ -123,10 +123,9 @@ namespace Braincase.GanttChart
             _mChart.SetToolTip(shower, string.Join(", ", _mManager.ResourcesOf(shower).Select(x => (x as MyResource).Name)));
 
             // Set Time information
-            _mManager.TimeScale = TimeScale.Day;
             var span = DateTime.Today - _mManager.Start;
-            _mManager.Now = (int)Math.Round(span.TotalDays); // set the "Now" marker at the correct date
-            _mChart.TimeScaleDisplay = TimeScaleDisplay.DayOfWeek; // Set the chart to display days of week in header
+            _mManager.Now = span; // set the "Now" marker at the correct date
+            _mChart.TimeResolution = TimeResolution.Day; // Set the chart to display in days in header
 
             // Init the rest of the UI
             _InitExampleUI();            
@@ -217,8 +216,7 @@ namespace Braincase.GanttChart
 
         private void mnuViewDaysDayOfWeek_Click(object sender, EventArgs e)
         {
-            _mManager.TimeScale = TimeScale.Day;
-            _mChart.TimeScaleDisplay = TimeScaleDisplay.DayOfWeek;
+            _mChart.TimeResolution = TimeResolution.Week;
             _mChart.Invalidate();
         }
 
@@ -260,7 +258,6 @@ namespace Braincase.GanttChart
         #region Timescale Views
         private void mnuViewDays_Click(object sender, EventArgs e)
         {
-            _mManager.TimeScale = TimeScale.Day;
             mnuViewDays.Checked = true;
             mnuViewWeek.Checked = false;
             _mChart.Invalidate();
@@ -268,37 +265,48 @@ namespace Braincase.GanttChart
 
         private void mnuViewWeek_Click(object sender, EventArgs e)
         {
-            _mManager.TimeScale = TimeScale.Week;
-            mnuViewDays.Checked = false;
+            _ClearTimeResolutionMenu();
             mnuViewWeek.Checked = true;
             _mChart.Invalidate();
         }
 
         private void mnuViewDayOfWeek_Click(object sender, EventArgs e)
         {
-            _mChart.TimeScaleDisplay = TimeScaleDisplay.DayOfWeek;
+            _mChart.TimeResolution = TimeResolution.Day;
+            _ClearTimeResolutionMenu();
             mnuViewDayOfWeek.Checked = true;
-            mnuViewDayOfMonth.Checked = false;
-            mnuViewWeekOfYear.Checked = false;
             _mChart.Invalidate();
         }
 
         private void mnuViewDayOfMonth_Click(object sender, EventArgs e)
         {
-            _mChart.TimeScaleDisplay = TimeScaleDisplay.DayOfMonth;
-            mnuViewDayOfWeek.Checked = false;
+            _ClearTimeResolutionMenu();
             mnuViewDayOfMonth.Checked = true;
-            mnuViewWeekOfYear.Checked = false;
             _mChart.Invalidate();
         }
 
         private void mnuViewWeekOfYear_Click(object sender, EventArgs e)
         {
-            _mChart.TimeScaleDisplay = TimeScaleDisplay.WeekOfYear;
-            mnuViewDayOfWeek.Checked = false;
-            mnuViewDayOfMonth.Checked = false;
+            _mChart.TimeResolution = TimeResolution.Week;
+            _ClearTimeResolutionMenu();
             mnuViewWeekOfYear.Checked = true;
             _mChart.Invalidate();
+        }
+
+        private void mnuViewHours_Click(object sender, EventArgs e)
+        {
+            _mChart.TimeResolution = TimeResolution.Hour;
+            _ClearTimeResolutionMenu();
+            mnuViewHours.Checked = true;
+            _mChart.Invalidate();
+        }
+
+        private void _ClearTimeResolutionMenu()
+        {
+            mnuViewHours.Checked = false;
+            mnuViewDayOfWeek.Checked = false;
+            mnuViewDayOfMonth.Checked = false;
+            mnuViewWeekOfYear.Checked = false;
         }
         #endregion Timescale Views
 
@@ -310,8 +318,8 @@ namespace Braincase.GanttChart
         {
             _mManager.Start = _mStartDatePicker.Value;
             var span = DateTime.Today - _mManager.Start;
-            _mManager.Now = (int)Math.Round(span.TotalDays);
-            if (_mManager.TimeScale == TimeScale.Week) _mManager.Now = (_mManager.Now % 7) * 7;
+            _mManager.Now = span;
+            
             _mChart.Invalidate();
         }
 
@@ -323,8 +331,7 @@ namespace Braincase.GanttChart
         private void _mNowDatePicker_ValueChanged(object sender, EventArgs e)
         {
             TimeSpan span = _mNowDatePicker.Value - _mStartDatePicker.Value;
-            _mManager.Now = span.Days + 1;
-            if (_mManager.TimeScale == TimeScale.Week) _mManager.Now = _mManager.Now / 7 + (_mManager.Now % 7 > 0 ? 1 : 0);
+            _mManager.Now = span.Add(new TimeSpan(1, 0, 0, 0));
             _mChart.Invalidate();
         }
 
@@ -383,9 +390,8 @@ namespace Braincase.GanttChart
             }
         }
 
-        #endregion Print        
 
-        
+        #endregion Print        
     }
 
     #region overlay painter
@@ -473,9 +479,9 @@ namespace Braincase.GanttChart
 
         private ProjectManager Manager { get; set; }
 
-        public new int Start { get { return base.Start; } set { Manager.SetStart(this, value); } }
-        public new int End { get { return base.End; } set { Manager.SetEnd(this, value); } }
-        public new int Duration { get { return base.Duration; } set { Manager.SetDuration(this, value); } }
+        public new TimeSpan Start { get { return base.Start; } set { Manager.SetStart(this, value); } }
+        public new TimeSpan End { get { return base.End; } set { Manager.SetEnd(this, value); } }
+        public new TimeSpan Duration { get { return base.Duration; } set { Manager.SetDuration(this, value); } }
         public new float Complete { get { return base.Complete; } set { Manager.SetComplete(this, value); } }
     }
     #endregion custom task and resource

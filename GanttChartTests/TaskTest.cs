@@ -18,28 +18,28 @@ namespace GanttChartTests
             manager.Add(one);
 
             // setup: set some initial values
-            manager.SetStart(one, 22);
-            manager.SetEnd(one, 24);
+            manager.SetStart(one, TimeSpan.FromDays(22));
+            manager.SetEnd(one, TimeSpan.FromDays(24));
             manager.SetComplete(one, 0.3f);
             manager.SetCollapse(one, false);
-            Assert.IsTrue(one.Start == 22);
-            Assert.IsTrue(one.End == 24);
+            Assert.IsTrue(one.Start == TimeSpan.FromDays(22));
+            Assert.IsTrue(one.End == TimeSpan.FromDays(24));
             Assert.IsTrue(one.Complete == 0.3f);
             Assert.IsTrue(one.IsCollapsed == false);
-            Assert.IsTrue(one.Slack == 0);
-            Assert.IsTrue(one.Duration == 2);
+            Assert.IsTrue(one.Slack == TimeSpan.FromDays(0));
+            Assert.IsTrue(one.Duration == TimeSpan.FromDays(2));
 
             // test: change the values and check again
-            manager.SetStart(one, 34);
-            manager.SetDuration(one, 56);
+            manager.SetStart(one, TimeSpan.FromDays(34));
+            manager.SetDuration(one, TimeSpan.FromDays(56));
             manager.SetComplete(one, 0.9f);
             manager.SetCollapse(one, true); // should have no effect unless on group
-            Assert.IsTrue(one.Start == 34);
-            Assert.IsTrue(one.End == 90);
+            Assert.IsTrue(one.Start == TimeSpan.FromDays(34));
+            Assert.IsTrue(one.End == TimeSpan.FromDays(90));
             Assert.IsTrue(one.Complete == 0.9f);
             Assert.IsTrue(one.IsCollapsed == false);
-            Assert.IsTrue(one.Slack == 0);
-            Assert.IsTrue(one.Duration == 56);
+            Assert.IsTrue(one.Slack == TimeSpan.FromDays(0));
+            Assert.IsTrue(one.Duration == TimeSpan.FromDays(56));
         }
 
         [TestMethod]
@@ -53,16 +53,16 @@ namespace GanttChartTests
 
             // setup: set task parameters and set relation
             manager.Relate(one, two);
-            manager.SetStart(one, 10);
-            manager.SetDuration(one, 5);
-            manager.SetStart(two, 18);
-            manager.SetDuration(two, 12);
-            Assert.IsTrue(one.Start == 10);
-            Assert.IsTrue(one.End == 15);
-            Assert.IsTrue(one.Slack == 2, string.Format("Expected {0} != {1}", 2, one.Slack));
-            Assert.IsTrue(two.Start == 18);
-            Assert.IsTrue(two.End == 30);
-            Assert.IsTrue(two.Slack == 0);
+            manager.SetStart(one, TimeSpan.FromDays(10));
+            manager.SetDuration(one, TimeSpan.FromDays(5));
+            manager.SetStart(two, TimeSpan.FromDays(18));
+            manager.SetDuration(two, TimeSpan.FromDays(12));
+            Assert.IsTrue(one.Start == TimeSpan.FromDays(10));
+            Assert.IsTrue(one.End == TimeSpan.FromDays(15));
+            Assert.IsTrue(one.Slack == TimeSpan.FromDays(3), string.Format("Expected {0} != {1}", 2, one.Slack));
+            Assert.IsTrue(two.Start == TimeSpan.FromDays(18));
+            Assert.IsTrue(two.End == TimeSpan.FromDays(30));
+            Assert.IsTrue(two.Slack == TimeSpan.FromDays(0));
         }
 
         [TestMethod]
@@ -75,21 +75,21 @@ namespace GanttChartTests
             manager.Add(two);
 
             // setup: make 2 independant tasks
-            manager.SetStart(one, 10);
-            manager.SetDuration(one, 6);
-            manager.SetStart(two, 10);
-            manager.SetDuration(two, 10);
-            Assert.IsTrue(one.Start == 10);
-            Assert.IsTrue(one.End == 16);
-            Assert.IsTrue(two.Start == 10);
-            Assert.IsTrue(two.End == 20);
+            manager.SetStart(one, TimeSpan.FromDays(10));
+            manager.SetDuration(one, TimeSpan.FromDays(6));
+            manager.SetStart(two, TimeSpan.FromDays(10));
+            manager.SetDuration(two, TimeSpan.FromDays(10));
+            Assert.IsTrue(one.Start == TimeSpan.FromDays(10));
+            Assert.IsTrue(one.End == TimeSpan.FromDays(16));
+            Assert.IsTrue(two.Start == TimeSpan.FromDays(10));
+            Assert.IsTrue(two.End == TimeSpan.FromDays(20));
 
             // test: relate one and two; one before two
             manager.Relate(one, two);
-            Assert.IsTrue(one.Start == 10);
-            Assert.IsTrue(one.End == 16);
-            Assert.IsTrue(two.Start == 17);
-            Assert.IsTrue(two.End == 27);
+            Assert.IsTrue(one.Start == TimeSpan.FromDays(10));
+            Assert.IsTrue(one.End == TimeSpan.FromDays(16));
+            Assert.IsTrue(two.Start == TimeSpan.FromDays(16));
+            Assert.IsTrue(two.End == TimeSpan.FromDays(26));
         }
 
         [TestMethod]
@@ -103,25 +103,25 @@ namespace GanttChartTests
 
             // setup: set task parameters and set relation
             manager.Relate(one, two);
-            manager.SetStart(one, 10);
-            manager.SetDuration(one, 5);
-            manager.SetStart(two, 18);
-            manager.SetDuration(two, 12);
-            Assert.IsTrue(one.Start == 10);
-            Assert.IsTrue(one.End == 15);
-            Assert.IsTrue(one.Slack == 2, string.Format("Expected {0} != {1}", 2, one.Slack));
-            Assert.IsTrue(two.Start == 18);
-            Assert.IsTrue(two.End == 30);
-            Assert.IsTrue(two.Slack == 0);
+            manager.SetStart(one, TimeSpan.FromDays(10));
+            manager.SetDuration(one, TimeSpan.FromDays(5));
+            manager.SetStart(two, TimeSpan.FromDays(18));
+            manager.SetDuration(two, TimeSpan.FromDays(12));
+            Assert.IsTrue(one.Start == TimeSpan.FromDays(10));
+            Assert.IsTrue(one.End == TimeSpan.FromDays(15));
+            Assert.IsTrue(one.Slack == TimeSpan.FromDays(3), string.Format("Expected {0} != {1}", 3, one.Slack));
+            Assert.IsTrue(two.Start == TimeSpan.FromDays(18));
+            Assert.IsTrue(two.End == TimeSpan.FromDays(30));
+            Assert.IsTrue(two.Slack == TimeSpan.FromDays(0));
             
             // test: set one end date further than two start date
-            manager.SetStart(one, 15);
-            Assert.IsTrue(one.Start == 15);
-            Assert.IsTrue(one.End == 20);
-            Assert.IsTrue(one.Slack == 0, string.Format("Expected {0} != {1}", 1, one.Slack));
-            Assert.IsTrue(two.Start == 21);
-            Assert.IsTrue(two.End == 33, string.Format("Expected {0} != {1}", 33, two.End));
-            Assert.IsTrue(one.Slack == 0);
+            manager.SetStart(one, TimeSpan.FromDays(15));
+            Assert.IsTrue(one.Start == TimeSpan.FromDays(15));
+            Assert.IsTrue(one.End == TimeSpan.FromDays(20));
+            Assert.IsTrue(one.Slack == TimeSpan.FromDays(0), string.Format("Expected {0} != {1}", 0, one.Slack));
+            Assert.IsTrue(two.Start == TimeSpan.FromDays(20));
+            Assert.IsTrue(two.End == TimeSpan.FromDays(32), string.Format("Expected {0} != {1}", 32, two.End));
+            Assert.IsTrue(one.Slack == TimeSpan.FromDays(0));
         }
 
         [TestMethod]
@@ -138,28 +138,28 @@ namespace GanttChartTests
             // setup: create a group with 2 members and some initial schedule
             manager.Group(group, one);
             manager.Group(group, two);
-            manager.SetStart(one, 10);
-            manager.SetDuration(one, 6);
-            manager.SetStart(two, 12);
-            manager.SetEnd(two, 20);
-            Assert.IsTrue(one.Start == 10);
-            Assert.IsTrue(one.End == 16);
-            Assert.IsTrue(two.Start == 12);
-            Assert.IsTrue(two.Duration == 8);
-            Assert.IsTrue(group.Start == 10);
-            Assert.IsTrue(group.End == 20);
-            Assert.IsTrue(group.Duration == 10, string.Format("Expected {0} != {1}", 10, group.Duration));
+            manager.SetStart(one, TimeSpan.FromDays(10));
+            manager.SetDuration(one, TimeSpan.FromDays(6));
+            manager.SetStart(two, TimeSpan.FromDays(12));
+            manager.SetEnd(two, TimeSpan.FromDays(20));
+            Assert.IsTrue(one.Start == TimeSpan.FromDays(10));
+            Assert.IsTrue(one.End == TimeSpan.FromDays(16));
+            Assert.IsTrue(two.Start == TimeSpan.FromDays(12));
+            Assert.IsTrue(two.Duration == TimeSpan.FromDays(8));
+            Assert.IsTrue(group.Start == TimeSpan.FromDays(10));
+            Assert.IsTrue(group.End == TimeSpan.FromDays(20));
+            Assert.IsTrue(group.Duration == TimeSpan.FromDays(10), string.Format("Expected {0} != {1}", 10, group.Duration));
 
             // test: change the member schedule and confirm if the group schedule updates approperiately
-            manager.SetStart(one, 26);
-            Assert.IsTrue(group.Start == 12);
-            Assert.IsTrue(group.End == 32);
+            manager.SetStart(one, TimeSpan.FromDays(26));
+            Assert.IsTrue(group.Start == TimeSpan.FromDays(12));
+            Assert.IsTrue(group.End == TimeSpan.FromDays(32));
 
             // test: change the member schedule back
-            manager.SetStart(one, 10);
-            Assert.IsTrue(group.Start == 10);
-            Assert.IsTrue(group.End == 20);
-            Assert.IsTrue(group.Duration == 10);
+            manager.SetStart(one, TimeSpan.FromDays(10));
+            Assert.IsTrue(group.Start == TimeSpan.FromDays(10));
+            Assert.IsTrue(group.End == TimeSpan.FromDays(20));
+            Assert.IsTrue(group.Duration == TimeSpan.FromDays(10));
         }
 
         [TestMethod]
@@ -219,14 +219,14 @@ namespace GanttChartTests
             manager.Add(one);
 
             // setup: set initial task parameters
-            manager.SetStart(group, 6);
-            manager.SetDuration(group, 5);
-            manager.SetStart(one, 9);
-            manager.SetEnd(one, 15);
-            Assert.IsTrue(group.Start == 6);
-            Assert.IsTrue(group.End == 11);
-            Assert.IsTrue(one.Start == 9);
-            Assert.IsTrue(one.Duration == 6);
+            manager.SetStart(group, TimeSpan.FromDays(6));
+            manager.SetDuration(group, TimeSpan.FromDays(5));
+            manager.SetStart(one, TimeSpan.FromDays(9));
+            manager.SetEnd(one, TimeSpan.FromDays(15));
+            Assert.IsTrue(group.Start == TimeSpan.FromDays(6));
+            Assert.IsTrue(group.End == TimeSpan.FromDays(11));
+            Assert.IsTrue(one.Start == TimeSpan.FromDays(9));
+            Assert.IsTrue(one.Duration == TimeSpan.FromDays(6));
 
             // test: make a group and group make have same parameters as one
             manager.Group(group, one);
@@ -237,24 +237,24 @@ namespace GanttChartTests
         }
 
         [TestMethod]
-        public void DurationCannotLessThanOne()
+        public void DurationCannotLessThanZero()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
             var one = new Task();
             manager.Add(one);
 
             // setup: set initial value
-            manager.SetStart(one, 14);
-            manager.SetEnd(one, 20);
-            Assert.IsTrue(one.Duration == 6);
+            manager.SetStart(one, TimeSpan.FromDays(14));
+            manager.SetEnd(one, TimeSpan.FromDays(20));
+            Assert.IsTrue(one.Duration == TimeSpan.FromDays(6));
 
             // test: moving the end point
-            manager.SetEnd(one, 10);
-            Assert.IsTrue(one.Duration == 1);
+            manager.SetEnd(one, TimeSpan.FromDays(10));
+            Assert.IsTrue(one.Duration > TimeSpan.Zero);
 
             // test: moving the duration point
-            manager.SetDuration(one, -5);
-            Assert.IsTrue(one.Duration == 1);
+            manager.SetDuration(one, TimeSpan.FromDays(-5));
+            Assert.IsTrue(one.Duration > TimeSpan.Zero);
         }
 
         [TestMethod]
@@ -265,10 +265,10 @@ namespace GanttChartTests
             manager.Add(one);
 
             // setup: set initial value
-            manager.SetStart(one, 14);
-            manager.SetEnd(one, 20);
+            manager.SetStart(one, TimeSpan.FromDays(14));
+            manager.SetEnd(one, TimeSpan.FromDays(20));
             manager.SetComplete(one, 0.5f);
-            Assert.IsTrue(one.Duration == 6);
+            Assert.IsTrue(one.Duration == TimeSpan.FromDays(6));
             Assert.IsTrue(one.Complete == 0.5f);
 
             // test: complete > 1 become 1
@@ -291,22 +291,22 @@ namespace GanttChartTests
 
             // setup: one before two
             manager.Relate(one, two);
-            manager.SetStart(one, 5);
-            manager.SetEnd(one, 10);
-            manager.SetStart(two, 15);
-            manager.SetDuration(two, 25);
-            Assert.IsTrue(one.Start == 5);
-            Assert.IsTrue(one.Duration == 5);
-            Assert.IsTrue(two.Start == 15);
-            Assert.IsTrue(two.End == 40);
+            manager.SetStart(one, TimeSpan.FromDays(5));
+            manager.SetEnd(one, TimeSpan.FromDays(10));
+            manager.SetStart(two, TimeSpan.FromDays(15));
+            manager.SetDuration(two, TimeSpan.FromDays(25));
+            Assert.IsTrue(one.Start == TimeSpan.FromDays(5));
+            Assert.IsTrue(one.Duration == TimeSpan.FromDays(5));
+            Assert.IsTrue(two.Start == TimeSpan.FromDays(15));
+            Assert.IsTrue(two.End == TimeSpan.FromDays(40));
 
             // test: reschedule two to start before end of one
-            manager.SetStart(two, 8);
-            Assert.IsTrue(one.Start == 5);
-            Assert.IsTrue(one.Duration == 5);
-            Assert.IsTrue(two.Start == 11);
-            Assert.IsTrue(two.Duration == 25);
-            Assert.IsTrue(two.End == 36);
+            manager.SetStart(two, TimeSpan.FromDays(8));
+            Assert.IsTrue(one.Start == TimeSpan.FromDays(5));
+            Assert.IsTrue(one.Duration == TimeSpan.FromDays(5));
+            Assert.IsTrue(two.Start == TimeSpan.FromDays(10));
+            Assert.IsTrue(two.Duration == TimeSpan.FromDays(25));
+            Assert.IsTrue(two.End == TimeSpan.FromDays(35));
         }
 
         [TestMethod]
@@ -353,24 +353,24 @@ namespace GanttChartTests
             manager.Group(group2, six);
             manager.Group(group2, seven);
             manager.Group(group2, eight);
-            manager.SetStart(one, 0); manager.SetEnd(one, 3);
-            manager.SetStart(two, 4); manager.SetEnd(two, 7);
-            manager.SetStart(three, 5); manager.SetEnd(three, 8);
-            manager.SetStart(four, 10); manager.SetEnd(four, 15);
-            manager.SetStart(five, 1); manager.SetEnd(five, 5);
-            manager.SetStart(six, 6); manager.SetEnd(six, 9);
-            manager.SetStart(seven, 12); manager.SetEnd(seven, 15);
-            manager.SetStart(eight, 11); manager.SetEnd(eight, 16);
-            manager.SetStart(nine, 17); manager.SetEnd(nine, 20);
-            Assert.IsTrue(one.Start == 0 && one.Duration == 3, string.Format("Expected ({0}, {1}) != ({2}, {3})", 0, 3, one.Start, one.Duration));
-            Assert.IsTrue(two.Start == 4 && two.Duration == 3);
-            Assert.IsTrue(three.Start == 5 && three.Duration == 3);
-            Assert.IsTrue(four.Start == 10 && four.Duration == 5);
-            Assert.IsTrue(five.Start == 1 && five.Duration == 4);
-            Assert.IsTrue(six.Start == 6 && six.Duration == 3);
-            Assert.IsTrue(seven.Start == 12 && seven.Duration == 3);
-            Assert.IsTrue(eight.Start == 11 && eight.Duration == 5);
-            Assert.IsTrue(nine.Start == 17 && nine.Duration == 3, string.Format("Expected ({0}, {1}) != ({2}, {3})", 17, 3, nine.Start, nine.Duration));
+            manager.SetStart(one, TimeSpan.FromDays(0)); manager.SetEnd(one, TimeSpan.FromDays(3));
+            manager.SetStart(two, TimeSpan.FromDays(4)); manager.SetEnd(two, TimeSpan.FromDays(7));
+            manager.SetStart(three, TimeSpan.FromDays(5)); manager.SetEnd(three, TimeSpan.FromDays(8));
+            manager.SetStart(four, TimeSpan.FromDays(10)); manager.SetEnd(four, TimeSpan.FromDays(15));
+            manager.SetStart(five, TimeSpan.FromDays(1)); manager.SetEnd(five, TimeSpan.FromDays(5));
+            manager.SetStart(six, TimeSpan.FromDays(6)); manager.SetEnd(six, TimeSpan.FromDays(9));
+            manager.SetStart(seven, TimeSpan.FromDays(12)); manager.SetEnd(seven, TimeSpan.FromDays(15));
+            manager.SetStart(eight, TimeSpan.FromDays(11)); manager.SetEnd(eight, TimeSpan.FromDays(16));
+            manager.SetStart(nine, TimeSpan.FromDays(17)); manager.SetEnd(nine, TimeSpan.FromDays(20));
+            Assert.IsTrue(one.Start == TimeSpan.FromDays(0) && one.Duration == TimeSpan.FromDays(3), string.Format("Expected ({0}, {1}) != ({2}, {3})", 0, 3, one.Start, one.Duration));
+            Assert.IsTrue(two.Start == TimeSpan.FromDays(4) && two.Duration == TimeSpan.FromDays(3));
+            Assert.IsTrue(three.Start == TimeSpan.FromDays(5) && three.Duration == TimeSpan.FromDays(3));
+            Assert.IsTrue(four.Start == TimeSpan.FromDays(10) && four.Duration == TimeSpan.FromDays(5));
+            Assert.IsTrue(five.Start == TimeSpan.FromDays(1) && five.Duration == TimeSpan.FromDays(4));
+            Assert.IsTrue(six.Start == TimeSpan.FromDays(6) && six.Duration == TimeSpan.FromDays(3));
+            Assert.IsTrue(seven.Start == TimeSpan.FromDays(12) && seven.Duration == TimeSpan.FromDays(3));
+            Assert.IsTrue(eight.Start == TimeSpan.FromDays(11) && eight.Duration == TimeSpan.FromDays(5));
+            Assert.IsTrue(nine.Start == TimeSpan.FromDays(17) && nine.Duration == TimeSpan.FromDays(3), string.Format("Expected ({0}, {1}) != ({2}, {3})", 17, 3, nine.Start, nine.Duration));
             var iter_nine = manager.PrecedentsOf(nine).GetEnumerator(); // nine is critical in this setup
             iter_nine.MoveNext(); Assert.IsTrue(iter_nine.Current.Equals(eight));
             iter_nine.MoveNext(); Assert.IsTrue(iter_nine.Current.Equals(six));
@@ -378,7 +378,7 @@ namespace GanttChartTests
             Assert.IsTrue(iter_nine.MoveNext() == false);
 
             // test: change the critical path and see if it gets updated correctly
-            manager.SetStart(four, 17); // four now ends later than 9;
+            manager.SetStart(four, TimeSpan.FromDays(17)); // four now ends later than 9;
             var critical_paths = manager.CriticalPaths; // should have 2 paths: 4 to 1; and 4 to 5;
             Assert.IsTrue(critical_paths.Count() == 2, string.Format("Expected {0} != {1}", 2, critical_paths.Count()));
             var critical_tasks = critical_paths.SelectMany(x => x);
@@ -399,13 +399,13 @@ namespace GanttChartTests
             manager.Add(task);
 
             // test: ensure end and start must conserve precedence
-            manager.SetStart(task, 10);
-            manager.SetEnd(task, 5);
+            manager.SetStart(task, TimeSpan.FromDays(10));
+            manager.SetEnd(task, TimeSpan.FromDays(5));
             Assert.IsTrue(task.Start < task.End);
 
             // test: ensure negative case holds
-            manager.SetStart(task, -9);
-            manager.SetEnd(task, -15);
+            manager.SetStart(task, TimeSpan.FromDays(-9));
+            manager.SetEnd(task, TimeSpan.FromDays(-15));
             Assert.IsTrue(task.Start < task.End);
         }
 
@@ -420,30 +420,30 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a regular task of 30 duration
-            manager.SetStart(split, 12);
-            manager.SetDuration(split, 30);
-            Assert.IsTrue(split.Start == 12);
-            Assert.IsTrue(split.Duration == 30);
-            Assert.IsTrue(split.End == 42);
+            manager.SetStart(split, TimeSpan.FromDays(12));
+            manager.SetDuration(split, TimeSpan.FromDays(30));
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(12));
+            Assert.IsTrue(split.Duration == TimeSpan.FromDays(30));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(42));
 
             // test: split task and get the correct 10 unit duration back for each part
-            manager.Split(split, part1, part2, 10);
-            manager.Split(part2, part3, 10);
-            Assert.IsTrue(part1.Duration == 10);
-            Assert.IsTrue(part1.Start == 12);
-            Assert.IsTrue(part1.End == 22);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(10));
+            manager.Split(part2, part3, TimeSpan.FromDays(10));
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(12));
+            Assert.IsTrue(part1.End == TimeSpan.FromDays(22));
 
-            Assert.IsTrue(part2.Duration == 10);
-            Assert.IsTrue(part2.Start == 23);
-            Assert.IsTrue(part2.End == 33);
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(22));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(32));
 
-            Assert.IsTrue(part3.Duration == 10);
-            Assert.IsTrue(part3.Start == 34);
-            Assert.IsTrue(part3.End == 44);
+            Assert.IsTrue(part3.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(32));
+            Assert.IsTrue(part3.End == TimeSpan.FromDays(42));
 
-            Assert.IsTrue(split.Start == 12);
-            Assert.IsTrue(split.Duration == 32);
-            Assert.IsTrue(split.End == 44);
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(12));
+            Assert.IsTrue(split.Duration == TimeSpan.FromDays(30));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(42));
         }
 
         [TestMethod]
@@ -457,43 +457,43 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a 3 part split
-            manager.SetStart(split, 0);
-            manager.SetDuration(split, 30);
-            manager.Split(split, part1, part2, 10);
-            manager.Split(part2, part3, 10);
-            Assert.IsTrue(part1.Duration == 10);
-            Assert.IsTrue(part1.Start == 0);
-            Assert.IsTrue(part1.End == 10);
+            manager.SetStart(split, TimeSpan.FromDays(0));
+            manager.SetDuration(split, TimeSpan.FromDays(30));
+            manager.Split(split, part1, part2, TimeSpan.FromDays(10));
+            manager.Split(part2, part3, TimeSpan.FromDays(10));
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(part1.End == TimeSpan.FromDays(10));
 
-            Assert.IsTrue(part2.Duration == 10);
-            Assert.IsTrue(part2.Start == 11);
-            Assert.IsTrue(part2.End == 21);
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(10));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(20));
 
-            Assert.IsTrue(part3.Duration == 10);
-            Assert.IsTrue(part3.Start == 22);
-            Assert.IsTrue(part3.End == 32);
+            Assert.IsTrue(part3.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(20));
+            Assert.IsTrue(part3.End == TimeSpan.FromDays(30));
 
-            Assert.IsTrue(split.Start == 0);
-            Assert.IsTrue(split.Duration == 32);
-            Assert.IsTrue(split.End == 32);
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(split.Duration == TimeSpan.FromDays(30));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(30));
 
             // test: move part3 to a later start
-            manager.SetStart(part3, 40);
-            Assert.IsTrue(part1.Duration == 10);
-            Assert.IsTrue(part1.Start == 0);
-            Assert.IsTrue(part1.End == 10);
+            manager.SetStart(part3, TimeSpan.FromDays(40));
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(part1.End == TimeSpan.FromDays(10));
 
-            Assert.IsTrue(part2.Duration == 10);
-            Assert.IsTrue(part2.Start == 11);
-            Assert.IsTrue(part2.End == 21);
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(10));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(20));
 
-            Assert.IsTrue(part3.Duration == 10);
-            Assert.IsTrue(part3.Start == 40);
-            Assert.IsTrue(part3.End == 50);
+            Assert.IsTrue(part3.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(40));
+            Assert.IsTrue(part3.End == TimeSpan.FromDays(50));
 
-            Assert.IsTrue(split.Start == 0);
-            Assert.IsTrue(split.Duration == 50);
-            Assert.IsTrue(split.End == 50);
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(split.Duration == TimeSpan.FromDays(50));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(50));
         }
 
         [TestMethod]
@@ -507,45 +507,45 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a 3 part split with extra interrupt in between
-            manager.SetStart(split, 0);
-            manager.SetDuration(split, 30);
-            manager.Split(split, part1, part2, 10);
-            manager.Split(part2, part3, 10);
-            manager.SetStart(part2, 16);
-            manager.SetStart(part3, 32);
-            Assert.IsTrue(part1.Duration == 10);
-            Assert.IsTrue(part1.Start == 0);
-            Assert.IsTrue(part1.End == 10);
+            manager.SetStart(split, TimeSpan.FromDays(0));
+            manager.SetDuration(split, TimeSpan.FromDays(30));
+            manager.Split(split, part1, part2, TimeSpan.FromDays(10));
+            manager.Split(part2, part3, TimeSpan.FromDays(10));
+            manager.SetStart(part2, TimeSpan.FromDays(16));
+            manager.SetStart(part3, TimeSpan.FromDays(32));
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(part1.End == TimeSpan.FromDays(10));
 
-            Assert.IsTrue(part2.Duration == 10);
-            Assert.IsTrue(part2.Start == 16);
-            Assert.IsTrue(part2.End == 26);
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(16));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(26));
 
-            Assert.IsTrue(part3.Duration == 10);
-            Assert.IsTrue(part3.Start == 32);
-            Assert.IsTrue(part3.End == 42);
+            Assert.IsTrue(part3.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(32));
+            Assert.IsTrue(part3.End == TimeSpan.FromDays(42));
 
-            Assert.IsTrue(split.Start == 0);
-            Assert.IsTrue(split.Duration == 42);
-            Assert.IsTrue(split.End == 42);
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(split.Duration == TimeSpan.FromDays(42));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(42));
 
             // test: start part3 slight earlier
-            manager.SetStart(part3, 28);
-            Assert.IsTrue(part1.Duration == 10);
-            Assert.IsTrue(part1.Start == 0);
-            Assert.IsTrue(part1.End == 10);
+            manager.SetStart(part3, TimeSpan.FromDays(28));
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(part1.End == TimeSpan.FromDays(10));
 
-            Assert.IsTrue(part2.Duration == 10);
-            Assert.IsTrue(part2.Start == 16);
-            Assert.IsTrue(part2.End == 26);
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(16));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(26));
 
-            Assert.IsTrue(part3.Duration == 10);
-            Assert.IsTrue(part3.Start == 28);
-            Assert.IsTrue(part3.End == 38);
+            Assert.IsTrue(part3.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(28));
+            Assert.IsTrue(part3.End == TimeSpan.FromDays(38));
 
-            Assert.IsTrue(split.Start == 0);
-            Assert.IsTrue(split.Duration == 38);
-            Assert.IsTrue(split.End == 38);
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(split.Duration == TimeSpan.FromDays(38));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(38));
         }
 
         [TestMethod]
@@ -559,63 +559,63 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a 3 part split with extra interrupt in between
-            manager.SetStart(split, 0);
-            manager.SetDuration(split, 30);
-            manager.Split(split, part1, part2, 10);
-            manager.Split(part2, part3, 10);
-            manager.SetStart(part2, 16);
-            manager.SetStart(part3, 32);
-            Assert.IsTrue(part1.Duration == 10);
-            Assert.IsTrue(part1.Start == 0);
-            Assert.IsTrue(part1.End == 10);
+            manager.SetStart(split, TimeSpan.FromDays(0));
+            manager.SetDuration(split, TimeSpan.FromDays(30));
+            manager.Split(split, part1, part2, TimeSpan.FromDays(10));
+            manager.Split(part2, part3, TimeSpan.FromDays(10));
+            manager.SetStart(part2, TimeSpan.FromDays(16));
+            manager.SetStart(part3, TimeSpan.FromDays(32));
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(part1.End == TimeSpan.FromDays(10));
 
-            Assert.IsTrue(part2.Duration == 10);
-            Assert.IsTrue(part2.Start == 16);
-            Assert.IsTrue(part2.End == 26);
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(16));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(26));
 
-            Assert.IsTrue(part3.Duration == 10);
-            Assert.IsTrue(part3.Start == 32);
-            Assert.IsTrue(part3.End == 42);
+            Assert.IsTrue(part3.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(32));
+            Assert.IsTrue(part3.End == TimeSpan.FromDays(42));
 
-            Assert.IsTrue(split.Start == 0);
-            Assert.IsTrue(split.Duration == 42);
-            Assert.IsTrue(split.End == 42);
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(split.Duration == TimeSpan.FromDays(42));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(42));
 
             // test: move part3 earlier, should pack parts to get earliest end date while start date remain
-            manager.SetStart(part3, 26);
-            Assert.IsTrue(part1.Duration == 10);
-            Assert.IsTrue(part1.Start == 0);
-            Assert.IsTrue(part1.End == 10);
+            manager.SetStart(part3, TimeSpan.FromDays(24));
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(part1.End == TimeSpan.FromDays(10));
 
-            Assert.IsTrue(part2.Duration == 10);
-            Assert.IsTrue(part2.Start == 15);
-            Assert.IsTrue(part2.End == 25);
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(14));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(24));
 
-            Assert.IsTrue(part3.Duration == 10);
-            Assert.IsTrue(part3.Start == 26);
-            Assert.IsTrue(part3.End == 36);
+            Assert.IsTrue(part3.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(24));
+            Assert.IsTrue(part3.End == TimeSpan.FromDays(34));
 
-            Assert.IsTrue(split.Start == 0);
-            Assert.IsTrue(split.Duration == 36);
-            Assert.IsTrue(split.End == 36);
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(split.Duration == TimeSpan.FromDays(34));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(34));
 
             // test: move part3 even earlier, tight packing
-            manager.SetStart(part3, 1);
-            Assert.IsTrue(part1.Duration == 10);
-            Assert.IsTrue(part1.Start == 0);
-            Assert.IsTrue(part1.End == 10);
+            manager.SetStart(part3, TimeSpan.FromDays(1));
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(part1.End == TimeSpan.FromDays(10));
 
-            Assert.IsTrue(part2.Duration == 10);
-            Assert.IsTrue(part2.Start == 11);
-            Assert.IsTrue(part2.End == 21);
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(10));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(20));
 
-            Assert.IsTrue(part3.Duration == 10);
-            Assert.IsTrue(part3.Start == 22);
-            Assert.IsTrue(part3.End == 32);
+            Assert.IsTrue(part3.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(20));
+            Assert.IsTrue(part3.End == TimeSpan.FromDays(30));
 
-            Assert.IsTrue(split.Start == 0);
-            Assert.IsTrue(split.Duration == 32);
-            Assert.IsTrue(split.End == 32);
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(split.Duration == TimeSpan.FromDays(30));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(30));
         }
 
         [TestMethod]
@@ -629,44 +629,43 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a 3 part split
-            manager.SetStart(split, 0);
-            manager.SetDuration(split, 30);
-            manager.Split(split, part1, part2, 10);
-            manager.Split(part2, part3, 10);
-            Assert.IsTrue(part1.Duration == 10);
-            Assert.IsTrue(part1.Start == 0);
-            Assert.IsTrue(part1.End == 10);
+            manager.SetStart(split, TimeSpan.FromDays(0));
+            manager.SetDuration(split, TimeSpan.FromDays(30));
+            manager.Split(split, part1, part2, TimeSpan.FromDays(10));
+            manager.Split(part2, part3, TimeSpan.FromDays(10));
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(part1.End == TimeSpan.FromDays(10));
 
-            Assert.IsTrue(part2.Duration == 10);
-            Assert.IsTrue(part2.Start == 11);
-            Assert.IsTrue(part2.End == 21);
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(10));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(20));
 
-            Assert.IsTrue(part3.Duration == 10);
-            Assert.IsTrue(part3.Start == 22);
-            Assert.IsTrue(part3.End == 32);
+            Assert.IsTrue(part3.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(20));
+            Assert.IsTrue(part3.End == TimeSpan.FromDays(30));
 
-            Assert.IsTrue(split.Start == 0);
-            Assert.IsTrue(split.Duration == 32);
-            Assert.IsTrue(split.End == 32);
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(split.Duration == TimeSpan.FromDays(30));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(30));
 
             // test: move part1 to overlap with part2, should pack parts to get earliest end date
-            // with at least 1 time unit interrupt between each part
-            manager.SetStart(part1, 12);
-            Assert.IsTrue(part1.Duration == 10);
-            Assert.IsTrue(part1.Start == 12);
-            Assert.IsTrue(part1.End == 22);
+            manager.SetStart(part1, TimeSpan.FromDays(12));
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(12));
+            Assert.IsTrue(part1.End == TimeSpan.FromDays(22));
 
-            Assert.IsTrue(part2.Duration == 10);
-            Assert.IsTrue(part2.Start == 23);
-            Assert.IsTrue(part2.End == 33);
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(22));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(32));
 
-            Assert.IsTrue(part3.Duration == 10);
-            Assert.IsTrue(part3.Start == 34);
-            Assert.IsTrue(part3.End == 44);
+            Assert.IsTrue(part3.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(32));
+            Assert.IsTrue(part3.End == TimeSpan.FromDays(42));
 
-            Assert.IsTrue(split.Start == 12);
-            Assert.IsTrue(split.Duration == 32);
-            Assert.IsTrue(split.End == 44);
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(12));
+            Assert.IsTrue(split.Duration == TimeSpan.FromDays(30));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(42));
         }
 
         [TestMethod]
@@ -676,30 +675,33 @@ namespace GanttChartTests
             var split = new Task();
             var part1 = new Task();
             var part2 = new Task();
-            var dependant = new Task();
+            var dependant = new Task(); 
             manager.Add(split);
             manager.Add(dependant);
 
             // setup: create a dependant on the split task
-            manager.SetDuration(split, 20);
-            manager.SetDuration(dependant, 7);
-            manager.Split(split, part1, part2, 15);
+            manager.SetDuration(split, TimeSpan.FromDays(20));
+            manager.SetDuration(dependant, TimeSpan.FromDays(7));
+            manager.Split(split, part1, part2, TimeSpan.FromDays(15));
             manager.Relate(split, dependant);
-            Assert.IsTrue(dependant.Start == 22);
-            Assert.IsTrue(part2.End == 21);
-            Assert.IsTrue(split.End == 21);
+            Assert.IsTrue(dependant.Start == TimeSpan.FromDays(20));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(20));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(20));
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(5));
 
-            // test: adjust part2 duration beyond dependant start
-            manager.SetEnd(part2, 25);
-            Assert.IsTrue(dependant.Start == 26);
-            Assert.IsTrue(part2.End == 25);
-            Assert.IsTrue(split.End == 25);
+            //// test: adjust part2 duration beyond dependant start
+            manager.SetEnd(part2, TimeSpan.FromDays(25));
+            Assert.IsTrue(dependant.Start == TimeSpan.FromDays(25));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(25));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(25));
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(10));
 
-            // test: adjust part2 start such that end beyond dependant start
-            manager.SetStart(part2, 30);
-            Assert.IsTrue(dependant.Start == 40);
-            Assert.IsTrue(part2.End == 39);
-            Assert.IsTrue(split.End == 39);
+            //// test: adjust part2 start such that end beyond dependant start
+            manager.SetStart(part2, TimeSpan.FromDays(30));
+            Assert.IsTrue(dependant.Start == TimeSpan.FromDays(40));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(40));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(40));
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(10));
         }
         [TestMethod]
         public void SplitPartWithDependantAndAdjustDependantStart()
@@ -713,16 +715,25 @@ namespace GanttChartTests
             manager.Add(dependant);
 
             // setup: create a dependant on the split task
-            manager.SetDuration(split, 20);
-            manager.SetDuration(dependant, 7);
+            manager.SetDuration(split, TimeSpan.FromDays(20));
+            manager.SetDuration(dependant, TimeSpan.FromDays(7));
             manager.Relate(split, dependant);
-            Assert.IsTrue(dependant.Start == 21);
+            Assert.IsTrue(dependant.Start == TimeSpan.FromDays(20));
 
-            // test: split and dependant should be pushed forward due to interrupt
-            manager.Split(split, part1, part2, 15);
-            Assert.IsTrue(dependant.Start == 22);
-            Assert.IsTrue(part2.End == 21);
-            Assert.IsTrue(split.End == 21);
+            // test: split and dependant should not be affected
+            manager.Split(split, part1, part2, TimeSpan.FromDays(15));
+            Assert.IsTrue(dependant.Start == TimeSpan.FromDays(20));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(20));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(20));
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(5));
+
+            // test: increase split end, expect part2 to increase duration and dependant to start later
+            manager.SetEnd(split, TimeSpan.FromDays(25));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(25));
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(15));
+            Assert.IsTrue(dependant.Start == TimeSpan.FromDays(25));
+
         }
 
         [TestMethod]
@@ -736,44 +747,44 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a split task
-            manager.Split(split, part1, part2, 1);
-            manager.Split(part2, part3, 1);
-            manager.SetStart(part1, 0);
-            manager.SetStart(part2, 15);
-            manager.SetStart(part3, 30);
-            manager.SetDuration(part1, 3);
-            manager.SetDuration(part2, 4);
-            manager.SetDuration(part3, 5);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
+            manager.Split(part2, part3, TimeSpan.FromDays(1));
+            manager.SetStart(part1, TimeSpan.FromDays(0));
+            manager.SetStart(part2, TimeSpan.FromDays(15));
+            manager.SetStart(part3, TimeSpan.FromDays(30));
+            manager.SetDuration(part1, TimeSpan.FromDays(3));
+            manager.SetDuration(part2, TimeSpan.FromDays(4));
+            manager.SetDuration(part3, TimeSpan.FromDays(5));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
             Assert.IsTrue(manager.IsPart(part3));
-            Assert.IsTrue(part1.Start == 0);
-            Assert.IsTrue(part2.Start == 15);
-            Assert.IsTrue(part3.Start == 30);
-            Assert.IsTrue(part1.Duration == 3);
-            Assert.IsTrue(part2.Duration == 4);
-            Assert.IsTrue(part3.Duration == 5);
-            Assert.IsTrue(part1.End == 3);
-            Assert.IsTrue(part2.End == 19);
-            Assert.IsTrue(part3.End == 35);
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(15));
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(30));
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(3));
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(4));
+            Assert.IsTrue(part3.Duration == TimeSpan.FromDays(5));
+            Assert.IsTrue(part1.End == TimeSpan.FromDays(3));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(19));
+            Assert.IsTrue(part3.End == TimeSpan.FromDays(35));
             
             // test: move the split task itself - maintain interrupts
-            var offset = 10 - split.Start;
-            manager.SetStart(split, 10);
+            var offset = TimeSpan.FromDays(10) - split.Start;
+            manager.SetStart(split, TimeSpan.FromDays(10));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
             Assert.IsTrue(manager.IsPart(part3));
-            Assert.IsTrue(part1.Start == 0 + offset);
-            Assert.IsTrue(part2.Start == 15 + offset);
-            Assert.IsTrue(part3.Start == 30 + offset);
-            Assert.IsTrue(part1.Duration == 3);
-            Assert.IsTrue(part2.Duration == 4);
-            Assert.IsTrue(part3.Duration == 5);
-            Assert.IsTrue(part1.End == 3 + offset);
-            Assert.IsTrue(part2.End == 19 + offset);
-            Assert.IsTrue(part3.End == 35 + offset);
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(0) + offset);
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(15) + offset);
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(30) + offset);
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(3));
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(4));
+            Assert.IsTrue(part3.Duration == TimeSpan.FromDays(5));
+            Assert.IsTrue(part1.End == TimeSpan.FromDays(3) + offset);
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(19) + offset);
+            Assert.IsTrue(part3.End == TimeSpan.FromDays(35) + offset);
         }
 
         [TestMethod]
@@ -787,50 +798,50 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a split task
-            manager.Split(split, part1, part2, 1);
-            manager.Split(part2, part3, 1);
-            manager.SetStart(part1, 0);
-            manager.SetStart(part2, 15);
-            manager.SetStart(part3, 30);
-            manager.SetDuration(part1, 3);
-            manager.SetDuration(part2, 4);
-            manager.SetDuration(part3, 5);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
+            manager.Split(part2, part3, TimeSpan.FromDays(1));
+            manager.SetStart(part1, TimeSpan.FromDays(0));
+            manager.SetStart(part2, TimeSpan.FromDays(15));
+            manager.SetStart(part3, TimeSpan.FromDays(30));
+            manager.SetDuration(part1, TimeSpan.FromDays(3));
+            manager.SetDuration(part2, TimeSpan.FromDays(4));
+            manager.SetDuration(part3, TimeSpan.FromDays(5));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
             Assert.IsTrue(manager.IsPart(part3));
-            Assert.IsTrue(part1.Start == 0);
-            Assert.IsTrue(part2.Start == 15);
-            Assert.IsTrue(part3.Start == 30);
-            Assert.IsTrue(part1.Duration == 3);
-            Assert.IsTrue(part2.Duration == 4);
-            Assert.IsTrue(part3.Duration == 5);
-            Assert.IsTrue(part1.End == 3);
-            Assert.IsTrue(part2.End == 19);
-            Assert.IsTrue(part3.End == 35);
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(15));
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(30));
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(3));
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(4));
+            Assert.IsTrue(part3.Duration == TimeSpan.FromDays(5));
+            Assert.IsTrue(part1.End == TimeSpan.FromDays(3));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(19));
+            Assert.IsTrue(part3.End == TimeSpan.FromDays(35));
 
             // test: set the split task end - last part end to increase or decrease,
-            // resulting no less than 1 unit duration
-            manager.SetEnd(split, 1);
+            // resulting no less than zero time unit
+            manager.SetEnd(split, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
             Assert.IsTrue(manager.IsPart(part3));
-            Assert.IsTrue(part1.Start == 0);
-            Assert.IsTrue(part2.Start == 15);
-            Assert.IsTrue(part3.Start == 30);
-            Assert.IsTrue(part1.Duration == 3);
-            Assert.IsTrue(part2.Duration == 4);
-            Assert.IsTrue(part3.Duration == 1);
-            Assert.IsTrue(part1.End == 3);
-            Assert.IsTrue(part2.End == 19);
-            Assert.IsTrue(part3.End == 31);
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(15));
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(30));
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(3));
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(4));
+            Assert.IsTrue(part3.Duration > TimeSpan.Zero);
+            Assert.IsTrue(part1.End == TimeSpan.FromDays(3));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(19));
+            Assert.IsTrue(part3.End > part3.Start);
 
-            // test: increase split task end and last part adjust accordingly
-            manager.SetEnd(split, 100);
-            Assert.IsTrue(part3.End == 100);
-            Assert.IsTrue(part3.Duration == 70);
-            Assert.IsTrue(part3.Start == 30);
+            //// test: increase split task end and last part adjust accordingly
+            //manager.SetEnd(split, TimeSpan.FromDays(100));
+            //Assert.IsTrue(part3.End == TimeSpan.FromDays(100));
+            //Assert.IsTrue(part3.Duration == TimeSpan.FromDays(70));
+            //Assert.IsTrue(part3.Start == TimeSpan.FromDays(30));
         }
 
         [TestMethod]
@@ -878,7 +889,7 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a split task with resources on parts
-            manager.Split(split, part1, part2, 1);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
             manager.Assign(part1, r1);
             manager.Assign(part2, r1);
             Assert.IsTrue(!manager.TasksOf(r1).Contains(split));
@@ -910,7 +921,7 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a split task with resources on parts
-            manager.Split(split, part1, part2, 1);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
@@ -933,7 +944,7 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a split task with resources on parts
-            manager.Split(split, part1, part2, 1);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
             manager.Assign(part1, r1);
             manager.Assign(part2, r1);
             Assert.IsTrue(!manager.TasksOf(r1).Contains(split));
@@ -973,7 +984,7 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a split task with resources on parts
-            manager.Split(split, part1, part2, 1);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
@@ -1014,7 +1025,7 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create split task
-            manager.Split(split, part1, part2, 1);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(!manager.IsPart(split));
 
@@ -1028,7 +1039,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsPart(part3));
 
             // test: try to split the split task again - no effect.
-            manager.Split(split, part3, 1);
+            manager.Split(split, part3, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(!manager.IsPart(split));
 
@@ -1055,26 +1066,26 @@ namespace GanttChartTests
             manager.Add(precedent);
 
             // setup: create a split task with precendent
-            manager.SetStart(precedent, 5);
-            manager.SetDuration(precedent, 5);
-            manager.SetStart(split, 15);
-            manager.SetDuration(split, 5);
+            manager.SetStart(precedent, TimeSpan.FromDays(5));
+            manager.SetDuration(precedent, TimeSpan.FromDays(5));
+            manager.SetStart(split, TimeSpan.FromDays(15));
+            manager.SetDuration(split, TimeSpan.FromDays(5));
             manager.Relate(precedent, split);
-            manager.Split(split, part1, part2, 2);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(2));
             Assert.IsTrue(manager.PrecedentsOf(split).Contains(precedent));
             Assert.IsTrue(manager.PartsOf(split).Contains(part1));
             Assert.IsTrue(manager.PartsOf(split).Contains(part2));
-            Assert.IsTrue(precedent.End == 10);
-            Assert.IsTrue(split.Start == 15);
-            Assert.IsTrue(part1.Start == 15);
+            Assert.IsTrue(precedent.End == TimeSpan.FromDays(10));
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(15));
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(15));
 
-            // test: move part1 start before precendent start
-            manager.SetStart(part1, 8);
+            // test: move part1 start before precendent end
+            manager.SetStart(part1, TimeSpan.FromDays(8));
             Assert.IsTrue(manager.PrecedentsOf(split).Contains(precedent));
             Assert.IsTrue(manager.PartsOf(split).Contains(part1));
             Assert.IsTrue(manager.PartsOf(split).Contains(part2));
-            Assert.IsTrue(part1.Start == 11);
-            Assert.IsTrue(split.Start == 11);
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(10));
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(10));
         }
 
         [TestMethod]
@@ -1091,11 +1102,11 @@ namespace GanttChartTests
             manager.Add(group);
 
             // setup: create split task under a group
-            manager.SetDuration(split, 6);
-            manager.SetDuration(member, 14);
+            manager.SetDuration(split, TimeSpan.FromDays(6));
+            manager.SetDuration(member, TimeSpan.FromDays(14));
             manager.Group(group, split);
             manager.Group(group, member);
-            manager.Split(split, part1, part2, 2);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(2));
             Assert.IsTrue(manager.IsGroup(group));
             Assert.IsTrue(manager.IsMember(member));
             Assert.IsTrue(manager.IsMember(split));
@@ -1105,17 +1116,17 @@ namespace GanttChartTests
             Assert.IsTrue(part1.Complete == 0);
             Assert.IsTrue(part2.Complete == 0);
 
-            Assert.IsTrue(group.Duration == 14);
-            Assert.IsTrue(member.Duration == 14);
-            Assert.IsTrue(split.Duration == 7);
-            Assert.IsTrue(part1.Duration == 2);
-            Assert.IsTrue(part2.Duration == 4);
+            Assert.IsTrue(group.Duration == TimeSpan.FromDays(14));
+            Assert.IsTrue(member.Duration == TimeSpan.FromDays(14));
+            Assert.IsTrue(split.Duration == TimeSpan.FromDays(6));
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(2));
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(4));
 
             // test: set complete for part1 and see group and split complete increase
             manager.SetComplete(part1, 0.3f);
             Assert.IsTrue(Math.Abs(split.Complete - (0.3f * 2) / 6.0f) < 0.01f);
             Assert.IsTrue(Math.Abs(group.Complete - (split.Complete * 7) / 20.0f) < 0.01f);
-            
+
         }
     }
 }

@@ -38,15 +38,14 @@ namespace Braincase.GanttChart
         /// </summary>
         public ProjectManager()
         {
-            Now = 0;
+            Now = TimeSpan.Zero;
             Start = DateTime.Now;
-            TimeScale = GanttChart.TimeScale.Day;
         }
 
         /// <summary>
-        /// Get or set the period we are at now
+        /// Get or set the TimeSpan we are at now from Start DateTime
         /// </summary>
-        public int Now { get; set; }
+        public TimeSpan Now { get; set; }
 
         /// <summary>
         /// Get or set the starting date for this project
@@ -54,27 +53,13 @@ namespace Braincase.GanttChart
         public DateTime Start { get; set; }
 
         /// <summary>
-        /// Get or set the time scale on this project. Each period on the task represents one unit of TimeScale.
+        /// Get the date after the specified TimeSpan
         /// </summary>
-        public TimeScale TimeScale { get; set; }
-
-        /// <summary>
-        /// Get the date after the specified period based on TimeScale
-        /// </summary>
-        /// <param name="period"></param>
+        /// <param name="span"></param>
         /// <returns></returns>
-        public DateTime GetDateTime(int period)
+        public DateTime GetDateTime(TimeSpan span)
         {
-            DateTime datetime = DateTime.Now;
-            if (this.TimeScale == TimeScale.Day)
-            {
-                datetime = this.Start.AddDays(period);
-            }
-            else if (this.TimeScale == TimeScale.Week)
-            {
-                datetime = this.Start.AddDays(period * 7 - (int)this.Start.DayOfWeek);
-            }
-            return datetime;
+            return this.Start.Add(span);
         }
 
         /// <summary>
@@ -271,7 +256,7 @@ namespace Braincase.GanttChart
         }
 
         /// <summary>
-        /// Re-position the task by offset amount of places
+        /// Re-order position of the task by offset amount of places
         /// </summary>
         /// <param name="task"></param>
         /// <param name="offset"></param>
@@ -355,7 +340,7 @@ namespace Braincase.GanttChart
         }
         
         /// <summary>
-        /// Enumerate through all the children and grandchildren of the specified group
+        /// Enumerate through all the parents and grandparents of the specified task
         /// </summary>
         public IEnumerable<T> AncestorsOf(T task)
         {
@@ -505,19 +490,19 @@ namespace Braincase.GanttChart
         {
             get
             {
-                Dictionary<int, List<T>> endtimelookp = new Dictionary<int, List<T>>(1024);
+                Dictionary<TimeSpan, List<T>> endtimelookp = new Dictionary<TimeSpan, List<T>>(1024);
                 List<T> list;
-                var max_end = int.MinValue;
+                TimeSpan max_end = TimeSpan.MinValue;
                 foreach (var task in this.Tasks)
                 {
                     if (!endtimelookp.TryGetValue(task.End, out list))
                         endtimelookp[task.End] = new List<T>(10);
                     endtimelookp[task.End].Add(task);
 
-                    if(task.End > max_end) max_end = task.End;
+                    if (task.End > max_end) max_end = task.End;
                 }
 
-                if (max_end != int.MinValue)
+                if (max_end != TimeSpan.MinValue)
                 {
                     foreach (var task in endtimelookp[max_end])
                     {
@@ -732,7 +717,7 @@ namespace Braincase.GanttChart
         /// <summary>
         /// Set the start value. Affects group start/end and dependants start time.
         /// </summary>
-        public void SetStart(T task, int value)
+        public void SetStart(T task, TimeSpan value)
         {
             if (_mRegister.Contains(task) && value != task.Start && !this.IsGroup(task))
             {
@@ -741,12 +726,20 @@ namespace Braincase.GanttChart
                 _RecalculateAncestorsSchedule();
                 _RecalculateSlack();
             }
+            // Set start for a group task
+            //else if(_mRegister.Contains(task) && value != task.Start && this.IsGroup(task))
+            //{
+            //    _SetGroupStartHelper(task, value);
+
+            //    _RecalculateAncestorsSchedule();
+            //    _RecalculateSlack();
+            //}
         }
 
         /// <summary>
         /// Set the end time. Affects group end and dependants start time.
         /// </summary>
-        public void SetEnd(T task, int value)
+        public void SetEnd(T task, TimeSpan value)
         {
             if (_mRegister.Contains(task) && value != task.End && !this.IsGroup(task))
             {
@@ -762,7 +755,7 @@ namespace Braincase.GanttChart
         /// </summary>
         /// <param name="task"></param>
         /// <param name="duration">Number of timescale units between ProjectManager.Start</param>
-        public void SetDuration(T task, int duration)
+        public void SetDuration(T task, TimeSpan duration)
         {
             this.SetEnd(task, task.Start + duration);
         }
@@ -807,7 +800,7 @@ namespace Braincase.GanttChart
         /// <param name="part1">New Task part (1) of the split task, with the start time of the original task and the specified duration value.</param>
         /// <param name="part2">New Task part (2) of the split task, starting 1 time unit after part (1) ends and having the remaining of the duration of the origina task.</param>
         /// <param name="duration">The duration of part (1) will be set to the specified duration value but will also be adjusted to approperiate value if necessary.</param>
-        public void Split(T task, T part1, T part2, int duration)
+        public void Split(T task, T part1, T part2, TimeSpan duration)
         {
             if (task != null
                 && part1 != null
@@ -831,7 +824,7 @@ namespace Braincase.GanttChart
                 _mSplitTaskOfPart[part1] = task; // make a reverse lookup
 
                 // allign the schedule
-                if (duration >= task.Duration) duration--;
+                if (duration <= TimeSpan.Zero || duration >= task.Duration) duration = TimeSpan.FromTicks(task.Duration.Ticks / 2);
                 part1.Start = task.Start;
                 part1.End = task.End;
                 part1.Duration = task.Duration;
@@ -847,7 +840,7 @@ namespace Braincase.GanttChart
         /// <param name="part">The task part to split which has duration of at least 2 to make two parts of 1 time unit duration each. Its duration will be set to the specified duration value.</param>
         /// <param name="other">New Task part of the original part, starting 1 time unit after it ends and having the remaining of the duration of the original part.</param>
         /// <param name="duration">The duration of part (1) will be set to the specified duration value but will also be adjusted to approperiate value if necessary.</param>
-        public void Split(T part, T other, int duration)
+        public void Split(T part, T other, TimeSpan duration)
         {
             if (part != null
                 && other != null
@@ -864,18 +857,18 @@ namespace Braincase.GanttChart
                 parts.Insert(parts.IndexOf(part) + 1, other); // insert the other part after the existing part
                 _mSplitTaskOfPart[other] = split; // set the reverse lookup
 
-                if (part.Duration < 2) part.Duration = 2; // increase duration to allow for split
+                System.Diagnostics.Debug.Write("Project::Split(T part, T other, TimeSpan duration): Need to define minimum duration for splitting.");
 
-                if (duration < 1) duration = 1; // limit the duration point within the split task duration
-                else if (duration >= part.Duration) duration = part.Duration - 1;
-
+                // limit the duration point within the split task duration
+                if (duration <= TimeSpan.Zero || duration >= part.Duration) duration = TimeSpan.FromTicks(part.Duration.Ticks / 2);
+                
                 // the real split
                 var one_duration = duration;
                 var two_duration = part.Duration - duration;
                 part.Duration = one_duration;
                 part.End = part.Start + one_duration;
                 other.Duration = two_duration;
-                other.Start = part.End + 1;
+                other.Start = part.End;
                 other.End = other.Start + two_duration;
 
                 _PackPartsForward(parts);
@@ -913,10 +906,10 @@ namespace Braincase.GanttChart
                 if (parts.Count > 2)
                 {
                     // Aggregate part2 into part1, and determine join type
-                    int min; bool join_backwards;
+                    TimeSpan min; bool join_backwards;
                     if (part1.Start < part2.Start) { min = part1.Start; join_backwards = true; }
                     else { min = part2.Start; join_backwards = false; }
-                    int duration = part1.Duration + part2.Duration;
+                    TimeSpan duration = part1.Duration + part2.Duration;
 
                     part1.Start = min;
                     part1.Duration = duration;
@@ -962,7 +955,7 @@ namespace Braincase.GanttChart
                 && _mSplitTasks.ContainsKey(split) // must be existing split task
                 )
             {
-                int duration = 0;
+                TimeSpan duration = TimeSpan.Zero;
                 _mSplitTasks[split].ForEach(x => {
 
                     // sum durations
@@ -1051,7 +1044,7 @@ namespace Braincase.GanttChart
             }
         }
 
-        private void _SetStartHelper(T task, int value)
+        private void _SetStartHelper(T task, TimeSpan value)
         {
             if (task.Start != value)
             {
@@ -1063,11 +1056,11 @@ namespace Braincase.GanttChart
                 else // regular task or a split task, which we will treat normally
                 {
                     // check out of bounds
-                    if (value < 0) value = 0;
+                    if (value < TimeSpan.Zero) value = TimeSpan.Zero;
                     if (this.DirectPrecedentsOf(task).Any())
                     {
                         var max_end = this.DirectPrecedentsOf(task).Max(x => x.End);
-                        if (value <= max_end) value = max_end + 1;
+                        if (value <= max_end) value = max_end; // + One;
                     }
 
                     // save offset just in case we need to use for moving task parts
@@ -1095,7 +1088,45 @@ namespace Braincase.GanttChart
             }
         }
 
-        private void _SetEndHelper(T task, int value)
+        /// <summary>
+        /// Set the start date for a group task. The relative dates between the tasks in the group will not be affected
+        /// </summary>
+        /// <param name="group"></param>
+        /// <param name="value"></param>
+        private void _SetGroupStartHelper(T group, TimeSpan value)
+        {
+            if (_mRegister.Contains(group) && value != group.Start && this.IsGroup(group))
+            {
+                bool earlier = value < group.Start;
+                TimeSpan offset = value - group.Start;
+                var decendants = earlier ? DecendantsOf(group).OrderBy((t) => t.Start) : DecendantsOf(group).OrderByDescending((t) => t.Start);
+
+                foreach(T decendant in decendants)
+                {
+                    if (this.IsGroup(decendant)) continue;
+                   
+                    decendant.Start += offset;
+                    decendant.End += offset;
+
+                    if (this.IsSplit(decendant))
+                    {
+                        var parts = _mSplitTasks[decendant];
+                        foreach (T part in parts)
+                        {
+                            part.Start += offset;
+                            part.End += offset;
+                        }
+
+                        _RecalculateDependantsOf(decendant);
+                    }
+                }
+
+                _RecalculateAncestorsSchedule();
+                _RecalculateSlack();
+            }
+        }
+
+        private void _SetEndHelper(T task, TimeSpan value)
         {
             if (task.End != value)
             {
@@ -1112,9 +1143,9 @@ namespace Braincase.GanttChart
                     if (isSplitTask)
                     {
                         last_part = _mSplitTasks[task].Last();
-                        if (value <= last_part.Start) value = last_part.Start + 1;
+                        if (value <= last_part.Start) value = last_part.Start + TimeSpan.FromMinutes(30);
                     }
-                    if (value <= task.Start) value = task.Start + 1; // end cannot be less than start
+                    if (value <= task.Start) value = task.Start + TimeSpan.FromMinutes(30); // end cannot be less than start
                     
                     // assign end value
                     task.End = value;
@@ -1131,7 +1162,7 @@ namespace Braincase.GanttChart
             }
         }
 
-        private void _SetPartStartHelper(T part, int value)
+        private void _SetPartStartHelper(T part, TimeSpan value)
         {
             var split = _mSplitTaskOfPart[part];
             var parts = _mSplitTasks[split];
@@ -1140,9 +1171,9 @@ namespace Braincase.GanttChart
             if (this.DirectPrecedentsOf(split).Any())
             {
                 var max_end = this.DirectPrecedentsOf(split).Max(x => x.End);
-                if (value < max_end) value = max_end + 1;
+                if (value < max_end) value = max_end;
             }
-            if (value < 0) value = 0;
+            if (value < TimeSpan.Zero) value = TimeSpan.Zero;
 
             // flag whether we need to pack parts forward or backwards
             bool backwards = value < part.Start;
@@ -1164,13 +1195,13 @@ namespace Braincase.GanttChart
             _RecalculateDependantsOf(split);
         }
 
-        private void _SetPartEndHelper(T part, int value)
+        private void _SetPartEndHelper(T part, TimeSpan value)
         {
             var split = _mSplitTaskOfPart[part];
             var parts = _mSplitTasks[split];
 
             // check for bounds
-            if (value <= part.Start) value = part.Start + 1;
+            if (value <= part.Start) value = part.Start + TimeSpan.FromMinutes(30);
 
             // flag whether duration is increased or reduced
             bool increased = value > part.End;
@@ -1199,7 +1230,7 @@ namespace Braincase.GanttChart
                 var later = parts[i + 1];
                 if (later.Start <= earlier.End)
                 {
-                    earlier.End = later.Start - 1;
+                    earlier.End = later.Start;
                     earlier.Start = earlier.End - earlier.Duration;
                 }
             }
@@ -1215,7 +1246,7 @@ namespace Braincase.GanttChart
                 var previous = parts[i - 1];
                 if (previous.End >= current.Start)
                 {
-                    current.Start = previous.End + 1;
+                    current.Start = previous.End;
                     current.End = current.Start + current.Duration;
                 }
             }
@@ -1234,13 +1265,13 @@ namespace Braincase.GanttChart
                     var split = _mSplitTaskOfPart[task];
                     var parts = _mSplitTasks[split];
                     float complete = 0;
-                    int duration = 0;
+                    TimeSpan duration = TimeSpan.Zero;
                     foreach (var part in parts)
                     {
-                        complete += part.Complete * part.Duration;
+                        complete += part.Complete * part.Duration.Ticks;
                         duration += part.Duration;
                     }
-                    split.Complete = complete / duration;
+                    split.Complete = complete / duration.Ticks;
                 }
             }
         }
@@ -1257,13 +1288,13 @@ namespace Braincase.GanttChart
         private float _RecalculateCompletedHelper(T groupOrSplit)
         {
             float t_complete = 0;
-            int t_duration = 0;
+            TimeSpan t_duration = TimeSpan.Zero;
 
             if (_mSplitTasks.ContainsKey(groupOrSplit))
             {
                 foreach (var part in _mSplitTasks[groupOrSplit])
                 {
-                    t_complete += part.Complete * part.Duration;
+                    t_complete += part.Complete * part.Duration.Ticks;
                     t_duration += part.Duration;
                 }
             }
@@ -1272,12 +1303,12 @@ namespace Braincase.GanttChart
                 foreach (var member in this.ChildrenOf(groupOrSplit))
                 {
                     t_duration += member.Duration;
-                    if (this.IsGroup(member)) t_complete += _RecalculateCompletedHelper(member) * member.Duration;
-                    else t_complete += member.Complete * member.Duration;
+                    if (this.IsGroup(member)) t_complete += _RecalculateCompletedHelper(member) * member.Duration.Ticks;
+                    else t_complete += member.Complete * member.Duration.Ticks;
                 }
             }
 
-            groupOrSplit.Complete = t_complete / t_duration;
+            groupOrSplit.Complete = t_complete / t_duration.Ticks;
             
 
             return groupOrSplit.Complete;
@@ -1288,8 +1319,8 @@ namespace Braincase.GanttChart
             // affect decendants
             foreach (var dependant in this.DirectDependantsOf(precedent))
             {
-                if (dependant.Start <= precedent.End)
-                    this._SetStartHelper(dependant, precedent.End + 1);
+                if (dependant.Start < precedent.End)
+                    this._SetStartHelper(dependant, precedent.End);
             }
         }
 
@@ -1305,23 +1336,23 @@ namespace Braincase.GanttChart
         private void _RecalculateAncestorsScheduleHelper(T group)
         {
             float t_complete = 0;
-            int t_duration = 0;
-            var start = int.MaxValue;
-            var end = int.MinValue;
+            TimeSpan t_duration = TimeSpan.Zero;
+            var start = TimeSpan.MaxValue;
+            var end = TimeSpan.MinValue;
             foreach (var member in this.ChildrenOf(group))
             {
                 if (this.IsGroup(member))
                     _RecalculateAncestorsScheduleHelper(member);
 
                 t_duration += member.Duration;
-                t_complete += member.Complete * member.Duration;
+                t_complete += member.Complete * member.Duration.Ticks;
                 if (member.Start < start) start = member.Start;
                 if (member.End > end) end = member.End;
             }
 
             this._SetStartHelper(group, start);
             this._SetEndHelper(group, end);
-            this._SetCompleteHelper(group, t_complete / t_duration);
+            this._SetCompleteHelper(group, t_complete / t_duration.Ticks);
         }
 
         private void _RecalculateSlack()
@@ -1334,7 +1365,7 @@ namespace Braincase.GanttChart
                 {
                     // slack until the earliest dependant needs to start
                     var min = this.DirectDependantsOf(task).Min(x => x.Start);
-                    task.Slack = min - task.End - 1;
+                    task.Slack = min - task.End;
                 }
                 else
                 {

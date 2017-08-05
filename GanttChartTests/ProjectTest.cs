@@ -411,7 +411,7 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create split task
-            manager.Split(split, part1, part2, 1);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
@@ -702,7 +702,7 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a group and split under it
-            manager.Split(split, part1, part2, 1);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
             manager.Group(group, part1); // intentionall group using part
             Assert.IsTrue(manager.IsGroup(group));
             Assert.IsTrue(manager.IsMember(split));
@@ -730,18 +730,18 @@ namespace GanttChartTests
             manager.Add(task);
 
             // setup: create a group and split under it
-            manager.Split(split, part1, part2, 1);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
             manager.Group(group, part1); // intentionall group using part
             manager.Group(group, task);
-            manager.SetDuration(part1, 30);
-            manager.SetDuration(part2, 15);
-            manager.SetDuration(task, 20);
-            manager.SetStart(task, 50);
-            Assert.IsTrue(group.Duration == 70);
+            manager.SetDuration(part1, TimeSpan.FromDays(30));
+            manager.SetDuration(part2, TimeSpan.FromDays(15));
+            manager.SetDuration(task, TimeSpan.FromDays(20));
+            manager.SetStart(task, TimeSpan.FromDays(50));
+            Assert.IsTrue(group.Duration == TimeSpan.FromDays(70));
 
             // test: ungroup part should ungroup split task
             manager.Ungroup(group, part1);
-            Assert.IsTrue(group.Duration == 20);
+            Assert.IsTrue(group.Duration == TimeSpan.FromDays(20));
         }
 
         [TestMethod]
@@ -1701,7 +1701,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsPart(part2));
 
             // test: split the task into part1 and part2 and see resulting structure
-            manager.Split(split, part1, part2, 1);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
@@ -1725,24 +1725,24 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: set schedule on regular task
-            manager.SetStart(split, 11);
-            manager.SetDuration(split, 15);
-            Assert.IsTrue(split.Start == 11);
-            Assert.IsTrue(split.End == 26);
+            manager.SetStart(split, TimeSpan.FromDays(11));
+            manager.SetDuration(split, TimeSpan.FromDays(15));
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(11));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(26));
 
             // test: split the task into parts and make sure the schedules of the new parts tally with original task
-            manager.Split(split, part1, part2, 5);
-            Assert.IsTrue(part1.Duration == 5);
-            Assert.IsTrue(part1.Start == 11);
-            Assert.IsTrue(part1.End == 16);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(5));
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(5));
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(11));
+            Assert.IsTrue(part1.End == TimeSpan.FromDays(16));
 
-            Assert.IsTrue(part2.Duration == 10);
-            Assert.IsTrue(part2.Start == 17);
-            Assert.IsTrue(part2.End == 27);
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(10));
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(16));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(26));
             
-            Assert.IsTrue(split.Start == 11);
-            Assert.IsTrue(split.End == 27);
-            Assert.IsTrue(split.Duration == 16);
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(11));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(26));
+            Assert.IsTrue(split.Duration == TimeSpan.FromDays(15));
         }
 
         [TestMethod]
@@ -1757,7 +1757,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsPart(part2));
 
             // test: try to split a null task
-            manager.Split(null, part1, part2, 1);
+            manager.Split(null, part1, part2, TimeSpan.FromDays(1));
             Assert.IsTrue(!manager.IsPart(part1));
             Assert.IsTrue(!manager.IsPart(part2));
         }
@@ -1777,7 +1777,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.Tasks.Count() == 3);
 
             // test: split one using two and three
-            manager.Split(one, two, three, 1);
+            manager.Split(one, two, three, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.Tasks.Count() == 3);
             Assert.IsTrue(!manager.IsSplit(one));
             Assert.IsTrue(!manager.IsPart(two));
@@ -1799,7 +1799,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsPart(part2));
 
             // test: split the task
-            manager.Split(split, part1, part2, 1);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
@@ -1821,7 +1821,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.Tasks.Count() == 0);
 
             // test: attempt to split part (no effect)
-            manager.Split(part1, part2, 1);
+            manager.Split(part1, part2, TimeSpan.FromDays(1));
             Assert.IsTrue(!manager.IsPart(part1));
             Assert.IsTrue(!manager.IsPart(part2));
             Assert.IsTrue(manager.Tasks.Count() == 0);
@@ -1838,21 +1838,21 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a split task
-            manager.Split(split, part1, part2, 1);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
             Assert.IsTrue(!manager.IsPart(part3));
             
             // test: split a null part (no effect);
-            manager.Split(null, part3, 1);
+            manager.Split(null, part3, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
             Assert.IsTrue(!manager.IsPart(part3));
 
             // test: split a null part (no effect);
-            manager.Split(part1, null, 1);
+            manager.Split(part1, null, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
@@ -1888,8 +1888,8 @@ namespace GanttChartTests
             manager.Add(split2);
 
             // setup: create 2 split tasks
-            manager.Split(split1, part1a, part1b, 1);
-            manager.Split(split2, part2a, part2b, 1);
+            manager.Split(split1, part1a, part1b, TimeSpan.FromDays(1));
+            manager.Split(split2, part2a, part2b, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split1));
             Assert.IsTrue(manager.IsSplit(split2));
             Assert.IsTrue(manager.IsPart(part1a));
@@ -1931,12 +1931,12 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a 4 part split task
-            manager.SetDuration(split, 40);
-            manager.Split(split, part1, part2, 5);
-            manager.Split(part2, part3, 10);
-            manager.Split(part3, part4, 20);
-            Assert.IsTrue(part4.Duration == 5);
-            Assert.IsTrue(part2.Duration == 10);
+            manager.SetDuration(split, TimeSpan.FromDays(40));
+            manager.Split(split, part1, part2, TimeSpan.FromDays(5));
+            manager.Split(part2, part3, TimeSpan.FromDays(10));
+            manager.Split(part3, part4, TimeSpan.FromDays(20));
+            Assert.IsTrue(part4.Duration == TimeSpan.FromDays(5));
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(10));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
             Assert.IsTrue(manager.IsPart(part3));
@@ -1944,18 +1944,18 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.PartsOf(split).Count() == 4);
 
-            Assert.IsTrue(part1.Start == 0);
-            Assert.IsTrue(part1.End == 5);
-            Assert.IsTrue(part2.Start == 6);
-            Assert.IsTrue(part2.End == 16);
-            Assert.IsTrue(part3.Start == 17);
-            Assert.IsTrue(part3.End == 37);
-            Assert.IsTrue(part4.Start == 38);
-            Assert.IsTrue(part4.End == 43);
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(part1.End == TimeSpan.FromDays(5));
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(5));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(15));
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(15));
+            Assert.IsTrue(part3.End == TimeSpan.FromDays(35));
+            Assert.IsTrue(part4.Start == TimeSpan.FromDays(35));
+            Assert.IsTrue(part4.End == TimeSpan.FromDays(40));
 
             // test: join part 2 and 4
-            manager.Join(part2, part4);
-            Assert.IsTrue(part2.Duration == 15);
+            manager.Join(part2, part4); // expect part 4 to join into part 2, and part 3 start date gets pushed to later date by the combined duration of 2 and 4
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(15));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
             Assert.IsTrue(manager.IsPart(part3));
@@ -1963,12 +1963,12 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.PartsOf(split).Count() == 3);
 
-            Assert.IsTrue(part1.Start == 0);
-            Assert.IsTrue(part1.End == 5);
-            Assert.IsTrue(part2.Start == 6);
-            Assert.IsTrue(part2.End == 21);
-            Assert.IsTrue(part3.Start == 22);
-            Assert.IsTrue(part3.End == 42);
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(part1.End == TimeSpan.FromDays(5));
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(5));
+            Assert.IsTrue(part2.End == TimeSpan.FromDays(20));
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(20));
+            Assert.IsTrue(part3.End == TimeSpan.FromDays(40));
         }
 
         [TestMethod]
@@ -1983,7 +1983,7 @@ namespace GanttChartTests
             manager.Add(task);
 
             // setup: create a split task
-            manager.Split(split, part1a, part1b, 1);
+            manager.Split(split, part1a, part1b, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(!manager.IsSplit(part1a));
             Assert.IsTrue(!manager.IsSplit(part1b));
@@ -2020,7 +2020,7 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a split task
-            manager.Split(split, part1a, part1b, 1);
+            manager.Split(split, part1a, part1b, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(!manager.IsSplit(part1a));
             Assert.IsTrue(!manager.IsSplit(part1b));
@@ -2059,8 +2059,8 @@ namespace GanttChartTests
             manager.Add(split2);
 
             // setup: create 2 split tasks each of 2 parts
-            manager.Split(split1, part1a, part1b, 1);
-            manager.Split(split2, part2a, part2b, 1);
+            manager.Split(split1, part1a, part1b, TimeSpan.FromDays(1));
+            manager.Split(split2, part2a, part2b, TimeSpan.FromDays(1));
             Assert.IsTrue(!manager.HasRelations(split1));
             Assert.IsTrue(!manager.HasRelations(part1a));
             Assert.IsTrue(!manager.HasRelations(part1b));
@@ -2120,7 +2120,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsPart(part));
 
             // test: split using part and part
-            manager.Split(split, part, part, 1);
+            manager.Split(split, part, part, TimeSpan.FromDays(1));
             Assert.IsTrue(!manager.IsPart(split));
             Assert.IsTrue(!manager.IsPart(part));
             Assert.IsTrue(!manager.IsSplit(split));
@@ -2137,7 +2137,7 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a split
-            manager.Split(split, part1, part2, 1);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
@@ -2146,7 +2146,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.PartsOf(split).ElementAt(1).Equals(part2));
 
             // test: split part1 using part1
-            manager.Split(part1, part1, 1);
+            manager.Split(part1, part1, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
@@ -2173,7 +2173,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.DependantsOf(part1).Contains(part2));
 
             // test: split task using part1 and part2
-            manager.Split(split, part1, part2, 1);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.HasRelations(part1));
             Assert.IsTrue(manager.HasRelations(part2));
             Assert.IsTrue(manager.DependantsOf(part1).Contains(part2));
@@ -2194,21 +2194,20 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: set up a split task
-            manager.Split(split, part1, part3, 1);
+            manager.Split(split, part1, part3, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(!manager.IsPart(part2));
             Assert.IsTrue(manager.IsPart(part3));
             Assert.IsTrue(!manager.IsPart(part4));
             Assert.IsTrue(manager.PartsOf(split).Count() == 2);
-            var ele = manager.PartsOf(split);
             Assert.IsTrue(manager.PartsOf(split).ElementAt(0).Equals(part1));
             Assert.IsTrue(manager.PartsOf(split).ElementAt(1).Equals(part3));
             Assert.IsTrue(split.Start == part1.Start);
             Assert.IsTrue(split.End == part3.End);
 
-            // test: split part3 to give part3 and part4
-            manager.Split(part3, part4, 1);
+            //// test: split part3 to give part3 and part4
+            manager.Split(part3, part4, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(!manager.IsPart(part2));
@@ -2221,8 +2220,8 @@ namespace GanttChartTests
             Assert.IsTrue(split.Start == part1.Start);
             Assert.IsTrue(split.End == part4.End);
 
-            // test: split part1 to give part1 and part2
-            manager.Split(part1, part2, 1);
+            //// test: split part1 to give part1 and part2
+            manager.Split(part1, part2, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
@@ -2236,10 +2235,10 @@ namespace GanttChartTests
             Assert.IsTrue(split.Start == part1.Start);
             Assert.IsTrue(split.End == part4.End);
 
-            // test: ensure no parts overlap
-            Assert.IsTrue(part1.End < part2.Start);
-            Assert.IsTrue(part2.End < part3.Start);
-            Assert.IsTrue(part3.End < part4.Start);
+            //// test: ensure no parts overlap
+            Assert.IsTrue(part1.End == part2.Start);
+            Assert.IsTrue(part2.End == part3.Start);
+            Assert.IsTrue(part3.End == part4.Start);
             Assert.IsTrue(part1.Start < part1.End);
             Assert.IsTrue(part4.Start < part4.End);
         }
@@ -2256,14 +2255,14 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a split task with parts
-            manager.Split(split, part1, part2, 1);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(!manager.IsSplit(part1));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
 
             // test: split the part using the split task method
-            manager.Split(part1, part3, part4, 1);
+            manager.Split(part1, part3, part4, TimeSpan.FromDays(1));
             Assert.IsTrue(!manager.IsSplit(part1));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
@@ -2282,8 +2281,8 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a split task with 3 parts
-            manager.Split(split, part1, part2, 1);
-            manager.Split(part2, part3, 1);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
+            manager.Split(part2, part3, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
@@ -2314,20 +2313,23 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create split task with only part1 and part2
-            manager.Split(split, part1, part2, 1);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
             Assert.IsTrue(manager.PartsOf(split).Count() == 2);
             Assert.IsTrue(manager.PartsOf(split).ElementAt(0) == part1);
             Assert.IsTrue(manager.PartsOf(split).ElementAt(1) == part2);
+            Assert.IsTrue(split.Duration == TimeSpan.FromDays(1));
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(0.5f));
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(0.5f));
 
             // test: join the 2 parts, leave only a non-split task left
             manager.Join(part1, part2);
             Assert.IsTrue(!manager.IsSplit(split));
             Assert.IsTrue(!manager.IsPart(part1));
             Assert.IsTrue(!manager.IsPart(part2));
-            Assert.IsTrue(split.Duration == 2);
+            Assert.IsTrue(split.Duration == TimeSpan.FromDays(1));
         }
 
         [TestMethod]
@@ -2342,9 +2344,9 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a 4 part split task
-            manager.Split(split, part1, part2, 1);
-            manager.Split(part1, part3, 1);
-            manager.Split(part3, part4, 1);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
+            manager.Split(part1, part3, TimeSpan.FromDays(1));
+            manager.Split(part3, part4, TimeSpan.FromDays(1));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
@@ -2365,7 +2367,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsPart(part3));
             Assert.IsTrue(!manager.IsPart(part4));
             Assert.IsTrue(manager.Tasks.Count() == 1);
-            Assert.IsTrue(split.Duration == 4);
+            Assert.IsTrue(split.Duration == TimeSpan.FromDays(1));
         }
 
         [TestMethod]
@@ -2382,7 +2384,7 @@ namespace GanttChartTests
             manager.Add(task);
 
             // setup: create a split task and a group
-            manager.Split(split, part1, part2, 2);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(2));
             manager.Group(group, task);
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
@@ -2430,7 +2432,7 @@ namespace GanttChartTests
             manager.Add(task);
 
             // setup: group split task into group
-            manager.Split(split, part1, part2, 2);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(2));
             manager.Group(group, task);
             manager.Group(group, split);
             Assert.IsTrue(manager.IsSplit(split));
@@ -2469,28 +2471,28 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a 3 part split
-            manager.SetStart(split, 16);
-            manager.SetDuration(split, 24);
-            manager.Split(split, part1, part2, 8);
-            manager.Split(part2, part3, 8);
+            manager.SetStart(split, TimeSpan.FromDays(16));
+            manager.SetDuration(split, TimeSpan.FromDays(24));
+            manager.Split(split, part1, part2, TimeSpan.FromDays(8));
+            manager.Split(part2, part3, TimeSpan.FromDays(8));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.PartsOf(split).Count() == 3);
-            Assert.IsTrue(part1.Duration == 8);
-            Assert.IsTrue(part2.Duration == 8);
-            Assert.IsTrue(part3.Duration == 8);
-            Assert.IsTrue(split.Duration == 26);
-            Assert.IsTrue(split.Start == 16);
-            Assert.IsTrue(split.End == 42);
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(8));
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(8));
+            Assert.IsTrue(part3.Duration == TimeSpan.FromDays(8));
+            Assert.IsTrue(split.Duration == TimeSpan.FromDays(24));
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(16));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(40));
 
             // setup: join parts 1 and 2, intentionally in bad order, but should still work
             manager.Join(part2, part1);
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.PartsOf(split).Count() == 2);
-            Assert.IsTrue(part2.Duration == 16);
-            Assert.IsTrue(part3.Duration == 8);
-            Assert.IsTrue(split.Duration == 26); // schedule of other parts not affected
-            Assert.IsTrue(split.Start == 16);
-            Assert.IsTrue(split.End == 42);
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(16));
+            Assert.IsTrue(part3.Duration == TimeSpan.FromDays(8));
+            Assert.IsTrue(split.Duration == TimeSpan.FromDays(24)); // schedule of other parts not affected
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(16));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(40));
         }
 
         [TestMethod]
@@ -2503,7 +2505,7 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a split task
-            manager.Split(split, part1, part2, 7);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(7));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
@@ -2526,21 +2528,21 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a 3 part split task
-            manager.SetDuration(split, 30);
-            manager.Split(split, part1, part2, 4);
-            manager.Split(part2, part3, 5);
+            manager.SetDuration(split, TimeSpan.FromDays(30));
+            manager.Split(split, part1, part2, TimeSpan.FromDays(4));
+            manager.Split(part2, part3, TimeSpan.FromDays(5));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
             Assert.IsTrue(manager.IsPart(part3));
-            Assert.IsTrue(part1.Start == 0);
-            Assert.IsTrue(part2.Start == 5);
-            Assert.IsTrue(part3.Start == 11);
-            Assert.IsTrue(part1.Duration == 4);
-            Assert.IsTrue(part2.Duration == 5);
-            Assert.IsTrue(part3.Duration == 21);
-            Assert.IsTrue(split.Start == 0);
-            Assert.IsTrue(split.End == 32);
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(4));
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(9));
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(4));
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(5));
+            Assert.IsTrue(part3.Duration == TimeSpan.FromDays(21));
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(30));
 
             // test: delete part2, part1 and part3 should not be affected
             manager.Delete(part2);
@@ -2548,13 +2550,13 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(!manager.IsPart(part2));
             Assert.IsTrue(manager.IsPart(part3));
-            Assert.IsTrue(part1.Duration == 4);
-            Assert.IsTrue(part3.Duration == 21);
-            Assert.IsTrue(part1.Start == 0);
-            Assert.IsTrue(part3.Start == 11);
-            Assert.IsTrue(part3.End == 32);
-            Assert.IsTrue(split.Start == 0);
-            Assert.IsTrue(split.End == 32);
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(4));
+            Assert.IsTrue(part3.Duration == TimeSpan.FromDays(21));
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(9));
+            Assert.IsTrue(part3.End == TimeSpan.FromDays(30));
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(30));
         }
 
         [TestMethod]
@@ -2568,21 +2570,21 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a 3 part split task
-            manager.SetDuration(split, 30);
-            manager.Split(split, part1, part2, 4);
-            manager.Split(part2, part3, 5);
+            manager.SetDuration(split, TimeSpan.FromDays(30));
+            manager.Split(split, part1, part2, TimeSpan.FromDays(4));
+            manager.Split(part2, part3, TimeSpan.FromDays(5));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
             Assert.IsTrue(manager.IsPart(part3));
-            Assert.IsTrue(part1.Start == 0);
-            Assert.IsTrue(part2.Start == 5);
-            Assert.IsTrue(part3.Start == 11);
-            Assert.IsTrue(part1.Duration == 4);
-            Assert.IsTrue(part2.Duration == 5);
-            Assert.IsTrue(part3.Duration == 21);
-            Assert.IsTrue(split.Start == 0);
-            Assert.IsTrue(split.End == 32);
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(4));
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(9));
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(4));
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(5));
+            Assert.IsTrue(part3.Duration == TimeSpan.FromDays(21));
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(30));
 
             // test: delete part3, part1 and part2 should not be affected
             manager.Delete(part3);
@@ -2590,10 +2592,10 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
             Assert.IsTrue(!manager.IsPart(part3));
-            Assert.IsTrue(part1.Duration == 4);
-            Assert.IsTrue(part2.Duration == 5);
-            Assert.IsTrue(split.Start == 0);
-            Assert.IsTrue(split.End == 10);
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(4));
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(5));
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(9));
         }
 
         [TestMethod]
@@ -2607,21 +2609,21 @@ namespace GanttChartTests
             manager.Add(split);
 
             // setup: create a 3 part split task
-            manager.SetDuration(split, 30);
-            manager.Split(split, part1, part2, 4);
-            manager.Split(part2, part3, 5);
+            manager.SetDuration(split, TimeSpan.FromDays(30));
+            manager.Split(split, part1, part2, TimeSpan.FromDays(4));
+            manager.Split(part2, part3, TimeSpan.FromDays(5));
             Assert.IsTrue(manager.IsSplit(split));
             Assert.IsTrue(manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
             Assert.IsTrue(manager.IsPart(part3));
-            Assert.IsTrue(part1.Start == 0);
-            Assert.IsTrue(part2.Start == 5);
-            Assert.IsTrue(part3.Start == 11);
-            Assert.IsTrue(part1.Duration == 4);
-            Assert.IsTrue(part2.Duration == 5);
-            Assert.IsTrue(part3.Duration == 21);
-            Assert.IsTrue(split.Start == 0);
-            Assert.IsTrue(split.End == 32);
+            Assert.IsTrue(part1.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(4));
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(9));
+            Assert.IsTrue(part1.Duration == TimeSpan.FromDays(4));
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(5));
+            Assert.IsTrue(part3.Duration == TimeSpan.FromDays(21));
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(0));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(30));
 
             // test: delete part1, part2 and part3 should not be affected
             manager.Delete(part1);
@@ -2629,12 +2631,12 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsPart(part1));
             Assert.IsTrue(manager.IsPart(part2));
             Assert.IsTrue(manager.IsPart(part3));
-            Assert.IsTrue(part2.Start == 5);
-            Assert.IsTrue(part3.Start == 11);
-            Assert.IsTrue(part2.Duration == 5);
-            Assert.IsTrue(part3.Duration == 21);
-            Assert.IsTrue(split.Start == 5);
-            Assert.IsTrue(split.End == 32);
+            Assert.IsTrue(part2.Start == TimeSpan.FromDays(4));
+            Assert.IsTrue(part3.Start == TimeSpan.FromDays(9));
+            Assert.IsTrue(part2.Duration == TimeSpan.FromDays(5));
+            Assert.IsTrue(part3.Duration == TimeSpan.FromDays(21));
+            Assert.IsTrue(split.Start == TimeSpan.FromDays(4));
+            Assert.IsTrue(split.End == TimeSpan.FromDays(30));
         }
 
         [TestMethod]
@@ -2648,7 +2650,7 @@ namespace GanttChartTests
 
             // setup: create a split
             manager.SetComplete(split, 0.2f);
-            manager.Split(split, part1, part2, 1);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
             Assert.IsTrue(split.Complete == 0);
             Assert.IsTrue(part1.Complete == 0);
             Assert.IsTrue(part2.Complete == 0);
@@ -2674,12 +2676,12 @@ namespace GanttChartTests
 
             // setup: create a split under a group
             manager.Group(group, split);
-            manager.Split(split, part1, part2, 1);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
             Assert.IsTrue(group.Duration == split.Duration);
             Assert.IsTrue(group.End == part2.End);
 
             // test: split somemore and ensure group duration and end adjust correctly
-            manager.Split(part2, part3, 1);
+            manager.Split(part2, part3, TimeSpan.FromDays(1));
             Assert.IsTrue(group.Duration == split.Duration);
             Assert.IsTrue(group.End == part3.End);
         }
@@ -2698,16 +2700,16 @@ namespace GanttChartTests
 
             // setup: create a split under a group
             manager.Group(group, split);
-            manager.Split(split, part1, part2, 1);
-            manager.Split(part2, part3, 1);
-            Assert.IsTrue(group.Duration == 5);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
+            manager.Split(part2, part3, TimeSpan.FromDays(1));
+            Assert.IsTrue(group.Duration == TimeSpan.FromDays(1));
             Assert.IsTrue(group.Duration == split.Duration);
             Assert.IsTrue(group.End == part3.End);
 
             // test: join and make sure group duration is shortened
             manager.Join(part1, part3);
             Assert.IsTrue(!manager.IsPart(part3));
-            Assert.IsTrue(group.Duration == 4);
+            Assert.IsTrue(group.Duration == TimeSpan.FromDays(1));
             Assert.IsTrue(group.Duration == split.Duration);
             Assert.IsTrue(group.End == part2.End);
         }
