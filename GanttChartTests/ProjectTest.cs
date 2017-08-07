@@ -274,6 +274,67 @@ namespace GanttChartTests
         }
 
         [TestMethod]
+        public void MoveTaskIntoGroupUpdatesGroupSchedule()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+
+            // create tasks
+            var group = new Task() { Name = "group" };
+            var one = new Task() { Name = "one" };
+            var two = new Task() { Name = "two" };
+            var three = new Task() { Name = "three" };
+
+            manager.Add(one);
+            manager.Add(two);
+            manager.Add(three);
+            manager.Add(group);
+
+            manager.Group(group, two);
+            manager.Group(group, one);
+            manager.SetEnd(three, TimeSpan.FromDays(50));
+            Assert.IsTrue(manager.IsGroup(group));
+            Assert.IsTrue(manager.DirectMembersOf(group).Contains(one));
+            Assert.IsTrue(manager.DirectMembersOf(group).Contains(two));
+            Assert.IsTrue(!manager.DirectMembersOf(group).Contains(three));
+            Assert.IsTrue(manager.IndexOf(three) == 0);
+            Assert.IsTrue(manager.IndexOf(group) == 1);
+            Assert.IsTrue(manager.IndexOf(two) == 2);
+            Assert.IsTrue(manager.IndexOf(one) == 3);
+            Assert.IsTrue(group.Duration < three.Duration);
+
+            // test: move three into group
+            manager.Move(three, 2);
+            Assert.IsTrue(manager.IndexOf(group) == 0);
+            Assert.IsTrue(manager.IndexOf(three) == 1);
+            Assert.IsTrue(manager.IndexOf(two) == 2);
+            Assert.IsTrue(manager.IndexOf(one) == 3);
+            Assert.IsTrue(manager.IsGroup(group));
+            Assert.IsTrue(manager.DirectMembersOf(group).Contains(one));
+            Assert.IsTrue(manager.DirectMembersOf(group).Contains(two));
+            Assert.IsTrue(manager.DirectMembersOf(group).Contains(three));
+            Assert.IsTrue(manager.DirectGroupOf(one) == group);
+            Assert.IsTrue(manager.DirectGroupOf(two) == group);
+            Assert.IsTrue(manager.DirectGroupOf(three) == group);
+            Assert.IsTrue(group.Duration == three.Duration);
+
+            // test: move three out of the group
+            manager.Move(three, 3);
+            Assert.IsTrue(manager.IndexOf(group) == 0);
+            Assert.IsTrue(manager.IndexOf(two) == 1);
+            Assert.IsTrue(manager.IndexOf(one) == 2);
+            Assert.IsTrue(manager.IndexOf(three) == 3);
+            Assert.IsTrue(manager.IsGroup(group));
+            Assert.IsTrue(manager.DirectMembersOf(group).Contains(one));
+            Assert.IsTrue(manager.DirectMembersOf(group).Contains(two));
+            Assert.IsTrue(!manager.DirectMembersOf(group).Contains(three));
+            Assert.IsTrue(manager.DirectGroupOf(one) == group);
+            Assert.IsTrue(manager.DirectGroupOf(two) == group);
+            Assert.IsTrue(manager.DirectGroupOf(three) == null);
+            Assert.IsTrue(group.Duration == one.Duration);
+            Assert.IsTrue(group.Duration == two.Duration);
+        }
+
+        [TestMethod]
         public void MoveGroupsAround()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -510,6 +571,62 @@ namespace GanttChartTests
         }
 
         #region groups
+        [TestMethod]
+        public void GroupSetStartAdjustAllMembers()
+        {
+            IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
+            var group1 = new Task();
+            var precedent1 = new Task();
+            var dependant1 = new Task();
+            var split1 = new Task();
+            var part1a = new Task();
+            var part1b = new Task();
+
+            manager.Add(group1);
+            manager.Add(precedent1);
+            manager.Add(dependant1);
+            manager.Add(split1);
+            manager.SetDuration(precedent1, TimeSpan.FromDays(10));
+            manager.SetDuration(dependant1, TimeSpan.FromDays(10));
+            manager.SetDuration(split1, TimeSpan.FromDays(10));
+            manager.Split(split1, part1a, part1b, TimeSpan.FromDays(5));
+
+            manager.Group(group1, precedent1);
+            manager.Group(group1, split1);
+            manager.Relate(precedent1, dependant1);
+            manager.SetStart(dependant1, TimeSpan.FromDays(15));
+            Assert.IsTrue(group1.Start == TimeSpan.Zero);
+            Assert.IsTrue(group1.Duration == TimeSpan.FromDays(10), "Expected 10, Actual: {0}", group1.Duration);
+            Assert.IsTrue(group1.End == TimeSpan.FromDays(10));
+            Assert.IsTrue(dependant1.Start == TimeSpan.FromDays(15));
+            Assert.IsTrue(dependant1.End == TimeSpan.FromDays(25));
+            Assert.IsTrue(manager.DirectPrecedentsOf(dependant1).Contains(precedent1));
+
+            // test: bring forward group1
+            manager.SetStart(group1, TimeSpan.FromDays(5));
+            Assert.IsTrue(group1.Start == TimeSpan.FromDays(5));
+            Assert.IsTrue(group1.Duration == TimeSpan.FromDays(10), "Expected 10, Actual: {0}", group1.Duration);
+            Assert.IsTrue(group1.End == TimeSpan.FromDays(15));
+            Assert.IsTrue(dependant1.Start == TimeSpan.FromDays(15));
+            Assert.IsTrue(dependant1.End == TimeSpan.FromDays(25));
+            Assert.IsTrue(manager.DirectPrecedentsOf(dependant1).Contains(precedent1));
+            // expect all members moved, precedent is also moved
+            Assert.IsTrue(precedent1.Start == TimeSpan.FromDays(5));
+            Assert.IsTrue(precedent1.Duration == TimeSpan.FromDays(10), "Expected 10, Actual: {0}", group1.Duration);
+            Assert.IsTrue(precedent1.End == TimeSpan.FromDays(15));
+            // expect all members moved, split is also moved
+            Assert.IsTrue(split1.Start == TimeSpan.FromDays(5));
+            Assert.IsTrue(split1.Duration == TimeSpan.FromDays(10), "Expected 10, Actual: {0}", group1.Duration);
+            Assert.IsTrue(split1.End == TimeSpan.FromDays(15));
+
+            // test: set group start after dependant1 start, expect dependant 1 to move
+            manager.SetStart(group1, TimeSpan.FromDays(10));
+            Assert.IsTrue(group1.Start == TimeSpan.FromDays(10));
+            Assert.IsTrue(group1.Duration == TimeSpan.FromDays(10), "Expected 10, Actual: {0}", group1.Duration);
+            Assert.IsTrue(group1.End == TimeSpan.FromDays(20));
+            Assert.IsTrue(dependant1.Start == TimeSpan.FromDays(20));
+            Assert.IsTrue(dependant1.End == TimeSpan.FromDays(30));
+        }
 
         [TestMethod]
         public void GroupKnownTasksAndGroups()

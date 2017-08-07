@@ -258,38 +258,17 @@ namespace Braincase.GanttChart
         #region Timescale Views
         private void mnuViewDays_Click(object sender, EventArgs e)
         {
-            mnuViewDays.Checked = true;
-            mnuViewWeek.Checked = false;
-            _mChart.Invalidate();
-        }
-
-        private void mnuViewWeek_Click(object sender, EventArgs e)
-        {
-            _ClearTimeResolutionMenu();
-            mnuViewWeek.Checked = true;
-            _mChart.Invalidate();
-        }
-
-        private void mnuViewDayOfWeek_Click(object sender, EventArgs e)
-        {
             _mChart.TimeResolution = TimeResolution.Day;
             _ClearTimeResolutionMenu();
-            mnuViewDayOfWeek.Checked = true;
+            mnuViewDays.Checked = true;
             _mChart.Invalidate();
         }
 
-        private void mnuViewDayOfMonth_Click(object sender, EventArgs e)
-        {
-            _ClearTimeResolutionMenu();
-            mnuViewDayOfMonth.Checked = true;
-            _mChart.Invalidate();
-        }
-
-        private void mnuViewWeekOfYear_Click(object sender, EventArgs e)
+        private void mnuViewWeeks_Click(object sender, EventArgs e)
         {
             _mChart.TimeResolution = TimeResolution.Week;
             _ClearTimeResolutionMenu();
-            mnuViewWeekOfYear.Checked = true;
+            mnuViewWeeks.Checked = true;
             _mChart.Invalidate();
         }
 
@@ -303,10 +282,9 @@ namespace Braincase.GanttChart
 
         private void _ClearTimeResolutionMenu()
         {
+            mnuViewDays.Checked = false;
+            mnuViewWeeks.Checked = false;
             mnuViewHours.Checked = false;
-            mnuViewDayOfWeek.Checked = false;
-            mnuViewDayOfMonth.Checked = false;
-            mnuViewWeekOfYear.Checked = false;
         }
         #endregion Timescale Views
 

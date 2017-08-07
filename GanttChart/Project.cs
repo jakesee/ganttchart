@@ -291,9 +291,6 @@ namespace Braincase.GanttChart
                         // adding to the end of the task list
                         _DetachTask(task);
                         _mRootTasks.Add(task);
-
-                        // clear indices since positions changed
-                        _mTaskIndices.Clear();
                     }
                     else if (!displacedtask.Equals(task))
                     {
@@ -313,10 +310,13 @@ namespace Braincase.GanttChart
                             memberlist.Insert(indexofdestinationtask, task);
                             _mGroupOfMember[task] = displacedtaskparent;
                         }
-
-                        // clear indices since positions changed
-                        _mTaskIndices.Clear();
                     }
+
+                    _RecalculateAncestorsSchedule();
+                    _RecalculateSlack();
+
+                    // clear indices since positions changed
+                    _mTaskIndices.Clear();
                 }
             }
         }
@@ -735,13 +735,13 @@ namespace Braincase.GanttChart
                 _RecalculateSlack();
             }
             // Set start for a group task
-            //else if(_mRegister.Contains(task) && value != task.Start && this.IsGroup(task))
-            //{
-            //    _SetGroupStartHelper(task, value);
+            else if (_mRegister.Contains(task) && value != task.Start && this.IsGroup(task))
+            {
+                _SetGroupStartHelper(task, value);
 
-            //    _RecalculateAncestorsSchedule();
-            //    _RecalculateSlack();
-            //}
+                _RecalculateAncestorsSchedule();
+                _RecalculateSlack();
+            }
         }
 
         /// <summary>
@@ -1126,9 +1126,9 @@ namespace Braincase.GanttChart
                             part.Start += offset;
                             part.End += offset;
                         }
-
-                        _RecalculateDependantsOf(decendant);
                     }
+
+                    _RecalculateDependantsOf(decendant);
                 }
 
                 _RecalculateAncestorsSchedule();

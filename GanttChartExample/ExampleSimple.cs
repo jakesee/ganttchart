@@ -18,11 +18,7 @@ namespace Braincase.GanttChart
             InitializeComponent();
 
             _mProject = new ProjectManager();
-            //_mProject.Add(new Task() { Name = "New Task" });
-
-            var task = new Task() { Name = "New Face" };
-            _mProject.Add(task);
-            _mProject.SetEnd(task, TimeSpan.FromDays(20));
+            _mProject.Add(new Task() { Name = "New Task" });
             _mChart.Init(_mProject);
         }
     }

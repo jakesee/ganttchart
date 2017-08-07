@@ -975,7 +975,7 @@ namespace Braincase.GanttChart
                 // insertion indicator line
                 if (Row != int.MinValue)
                 {
-                    float y = e.Chart._ChartRowToChartCoord(Row) + e.Chart.BarHeight / 2.0f;
+                    float y = e.Chart._ChartRowToChartCoord(Row) + e.Chart.BarSpacing / 2.0f;
                     g.DrawLine(Pens.CornflowerBlue, new PointF(0, y), new PointF(e.Chart.Width, y));
                 }
 
@@ -1342,13 +1342,13 @@ namespace Braincase.GanttChart
                     minor.Text = calendar.GetWeekOfYear(datetime, System.Globalization.CalendarWeekRule.FirstFullWeek, DayOfWeek.Monday).ToString();
                     if(datetime.Month != datetimeprev.Month) major.Text = datetime.ToString("MMMM");
                     break;
-                case TimeResolution.Day:
-                    minor.Text = ShortDays[datetime.DayOfWeek]; // datetime.ToString("dddd").Substring(0, 1).ToUpper();
-                    if (datetime.DayOfWeek == DayOfWeek.Sunday) major.Text = datetime.ToString("dd MMM yyyy");
-                    break;
                 case TimeResolution.Hour:
                     minor.Text = datetime.Hour.ToString();
                     if (datetime.Day != datetimeprev.Day) major.Text = datetime.ToString("dd MMM yyyy");
+                    break;
+                default: // case TimeResolution.Day: -- to implement other TimeResolutions, add to this function or listen to the the PaintTimeline event
+                    minor.Text = ShortDays[datetime.DayOfWeek]; // datetime.ToString("dddd").Substring(0, 1).ToUpper();
+                    if (datetime.DayOfWeek == DayOfWeek.Sunday) major.Text = datetime.ToString("dd MMM yyyy");
                     break;
             }
         }

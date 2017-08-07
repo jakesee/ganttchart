@@ -69,11 +69,9 @@
             this.mnuFileExit = new System.Windows.Forms.ToolStripMenuItem();
             this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuViewDays = new System.Windows.Forms.ToolStripMenuItem();
-            this.mnuViewWeek = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuViewWeeks = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem5 = new System.Windows.Forms.ToolStripSeparator();
-            this.mnuViewDayOfWeek = new System.Windows.Forms.ToolStripMenuItem();
-            this.mnuViewDayOfMonth = new System.Windows.Forms.ToolStripMenuItem();
-            this.mnuViewWeekOfYear = new System.Windows.Forms.ToolStripMenuItem();
+            this.mnuViewHours = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
             this.mnuViewRelationships = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuViewSlack = new System.Windows.Forms.ToolStripMenuItem();
@@ -83,7 +81,6 @@
             this.mnuHelpAbout = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.lblStatus = new System.Windows.Forms.ToolStripStatusLabel();
-            this.mnuViewHours = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this._mSplitter1)).BeginInit();
             this._mSplitter1.Panel1.SuspendLayout();
             this._mSplitter1.Panel2.SuspendLayout();
@@ -292,7 +289,6 @@
             this._mChart.Dock = System.Windows.Forms.DockStyle.Fill;
             this._mChart.Font = new System.Drawing.Font("Segoe UI", 9F);
             this._mChart.Location = new System.Drawing.Point(0, 0);
-            this._mChart.MajorWidth = 140;
             this._mChart.Margin = new System.Windows.Forms.Padding(0);
             this._mChart.Name = "_mChart";
             this._mChart.Padding = new System.Windows.Forms.Padding(5);
@@ -457,13 +453,10 @@
             // viewToolStripMenuItem
             // 
             this.viewToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.mnuViewWeeks,
             this.mnuViewDays,
-            this.mnuViewWeek,
-            this.toolStripMenuItem5,
-            this.mnuViewDayOfWeek,
-            this.mnuViewDayOfMonth,
-            this.mnuViewWeekOfYear,
             this.mnuViewHours,
+            this.toolStripMenuItem5,
             this.toolStripMenuItem2,
             this.mnuViewRelationships,
             this.mnuViewSlack,
@@ -482,40 +475,24 @@
             this.mnuViewDays.Text = "Days";
             this.mnuViewDays.Click += new System.EventHandler(this.mnuViewDays_Click);
             // 
-            // mnuViewWeek
+            // mnuViewWeeks
             // 
-            this.mnuViewWeek.Name = "mnuViewWeek";
-            this.mnuViewWeek.Size = new System.Drawing.Size(152, 22);
-            this.mnuViewWeek.Text = "Weeks";
-            this.mnuViewWeek.Click += new System.EventHandler(this.mnuViewWeek_Click);
+            this.mnuViewWeeks.Name = "mnuViewWeeks";
+            this.mnuViewWeeks.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewWeeks.Text = "Weeks";
+            this.mnuViewWeeks.Click += new System.EventHandler(this.mnuViewWeeks_Click);
             // 
             // toolStripMenuItem5
             // 
             this.toolStripMenuItem5.Name = "toolStripMenuItem5";
             this.toolStripMenuItem5.Size = new System.Drawing.Size(149, 6);
             // 
-            // mnuViewDayOfWeek
+            // mnuViewHours
             // 
-            this.mnuViewDayOfWeek.Checked = true;
-            this.mnuViewDayOfWeek.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.mnuViewDayOfWeek.Name = "mnuViewDayOfWeek";
-            this.mnuViewDayOfWeek.Size = new System.Drawing.Size(152, 22);
-            this.mnuViewDayOfWeek.Text = "Day Of Week";
-            this.mnuViewDayOfWeek.Click += new System.EventHandler(this.mnuViewDayOfWeek_Click);
-            // 
-            // mnuViewDayOfMonth
-            // 
-            this.mnuViewDayOfMonth.Name = "mnuViewDayOfMonth";
-            this.mnuViewDayOfMonth.Size = new System.Drawing.Size(152, 22);
-            this.mnuViewDayOfMonth.Text = "Day Of Month";
-            this.mnuViewDayOfMonth.Click += new System.EventHandler(this.mnuViewDayOfMonth_Click);
-            // 
-            // mnuViewWeekOfYear
-            // 
-            this.mnuViewWeekOfYear.Name = "mnuViewWeekOfYear";
-            this.mnuViewWeekOfYear.Size = new System.Drawing.Size(152, 22);
-            this.mnuViewWeekOfYear.Text = "Week Of Year";
-            this.mnuViewWeekOfYear.Click += new System.EventHandler(this.mnuViewWeekOfYear_Click);
+            this.mnuViewHours.Name = "mnuViewHours";
+            this.mnuViewHours.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewHours.Text = "Hours";
+            this.mnuViewHours.Click += new System.EventHandler(this.mnuViewHours_Click);
             // 
             // toolStripMenuItem2
             // 
@@ -583,13 +560,6 @@
             this.lblStatus.Size = new System.Drawing.Size(814, 17);
             this.lblStatus.Spring = true;
             // 
-            // mnuViewHours
-            // 
-            this.mnuViewHours.Name = "mnuViewHours";
-            this.mnuViewHours.Size = new System.Drawing.Size(152, 22);
-            this.mnuViewHours.Text = "Hours";
-            this.mnuViewHours.Click += new System.EventHandler(this.mnuViewHours_Click);
-            // 
             // ExampleFull
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -641,7 +611,7 @@
         private System.Windows.Forms.ToolStripMenuItem mnuFileSave;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem4;
         private System.Windows.Forms.ToolStripMenuItem mnuViewDays;
-        private System.Windows.Forms.ToolStripMenuItem mnuViewWeek;
+        private System.Windows.Forms.ToolStripMenuItem mnuViewWeeks;
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.PropertyGrid _mTaskGrid;
@@ -671,9 +641,6 @@
         private System.Windows.Forms.ToolStripMenuItem mnuFilePrint25;
         private System.Windows.Forms.ToolStripMenuItem mnuFilePrint10;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem5;
-        private System.Windows.Forms.ToolStripMenuItem mnuViewDayOfWeek;
-        private System.Windows.Forms.ToolStripMenuItem mnuViewDayOfMonth;
-        private System.Windows.Forms.ToolStripMenuItem mnuViewWeekOfYear;
         private System.Windows.Forms.ToolStripMenuItem mnuFileOpen;
         private System.Windows.Forms.ToolStripSeparator toolStripMenuItem6;
         private System.Windows.Forms.ToolStripMenuItem mnuViewIntructions;
