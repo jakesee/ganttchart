@@ -244,17 +244,26 @@ namespace Braincase.GanttChart
         /// </summary>
         public void Resize()
         {
+            _mhScroll.Dock = DockStyle.None;
+            _mhScroll.Location = new Point(0, _mDevice.Height - _mhScroll.Height);
+            _mhScroll.Width = _mDevice.Width - _mvScroll.Width;
+            
+            _mvScroll.Dock = DockStyle.None;
+            _mvScroll.Location = new Point(_mDevice.Width - _mvScroll.Width, 0);
+            _mvScroll.Height = _mDevice.Height - _mhScroll.Height;
+
+            _mScrollHolePatch.Location = new Point(_mhScroll.Right, _mvScroll.Bottom);
+            _mScrollHolePatch.Size = new Size(_mvScroll.Width, _mhScroll.Height);
+
             if (WorldWidth <= _mDevice.Width)
             {
                 _mhScroll.Hide();
             }
             else
             {
-                _mhScroll.Show();
                 _mhScroll.Maximum = (int)(WorldWidth - _mDevice.Width);
-                _mhScroll.Dock = DockStyle.None;
-                _mhScroll.Location = new Point(0, _mDevice.Height - _mhScroll.Height);
-                _mhScroll.Width = _mDevice.Width - _mvScroll.Width;
+                _mhScroll.Show();
+
             }
 
             if (WorldHeight <= _mDevice.Height)
@@ -263,15 +272,9 @@ namespace Braincase.GanttChart
             }
             else
             {
-                _mvScroll.Show();
                 _mvScroll.Maximum = (int)(WorldHeight - _mDevice.Height);
-                _mvScroll.Dock = DockStyle.None;
-                _mvScroll.Location = new Point(_mDevice.Width - _mvScroll.Width, 0);
-                _mvScroll.Height = _mDevice.Height - _mhScroll.Height;
+                _mvScroll.Show();
             }
-
-            _mScrollHolePatch.Location = new Point(_mhScroll.Right, _mvScroll.Bottom);
-            _mScrollHolePatch.Size = new Size(_mvScroll.Width, _mhScroll.Height);
 
             _RecalculateRectangle();
             _RecalculateMatrix();

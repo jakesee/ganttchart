@@ -46,14 +46,14 @@ namespace Braincase.GanttChart
             _mManager.Add(pack);
 
             // Create another 1000 tasks for stress testing
-            //Random rand = new Random();
-            //for (int i = 0; i < 1000; i++)
-            //{
-            //    var task = new MyTask(_mManager) { Name = string.Format("New Task {0}", i.ToString()) };
-            //    _mManager.Add(task);
-            //    _mManager.SetStart(task, TimeSpan.FromDays(rand.Next(300)));
-            //    _mManager.SetDuration(task, TimeSpan.FromDays(rand.Next(50)));
-            //}
+            Random rand = new Random();
+            for (int i = 0; i < 1000; i++)
+            {
+                var task = new MyTask(_mManager) { Name = string.Format("New Task {0}", i.ToString()) };
+                _mManager.Add(task);
+                _mManager.SetStart(task, TimeSpan.FromDays(rand.Next(300)));
+                _mManager.SetDuration(task, TimeSpan.FromDays(rand.Next(50)));
+            }
 
             // Set task durations, e.g. using ProjectManager methods 
             _mManager.SetDuration(wake, TimeSpan.FromDays(3));

@@ -1097,8 +1097,7 @@ namespace Braincase.GanttChart
                 _DrawColumns(graphics);
 
                 // draw predecessor arrows
-                if (this.ShowRelations)
-                    this._DrawPredecessorLines(graphics);
+                if (this.ShowRelations) this._DrawPredecessorLines(graphics);
 
                 // draw bar charts
                 row = this._DrawTasks(graphics, clipRect);
@@ -1109,7 +1108,6 @@ namespace Braincase.GanttChart
                 // Paint overlays
                 ChartPaintEventArgs paintargs = new ChartPaintEventArgs(graphics, clipRect, this);
                 OnPaintOverlay(paintargs);
-
                 _mOverlay.Paint(paintargs);
             }
             else
