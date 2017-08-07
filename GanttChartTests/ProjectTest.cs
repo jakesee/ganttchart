@@ -40,6 +40,63 @@ namespace GanttChartTests
         }
 
         [TestMethod]
+        public void CreateAndRemoveTaskParts()
+        {
+            var manager = new ProjectManager<Task, object>();
+
+            var split = new Task();
+            var part1 = new Task();
+            var part2 = new Task();
+            var part3 = new Task();
+
+            manager.Add(split);
+            manager.Add(part1);
+            manager.Add(part2);
+            Assert.IsTrue(manager.Tasks.Any(t => t.Equals(split)));
+            Assert.IsTrue(manager.Tasks.Any(t => t.Equals(part1)));
+            Assert.IsTrue(manager.Tasks.Any(t => t.Equals(part2)));
+
+            // test: split task into part1 and part2, expect to fail.
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
+            Assert.IsTrue(manager.Tasks.Count(t => t.Equals(split)) == 1);
+            Assert.IsTrue(manager.Tasks.Count(t => t.Equals(part1)) == 1);
+            Assert.IsTrue(manager.Tasks.Count(t => t.Equals(part2)) == 1);
+            Assert.IsTrue(!manager.IsSplit(split));
+            Assert.IsTrue(!manager.IsPart(part1));
+            Assert.IsTrue(!manager.IsPart(part1));
+
+            // test: delete the parts
+            manager.Delete(part1);
+            manager.Delete(part2);
+            Assert.IsTrue(manager.Tasks.Count() == 1);
+            Assert.IsTrue(manager.Tasks.Count(t => t.Equals(split)) == 1);
+            Assert.IsTrue(manager.Tasks.Count(t => t.Equals(part1)) == 0);
+            Assert.IsTrue(manager.Tasks.Count(t => t.Equals(part2)) == 0);
+
+            // test: split task into part1 and part2, expect to succeed.
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
+            Assert.IsTrue(manager.Tasks.Count() == 1);
+            Assert.IsTrue(manager.Tasks.Count(t => t.Equals(split)) == 1);
+            Assert.IsTrue(manager.Tasks.Count(t => t.Equals(part1)) == 0);
+            Assert.IsTrue(manager.Tasks.Count(t => t.Equals(part2)) == 0);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+
+            // test: split task part into part1 and part3
+            manager.Split(part1, part3, TimeSpan.FromDays(1));
+            Assert.IsTrue(manager.Tasks.Count() == 1);
+            Assert.IsTrue(manager.Tasks.Count(t => t.Equals(split)) == 1);
+            Assert.IsTrue(manager.Tasks.Count(t => t.Equals(part1)) == 0);
+            Assert.IsTrue(manager.Tasks.Count(t => t.Equals(part2)) == 0);
+            Assert.IsTrue(manager.Tasks.Count(t => t.Equals(part3)) == 0);
+            Assert.IsTrue(manager.IsSplit(split));
+            Assert.IsTrue(manager.IsPart(part1));
+            Assert.IsTrue(manager.IsPart(part2));
+            Assert.IsTrue(manager.IsPart(part3));
+        }
+
+        [TestMethod]
         public void CreateAndRemoveGroup()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -428,13 +485,13 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IndexOf(two) == 2);
 
             // test: move again
-            manager.Move(split, -1);
+            manager.Move(part1, -1);
             Assert.IsTrue(manager.IndexOf(split) == 0);
             Assert.IsTrue(manager.IndexOf(one) == 1);
             Assert.IsTrue(manager.IndexOf(two) == 2);
 
             // test: move again (no effect, reached the top)
-            manager.Move(split, -1);
+            manager.Move(part2, -1);
             Assert.IsTrue(manager.IndexOf(split) == 0);
             Assert.IsTrue(manager.IndexOf(one) == 1);
             Assert.IsTrue(manager.IndexOf(two) == 2);
@@ -446,7 +503,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IndexOf(two) == 2);
 
             // test: move out of bounds
-            manager.Move(split, 2);
+            manager.Move(part1, 2);
             Assert.IsTrue(manager.IndexOf(one) == 0);
             Assert.IsTrue(manager.IndexOf(two) == 1);
             Assert.IsTrue(manager.IndexOf(split) == 2);
@@ -1374,6 +1431,78 @@ namespace GanttChartTests
             Assert.IsTrue(manager.DirectPrecedentsOf(three).Count() == 1);
         }
         
+        [TestMethod]
+        public void GroupCollapseDoesNotAffectRelateSplitTask()
+        {
+            var manager = new ProjectManager<Task, object>();
+            var precedent = new Task() { Name = "Precedent" };
+            var split = new Task() { Name = "split" };
+            var part1 = new Task() { Name = "part1" };
+            var part2 = new Task() { Name = "part2" };
+            var dependant = new Task() { Name = "dependant" };
+            var group = new Task() { Name = "group" };
+
+            manager.Add(precedent);
+            manager.Add(dependant);
+            manager.Add(split);
+            manager.Add(group);
+
+            manager.Group(group, precedent);
+            manager.Split(split, part1, part2, TimeSpan.FromDays(1));
+            manager.Group(group, part1);
+            Assert.IsTrue(!manager.HasRelations(precedent));
+            Assert.IsTrue(!manager.HasRelations(dependant));
+            Assert.IsTrue(!manager.HasRelations(split));
+            Assert.IsTrue(manager.DependantsOf(precedent).Count() == 0);
+            Assert.IsTrue(manager.DirectDependantsOf(precedent).Count() == 0);
+            Assert.IsTrue(manager.Precedents.Count() == 0);
+            Assert.IsTrue(manager.GroupsOf(precedent).Count() == 1);
+            Assert.IsTrue(manager.MembersOf(group).Count() == 2);
+
+            // test: relate tasks
+            manager.Relate(precedent, part1);
+            manager.Relate(precedent, dependant);
+            Assert.IsTrue(manager.HasRelations(precedent), "Expect precedent has relations");
+            Assert.IsTrue(manager.HasRelations(dependant), "Expect precedent has relations");
+            Assert.IsTrue(manager.HasRelations(split), "Expect precedent has relations");
+            Assert.IsTrue(manager.DependantsOf(precedent).Count() == 2, "Expect precedent has 2 dependants");
+            Assert.IsTrue(manager.DirectDependantsOf(precedent).Count() == 2, "Expect precedent has 2 direct dependants");
+            Assert.IsTrue(manager.Precedents.Count() == 1);
+            Assert.IsTrue(manager.GroupsOf(precedent).Count() == 1);
+            Assert.IsTrue(manager.GroupsOf(split).Count() == 1);
+            Assert.IsTrue(manager.MembersOf(group).Count() == 2);
+            Assert.IsTrue(manager.DirectDependantsOf(precedent).Contains(dependant));
+            Assert.IsTrue(manager.DirectDependantsOf(precedent).Contains(split));
+
+            // test: collapse group
+            manager.SetCollapse(group, true);
+            Assert.IsTrue(manager.HasRelations(precedent), "Expect precedent has relations");
+            Assert.IsTrue(manager.HasRelations(dependant), "Expect precedent has relations");
+            Assert.IsTrue(manager.HasRelations(split), "Expect precedent has relations");
+            Assert.IsTrue(manager.DependantsOf(precedent).Count() == 2, "Expect precedent has 2 dependants");
+            Assert.IsTrue(manager.DirectDependantsOf(precedent).Count() == 2, "Expect precedent has 2 direct dependants");
+            Assert.IsTrue(manager.Precedents.Count() == 1);
+            Assert.IsTrue(manager.GroupsOf(precedent).Count() == 1);
+            Assert.IsTrue(manager.GroupsOf(split).Count() == 1);
+            Assert.IsTrue(manager.MembersOf(group).Count() == 2);
+            Assert.IsTrue(manager.DirectDependantsOf(precedent).Contains(dependant));
+            Assert.IsTrue(manager.DirectDependantsOf(precedent).Contains(split));
+
+            // test: uncollapse group
+            manager.SetCollapse(group, false);
+            Assert.IsTrue(manager.HasRelations(precedent), "Expect precedent has relations");
+            Assert.IsTrue(manager.HasRelations(dependant), "Expect precedent has relations");
+            Assert.IsTrue(manager.HasRelations(split), "Expect precedent has relations");
+            Assert.IsTrue(manager.DependantsOf(precedent).Count() == 2, "Expect precedent has 2 dependants");
+            Assert.IsTrue(manager.DirectDependantsOf(precedent).Count() == 2, "Expect precedent has 2 direct dependants");
+            Assert.IsTrue(manager.Precedents.Count() == 1);
+            Assert.IsTrue(manager.GroupsOf(precedent).Count() == 1);
+            Assert.IsTrue(manager.GroupsOf(split).Count() == 1);
+            Assert.IsTrue(manager.MembersOf(group).Count() == 2);
+            Assert.IsTrue(manager.DirectDependantsOf(precedent).Contains(dependant));
+            Assert.IsTrue(manager.DirectDependantsOf(precedent).Contains(split));
+        }
+
         [TestMethod]
         public void AssignResource()
         {
@@ -2418,6 +2547,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.DirectMembersOf(group).Contains(task));
             Assert.IsTrue(manager.DirectMembersOf(group).Contains(split));
         }
+
         [TestMethod]
         public void UngroupPartBecomeUngroupSplitTask()
         {

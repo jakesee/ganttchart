@@ -1096,12 +1096,12 @@ namespace Braincase.GanttChart
                 // draw columns in the background
                 _DrawColumns(graphics);
 
-                // draw bar charts
-                row = this._DrawTasks(graphics, clipRect);
-
                 // draw predecessor arrows
                 if (this.ShowRelations)
                     this._DrawPredecessorLines(graphics);
+
+                // draw bar charts
+                row = this._DrawTasks(graphics, clipRect);
 
                 // draw the header
                 _DrawHeader(graphics, clipRect);
@@ -1146,10 +1146,10 @@ namespace Braincase.GanttChart
                     RectangleF taskRect;
 
                     // Compute task rectangle
-                    taskRect = new RectangleF(GetSpan(task.Start) + this.MinorWidth / 2, y_coord, GetSpan(task.Duration), this.BarHeight);
-                    _mChartTaskRects.Add(task, taskRect); // NOTE: groups and split tasks (not just task parts) are added to this list
-                    
-                    if(!_mProject.IsSplit(task))
+                    taskRect = new RectangleF(GetSpan(task.Start), y_coord, GetSpan(task.Duration), this.BarHeight);
+                    _mChartTaskRects.Add(task, taskRect); // also add groups and split tasks (not just task parts)
+
+                    if (!_mProject.IsSplit(task))
                     {
                         // Add normal Task Rectangles to hitRect collection for hit testing
                         _mChartTaskHitRects.Add(task, taskRect);
@@ -1160,7 +1160,7 @@ namespace Braincase.GanttChart
                         _mChartTaskPartRects.Add(task, parts);
                         foreach (var part in _mProject.PartsOf(task))
                         {
-                            taskRect = new RectangleF(GetSpan(part.Start) + this.MinorWidth / 2, y_coord, GetSpan(part.Duration), this.BarHeight);
+                            taskRect = new RectangleF(GetSpan(part.Start), y_coord, GetSpan(part.Duration), this.BarHeight);
                             parts.Add(new KeyValuePair<Task,RectangleF>(part, taskRect));
 
                             // Parts are mouse enabled, add to hitRect collection
@@ -1171,7 +1171,7 @@ namespace Braincase.GanttChart
                     // Compute Slack Rectangles
                     if (this.ShowSlack)
                     {
-                        var slackRect = new RectangleF(GetSpan(task.End) + this.MinorWidth / 2, y_coord, GetSpan(task.Slack), this.BarHeight);
+                        var slackRect = new RectangleF(GetSpan(task.End), y_coord, GetSpan(task.Slack), this.BarHeight);
                         _mChartSlackRects.Add(task, slackRect);
                     }
 
@@ -1185,7 +1185,7 @@ namespace Braincase.GanttChart
             _mViewport.WorldHeight = Math.Max(pHeight, row * this.BarSpacing + this.BarHeight);
             _mViewport.WorldWidth = Math.Max(pWidth, GetSpan(end) + 200);
         }
-        
+
         /// <summary>
         /// Generate Header rectangles and dates
         /// </summary>
@@ -1286,7 +1286,7 @@ namespace Braincase.GanttChart
             __DrawScale(graphics, clipRect, e.Font, e.Format, info.LabelRects, info.DateTimes);
 
             // draw "Now" line
-            float xf = GetSpan(_mProject.Now) + this.MinorWidth / 2;
+            float xf = GetSpan(_mProject.Now);
             var pen = new Pen(e.Format.Border.Color);
             pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
             graphics.DrawLine(pen, new PointF(xf, _mViewport.Y), new PointF(xf, _mViewport.Rectangle.Bottom));
@@ -1424,43 +1424,80 @@ namespace Braincase.GanttChart
             return row;
         }
 
+        /// <summary>
+        /// Only draw lines for all Precedents which are visible on the chart
+        /// TODO: draw lines for all collapsed Groups which has precendents
+        /// TODO: draw lines for all collapsed Groups which has dependants
+        /// </summary>
+        /// <param name="graphics"></param>
         private void _DrawPredecessorLines(Graphics graphics)
         {
             var viewRect = _mViewport.Rectangle;
             RectangleF clipRectF = new RectangleF(viewRect.X, viewRect.Y, viewRect.Width, viewRect.Height);
-            foreach (var p in _mProject.Precedents.Intersect(_mChartTaskRects.Keys))
+            foreach (var precedent in _mProject.Precedents)
             {
-                var precedent = p;
-                IEnumerable<Task> dependants = _mProject.DirectDependantsOf(precedent);
-
-                foreach (var d in dependants)
+                foreach (var dependant in _mProject.DirectDependantsOf(precedent))
                 {
-                    var dependant = d;
+                    var pvisible = _mChartTaskRects.ContainsKey(precedent);
+                    var dvisible = _mChartTaskRects.ContainsKey(dependant);
+                    RectangleF prect, drect;
+                    PointF p1, p2, p3;
+                    bool isPointingDown;
 
-                    // check with _mTaskRects that the dependant was drawn; this is needed to connect the lines
-                    if (_mChartTaskRects.ContainsKey(dependant))
+                    // case where both precedent and dependant are visible, just connect line between them
+                    if (!pvisible && !dvisible)
                     {
-                        var prect = _mChartTaskRects[precedent];
-                        var srect = _mChartTaskRects[dependant];
-                        if (precedent.End <= dependant.Start)
-                        {
-                            // plot and draw lines
-                            var p1 = new PointF(prect.Right, prect.Top + prect.Height / 2.0f);
-                            var p2 = new PointF(srect.Left, p1.Y);
-                            bool isPointingDown = p1.Y < srect.Top;
-                            var p3 = new PointF(srect.Left, isPointingDown ? srect.Top : srect.Bottom);
-                            var size = new SizeF(Math.Abs(p3.X - p1.X), Math.Abs(p3.Y - p1.Y));
-                            var linerect = p1.Y < p3.Y ? new RectangleF(p1, size) : new RectangleF(new PointF(p1.X, p1.Y - size.Height), size);
-                            if (clipRectF.IntersectsWith(linerect))
-                            {
-                                graphics.DrawLines(Pens.Black, new PointF[] { p1, p2, p3 });
-                                // draw arrowhead
-                                var p4 = new PointF(p3.X - 3f, p3.Y + (isPointingDown ? -6f : 6f));
-                                var p5 = new PointF(p3.X + 3f, p4.Y);
-                                graphics.FillPolygon(Brushes.Black, new PointF[] { p3, p4, p5 });
-                            }
-                        }
+                        continue; //next dependant please!
                     }
+                    else if (pvisible && dvisible)
+                    {
+                        prect = _mChartTaskRects[precedent];
+                        drect = _mChartTaskRects[dependant];
+
+                        // plot and draw lines
+                        p1 = new PointF(prect.Right, prect.Top + prect.Height / 2.0f);
+                        p2 = new PointF(drect.Left, p1.Y);
+                        isPointingDown = p1.Y < drect.Top;
+                        p3 = new PointF(drect.Left, isPointingDown ? drect.Top : drect.Bottom);
+                       
+                    }
+                    else if(pvisible && !dvisible)
+                    {
+                        prect = _mChartTaskRects[precedent];
+                        var group = _mProject.GroupsOf(dependant).Last(g => g.IsCollapsed);
+                        drect = _mChartTaskRects[group];
+
+                        // if precendent.start > group.start, need to handle this case of line bending back
+                        p1 = new PointF(prect.Right, prect.Top + prect.Height / 2.0f);
+                        p2 = new PointF(GetSpan(dependant.Start), p1.Y);
+                        isPointingDown = p1.Y < drect.Top;
+                        p3 = new PointF(GetSpan(dependant.Start), isPointingDown ? drect.Top : drect.Bottom);
+                    }
+                    else // if(!pvisible && dvisible)
+                    {
+                        var group = _mProject.GroupsOf(precedent).Last(g => g.IsCollapsed);
+                        prect = _mChartTaskRects[group];
+                        drect = _mChartTaskRects[dependant];
+
+                        // TODO: if group.end > dependant.start, need to handle this case of line bending back
+                        p1 = new PointF(GetSpan(precedent.End), prect.Top + prect.Height / 2.0f);
+                        p2 = new PointF(drect.Left, p1.Y);
+                        isPointingDown = p1.Y < drect.Top;
+                        p3 = new PointF(drect.Left, isPointingDown ? drect.Top : drect.Bottom);
+                    }
+
+                    // prepare and draw the lines
+                    var size = new SizeF(Math.Abs(p3.X - p1.X), Math.Abs(p3.Y - p1.Y));
+                    var linerect = p1.Y < p3.Y ? new RectangleF(p1, size) : new RectangleF(new PointF(p1.X, p1.Y - size.Height), size);
+                    if (clipRectF.IntersectsWith(linerect))
+                    {
+                        graphics.DrawLines(Pens.Black, new PointF[] { p1, p2, p3 });
+                        // draw arrowhead
+                        var p4 = new PointF(p3.X - 3f, p3.Y + (isPointingDown ? -6f : 6f));
+                        var p5 = new PointF(p3.X + 3f, p4.Y);
+                        graphics.FillPolygon(Brushes.Black, new PointF[] { p3, p4, p5 });
+                    }
+
                 }
             }
         }

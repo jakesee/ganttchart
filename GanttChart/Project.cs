@@ -143,7 +143,7 @@ namespace Braincase.GanttChart
                 && _mRegister.Contains(group)
                 )
             {
-                // change the member to become the split task is member is a task part
+                // if the member is a task part, assign the split task to the group instead
                 if (_mSplitTaskOfPart.ContainsKey(member)) member = _mSplitTaskOfPart[member];
 
                 if (_mRegister.Contains(member)
@@ -154,13 +154,14 @@ namespace Braincase.GanttChart
                     && !this.HasRelations(group)
                     )
                 {
-                    _LeaveGroup(member);
+                    _DetachTask(member);
+
+                    // add member to new group
                     _mMembersOfGroup[group].Add(member);
                     _mGroupOfMember[member] = group;
 
                     _RecalculateAncestorsSchedule();
                     _RecalculateSlack();
-
                     // clear indices since positions changed
                     _mTaskIndices.Clear();
                 }
@@ -196,19 +197,20 @@ namespace Braincase.GanttChart
 
         /// <summary>
         /// Ungroup all member task under the specfied group task. The specified group task will become a normal task.
+        /// If the there is a grandparent group, the members will become members of the grandparent group.
         /// </summary>
         /// <param name="group"></param>
         public void Ungroup(T group)
         {
-            List<T> list;
+            List<T> members;
             if (group != null
                 //&& _mRegister.Contains(group)
-                && _mMembersOfGroup.TryGetValue(group, out list))
+                && _mMembersOfGroup.TryGetValue(group, out members))
             {
                 var newgroup = this.DirectGroupOf(group);
                 if (newgroup == null)
                 {
-                    foreach (var member in list)
+                    foreach (var member in members)
                     {
                         _mRootTasks.Add(member);
                         _mGroupOfMember[member] = null;
@@ -216,19 +218,19 @@ namespace Braincase.GanttChart
                 }
                 else
                 {
-                    foreach (var member in list)
+                    foreach (var member in members)
                     {
                         _mMembersOfGroup[newgroup].Add(member);
                         _mGroupOfMember[member] = null;
                     }
                 }
 
-                list.Clear();
+                members.Clear();
 
                 _RecalculateAncestorsSchedule();
             }
         }
-        
+
         /// <summary>
         /// Get the zero-based index of the task in this Project
         /// </summary>
@@ -257,6 +259,9 @@ namespace Braincase.GanttChart
 
         /// <summary>
         /// Re-order position of the task by offset amount of places
+        /// If task is moved between members, the task is added to the members' group
+        /// If task is a member and it is moved above it's group or below last sibling member, then it is moved out of its group
+        /// If task is a part, then its parent split-task will be move instead
         /// </summary>
         /// <param name="task"></param>
         /// <param name="offset"></param>
@@ -264,20 +269,27 @@ namespace Braincase.GanttChart
         {
             if (task != null && _mRegister.Contains(task) && offset != 0)
             {
+                if (IsPart(task)) task = SplitTaskOf(task);
+
                 int indexoftask = IndexOf(task);
                 if (indexoftask > -1)
                 {
                     int newindexoftask = indexoftask + offset;
                     // check for out of index bounds
+                    var taskcount = Tasks.Count();
                     if (newindexoftask < 0) newindexoftask = 0;
-                    else if (newindexoftask > Tasks.Count()) newindexoftask = Tasks.Count();
+                    else if (newindexoftask > taskcount) newindexoftask = taskcount;
                     // get the index of the task that will be displaced
                     var displacedtask = Tasks.ElementAtOrDefault(newindexoftask);
 
+                    if(displacedtask == task)
+                    {
+                        return;
+                    }
                     if (displacedtask == null)
                     {
                         // adding to the end of the task list
-                        _LeaveGroup(task);
+                        _DetachTask(task);
                         _mRootTasks.Add(task);
 
                         // clear indices since positions changed
@@ -290,24 +302,20 @@ namespace Braincase.GanttChart
                         if (displacedtaskparent == null) // displacedtask is in root
                         {
                             indexofdestinationtask = _mRootTasks.IndexOf(displacedtask);
-                            _LeaveGroup(task);
+                            _DetachTask(task);
                             _mRootTasks.Insert(indexofdestinationtask, task);
                         }
                         else if (!displacedtaskparent.Equals(task)) // displaced task is not under the moving task
                         {
                             var memberlist = _mMembersOfGroup[displacedtaskparent];
                             indexofdestinationtask = memberlist.IndexOf(displacedtask);
-                            _LeaveGroup(task);
+                            _DetachTask(task);
                             memberlist.Insert(indexofdestinationtask, task);
                             _mGroupOfMember[task] = displacedtaskparent;
                         }
 
                         // clear indices since positions changed
                         _mTaskIndices.Clear();
-                    }
-                    else // displacedtask == task, no need to move    
-                    {
-
                     }
                 }
             }
@@ -340,7 +348,7 @@ namespace Braincase.GanttChart
         }
         
         /// <summary>
-        /// Enumerate through all the parents and grandparents of the specified task
+        /// Enumerate upwards from member to and through all the parents and grandparents of the specified task
         /// </summary>
         public IEnumerable<T> GroupsOf(T member)
         {
@@ -484,10 +492,10 @@ namespace Braincase.GanttChart
         {
             if (precedent == null) yield break;
 
-            HashSet<T> list;
-            if (_mDependantsOfPrecedent.TryGetValue(precedent, out list))
+            HashSet<T> dependants;
+            if (_mDependantsOfPrecedent.TryGetValue(precedent, out dependants))
             {
-                var iter = list.GetEnumerator();
+                var iter = dependants.GetEnumerator();
                 while (iter.MoveNext()) yield return iter.Current;
             }
         }
@@ -1029,17 +1037,19 @@ namespace Braincase.GanttChart
         }
 
         /// <summary>
-        /// Leave the parent group if task is a member, but remain registered in ProjectManager
+        /// Detach the specified task from ProjectManager.Tasks (i.e. remove from its parent group, or if not it goes not have a parent group, unregister from root task status).
+        /// The specified task will remain registered in ProjectManager.
+        /// After execution of this helper method, the task is expected to be re-attached to ProjectManager.Tasks by regaining root task status, or joining a new group.
         /// </summary>
         /// <param name="task"></param>
-        private void _LeaveGroup(T task)
+        private void _DetachTask(T task)
         {
-            var parent = this.DirectGroupOf(task);
-            if (parent == null)
+            var group = this.DirectGroupOf(task);
+            if (group == null) // member is actually not in any group, so it must be in _mRootTasks
                 _mRootTasks.Remove(task);
             else
             {
-                _mMembersOfGroup[parent].Remove(task);
+                _mMembersOfGroup[group].Remove(task);
                 _mGroupOfMember[task] = null;
             }
         }
