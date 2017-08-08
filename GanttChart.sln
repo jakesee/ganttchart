@@ -11,8 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GanttChartTests", "GanttCha
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{430EE8DA-1775-4F2B-BB55-0207922FFA9D}"
 	ProjectSection(SolutionItems) = preProject
-		LICENSE.txt = LICENSE.txt
-		readme.txt = readme.txt
+		LICENSE.md = LICENSE.md
+		readme.md = readme.md
 	EndProjectSection
 EndProject
 Global
