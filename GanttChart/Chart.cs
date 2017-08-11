@@ -98,7 +98,8 @@ namespace Braincase.GanttChart
         public Func<Task> CreateTaskDelegate = delegate() { return new Task(); };
 
         /// <summary>
-        /// Get the selected tasks
+        /// Get the selected tasks.
+        /// Split tasks will not be in this list, only its task parts, if selected.
         /// </summary>
         public IEnumerable<Task> SelectedTasks
         {
@@ -343,8 +344,7 @@ namespace Braincase.GanttChart
                 var printViewport = new PrintViewport(e.Graphics,
                     viewport.WorldWidth, viewport.WorldHeight,
                     e.MarginBounds.Width, e.MarginBounds.Height,
-                    e.PageSettings.Margins.Left, e.PageSettings.Margins.Right);
-                printViewport.Scale = scale;
+                    e.PageSettings.Margins.Left, e.PageSettings.Margins.Right) { Scale = scale };
                 _mViewport = printViewport;
 
                 // move the viewport
@@ -692,8 +692,7 @@ namespace Braincase.GanttChart
         /// <param name="e"></param>
         protected virtual void OnTaskMouseOver(TaskMouseEventArgs e)
         {
-            if (TaskMouseOver != null)
-                TaskMouseOver(this, e);
+            TaskMouseOver?.Invoke(this, e);
 
             this.Cursor = Cursors.Hand;
 
@@ -711,8 +710,7 @@ namespace Braincase.GanttChart
         /// <param name="e"></param>
         protected virtual void OnTaskMouseOut(TaskMouseEventArgs e)
         {
-            if (TaskMouseOut != null)
-                TaskMouseOut(this, e);
+            TaskMouseOut?.Invoke(this, e);
 
             this.Cursor = Cursors.Default;
 
@@ -726,8 +724,7 @@ namespace Braincase.GanttChart
         protected virtual void OnTaskMouseDrag(TaskDragDropEventArgs e)
         {
             // fire listeners
-            if (TaskMouseDrag != null)
-                TaskMouseDrag(this, e);
+            TaskMouseDrag?.Invoke(this, e);
 
             // Default drag behaviors **********************************
             if (e.Button == System.Windows.Forms.MouseButtons.Middle)
@@ -782,8 +779,7 @@ namespace Braincase.GanttChart
         protected virtual void OnTaskMouseDrop(TaskDragDropEventArgs e)
         {
             // Fire event
-            if (TaskMouseDrop != null)
-                TaskMouseDrop(this, e);
+            TaskMouseDrop?.Invoke(this, e);
 
             var delta = (e.PreviousLocation.X - e.StartLocation.X);
 
@@ -794,10 +790,9 @@ namespace Braincase.GanttChart
                     if (Control.ModifierKeys.HasFlag(Keys.Shift))
                     {
                         // insert
-                        int from;
                         Task source = e.Source;
-                        if(_mProject.IsPart(source)) source = _mProject.SplitTaskOf(source);
-                        if (this.TryGetRow(source, out from))
+                        if (_mProject.IsPart(source)) source = _mProject.SplitTaskOf(source);
+                        if (this.TryGetRow(source, out int from))
                             _mProject.Move(source, e.Row - from);
                     }
                     else
@@ -854,14 +849,16 @@ namespace Braincase.GanttChart
         /// <param name="e"></param>
         protected virtual void OnTaskMouseClick(TaskMouseEventArgs e)
         {
-            if (TaskMouseClick != null)
-                TaskMouseClick(this, e);
+            TaskMouseClick?.Invoke(this, e);
 
             if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
-                if (ModifierKeys.HasFlag(Keys.Shift))
+                if (ModifierKeys.HasFlag(Keys.Shift)) // activate multi-select
                 {
-                    _mSelectedTasks.Add(e.Task);
+                    if (!_mSelectedTasks.Remove(e.Task))
+                    {
+                        _mSelectedTasks.Add(e.Task);
+                    }
                 }
                 else
                 {
@@ -892,8 +889,7 @@ namespace Braincase.GanttChart
         /// <param name="e"></param>
         protected virtual void OnTaskMouseDoubleClick(TaskMouseEventArgs e)
         {
-            if (TaskMouseDoubleClick != null)
-                TaskMouseDoubleClick(this, e);
+            TaskMouseDoubleClick?.Invoke(this, e);
 
             if (e.Button == System.Windows.Forms.MouseButtons.Left)
             {
@@ -914,17 +910,15 @@ namespace Braincase.GanttChart
         /// <param name="e"></param>
         protected virtual void OnTaskSelected(TaskMouseEventArgs e)
         {
-            if (TaskSelected != null)
-                TaskSelected(this, e);
+            TaskSelected?.Invoke(this, e);
         }
         /// <summary>
-        /// Raises the TaskDeselecting event
+        /// Raises the TaskDeselecting event and then clear all the selected tasks
         /// </summary>
         /// <param name="e"></param>
         protected virtual void OnTaskDeselecting(TaskMouseEventArgs e)
         {
-            if (TaskDeselecting != null)
-                TaskDeselecting(this, e);
+            TaskDeselecting?.Invoke(this, e);
 
             // deselect all tasks
             _mSelectedTasks.Clear();
@@ -944,8 +938,7 @@ namespace Braincase.GanttChart
         /// <param name="e"></param>
         protected virtual void OnPaintTimeline(TimelinePaintEventArgs e)
         {
-            if (this.PaintTimeline != null)
-                this.PaintTimeline(this, e);
+            PaintTimeline?.Invoke(this, e);
         }
         /// <summary>
         /// Raises the PaintHeader event
@@ -953,8 +946,7 @@ namespace Braincase.GanttChart
         /// <param name="e"></param>
         protected virtual void OnPaintHeader(HeaderPaintEventArgs e)
         {
-            if(PaintHeader != null)
-                PaintHeader(this, e);
+            PaintHeader?.Invoke(this, e);
         }
         
         #endregion Chart Events
@@ -1285,14 +1277,12 @@ namespace Braincase.GanttChart
 
             // draw "Now" line
             float xf = GetSpan(_mProject.Now);
-            var pen = new Pen(e.Format.Border.Color);
-            pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
+            var pen = new Pen(e.Format.Border.Color) { DashStyle = System.Drawing.Drawing2D.DashStyle.Dash };
             graphics.DrawLine(pen, new PointF(xf, _mViewport.Y), new PointF(xf, _mViewport.Rectangle.Bottom));
         }
 
         private void __DrawScale(Graphics graphics, Rectangle clipRect, Font font, HeaderFormat headerformat, List<RectangleF> labelRects, List<DateTime> dates)
         {
-            LabelFormat minor, major;
             TimelinePaintEventArgs e = null;
             DateTime datetime = dates[0]; // these initialisation values matter
             DateTime datetimeprev = dates[0]; // these initialisation values matter
@@ -1301,7 +1291,7 @@ namespace Braincase.GanttChart
                 // Give user a chance to format the tickmark that is to be drawn
                 // https://blog.nicholasrogoff.com/2012/05/05/c-datetime-tostring-formats-quick-reference/
                 datetime = dates[i];
-                ___GetLabelFormat(datetime, datetimeprev, out minor, out major);
+                ___GetLabelFormat(datetime, datetimeprev, out LabelFormat minor, out LabelFormat major);
                 e = new TimelinePaintEventArgs(graphics, clipRect, this, datetime, datetimeprev, minor, major);
                 OnPaintTimeline(e);
 
@@ -1555,7 +1545,7 @@ namespace Braincase.GanttChart
 
         #endregion Private Helper Methods
 
-        #region Private Helper Variables
+        #region Private Helper Variables'
         /// <summary>
         /// Printing labels for header
         /// </summary>

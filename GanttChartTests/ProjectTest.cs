@@ -21,8 +21,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.DirectGroupOf(first) == null);
 
             // create second task, remove first task
-            var second = new Task();
-            second.Name = "Apple Jack";
+            var second = new Task() { Name = "Apple Jack" };
             manager.Add(second);
             manager.Delete(first);
             var firstordefault = manager.Tasks.FirstOrDefault();
