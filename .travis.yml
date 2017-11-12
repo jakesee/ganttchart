@@ -1,1 +1,2 @@
 language: csharp
+solution: GanttChart.sln
