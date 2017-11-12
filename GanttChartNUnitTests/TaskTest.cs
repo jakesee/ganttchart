@@ -2,15 +2,15 @@
 using System.Text;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using Braincase.GanttChart;
 
-namespace GanttChartTests
+namespace GanttChartNUnitTests
 {
-    [TestClass]
+    [TestFixture]
     public class TaskTest
     {
-        [TestMethod]
+        [Test]
         public void SetTaskParameters()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -42,7 +42,7 @@ namespace GanttChartTests
             Assert.IsTrue(one.Duration == TimeSpan.FromDays(56));
         }
 
-        [TestMethod]
+        [Test]
         public void RelateBeforePrecedentEndsLate()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -65,7 +65,7 @@ namespace GanttChartTests
             Assert.IsTrue(two.Slack == TimeSpan.FromDays(0));
         }
 
-        [TestMethod]
+        [Test]
         public void AdjustDependantScheduleOnRelate()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -92,7 +92,7 @@ namespace GanttChartTests
             Assert.IsTrue(two.End == TimeSpan.FromDays(26));
         }
 
-        [TestMethod]
+        [Test]
         public void PrecendentPushingDependantLater()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -124,7 +124,7 @@ namespace GanttChartTests
             Assert.IsTrue(one.Slack == TimeSpan.FromDays(0));
         }
 
-        [TestMethod]
+        [Test]
         public void AdjustGroupScheduleOnMemberScheduleChange()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -162,7 +162,7 @@ namespace GanttChartTests
             Assert.IsTrue(group.Duration == TimeSpan.FromDays(10));
         }
 
-        [TestMethod]
+        [Test]
         public void CannotSetCompleteOnGroup()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -189,7 +189,7 @@ namespace GanttChartTests
             Assert.IsTrue(member.Complete == 0);
         }
 
-        [TestMethod]
+        [Test]
         public void AdjustGroupCompleteOnMemberCompleteChange()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -209,7 +209,7 @@ namespace GanttChartTests
             Assert.IsTrue(group.Complete == 0.5f, string.Format("Expected {0} != {1}", 0.5f, group.Complete));
         }
 
-        [TestMethod]
+        [Test]
         public void AdjustGroupScheduleOnGroup()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -236,7 +236,7 @@ namespace GanttChartTests
             Assert.IsTrue(group.Complete == one.Complete);
         }
 
-        [TestMethod]
+        [Test]
         public void DurationCannotLessThanZero()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -257,7 +257,7 @@ namespace GanttChartTests
             Assert.IsTrue(one.Duration > TimeSpan.Zero);
         }
 
-        [TestMethod]
+        [Test]
         public void CompleteMustBetweenZeroAndOne()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -280,7 +280,7 @@ namespace GanttChartTests
             Assert.IsTrue(one.Complete == 0);
         }
 
-        [TestMethod]
+        [Test]
         public void DependantRescheduledStartEarlierThanPrecedentEnd()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -309,7 +309,7 @@ namespace GanttChartTests
             Assert.IsTrue(two.End == TimeSpan.FromDays(35));
         }
 
-        [TestMethod]
+        [Test]
         public void CriticalPath()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -391,7 +391,7 @@ namespace GanttChartTests
             Assert.IsTrue(critical_tasks.Contains(group1));
         }
 
-        [TestMethod]
+        [Test]
         public void TaskStartLessThanEnd()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -409,7 +409,7 @@ namespace GanttChartTests
             Assert.IsTrue(task.Start < task.End);
         }
 
-        [TestMethod]
+        [Test]
         public void SetSplitSchedule()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -446,7 +446,7 @@ namespace GanttChartTests
             Assert.IsTrue(split.End == TimeSpan.FromDays(42));
         }
 
-        [TestMethod]
+        [Test]
         public void MovePartLaterStart()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -496,7 +496,7 @@ namespace GanttChartTests
             Assert.IsTrue(split.End == TimeSpan.FromDays(50));
         }
 
-        [TestMethod]
+        [Test]
         public void MovePartEarlierStart()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -548,7 +548,7 @@ namespace GanttChartTests
             Assert.IsTrue(split.End == TimeSpan.FromDays(38));
         }
 
-        [TestMethod]
+        [Test]
         public void MovePartEarlierOverlap()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -618,7 +618,7 @@ namespace GanttChartTests
             Assert.IsTrue(split.End == TimeSpan.FromDays(30));
         }
 
-        [TestMethod]
+        [Test]
         public void MovePartLaterOverlap()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -668,7 +668,7 @@ namespace GanttChartTests
             Assert.IsTrue(split.End == TimeSpan.FromDays(42));
         }
 
-        [TestMethod]
+        [Test]
         public void MovePartLaterThanDependantStart()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -703,7 +703,7 @@ namespace GanttChartTests
             Assert.IsTrue(split.End == TimeSpan.FromDays(40));
             Assert.IsTrue(part2.Duration == TimeSpan.FromDays(10));
         }
-        [TestMethod]
+        [Test]
         public void SplitPartWithDependantAndAdjustDependantStart()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -736,7 +736,7 @@ namespace GanttChartTests
 
         }
 
-        [TestMethod]
+        [Test]
         public void SetSplitTaskStartMaintainPartsRelativeSchedule()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -787,7 +787,7 @@ namespace GanttChartTests
             Assert.IsTrue(part3.End == TimeSpan.FromDays(35) + offset);
         }
 
-        [TestMethod]
+        [Test]
         public void SetSplitTaskEndLastTaskMinimun1UnitTime()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -844,7 +844,7 @@ namespace GanttChartTests
             //Assert.IsTrue(part3.Start == TimeSpan.FromDays(30));
         }
 
-        [TestMethod]
+        [Test]
         public void DeleteResourceOnDeleteTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -878,7 +878,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.Resources.Contains(r1));
         }
         
-        [TestMethod]
+        [Test]
         public void TransferResourceToSplitTaskOnMerge_ByDeleteInThisCase()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -911,7 +911,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.Resources.Count() == 1);
         }
         
-        [TestMethod]
+        [Test]
         public void DeletePartCausingMerge()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -933,7 +933,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsPart(part2));
         }
         
-        [TestMethod]
+        [Test]
         public void DeleteResourcesOnDeleteSplitTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -974,7 +974,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.Tasks.Count() == 3);
         }
         
-        [TestMethod]
+        [Test]
         public void DeletePartsOnDeleteSplitTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1014,7 +1014,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.Tasks.Count() == 3);
         }
 
-        [TestMethod]
+        [Test]
         public void SplitExistingSplitTaskNoEffect()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1054,7 +1054,7 @@ namespace GanttChartTests
             
         }
 
-        [TestMethod]
+        [Test]
         public void CannotStartPartBeforeSplitTaskPrecedentStart()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1088,7 +1088,7 @@ namespace GanttChartTests
             Assert.IsTrue(split.Start == TimeSpan.FromDays(10));
         }
 
-        [TestMethod]
+        [Test]
         public void SetPartCompleteUpdatesSplitTaskAndGroup()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();

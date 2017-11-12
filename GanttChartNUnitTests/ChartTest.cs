@@ -1,16 +1,14 @@
 ﻿using Braincase.GanttChart;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System;
-using System.Drawing;
+using NUnit.Framework;
 using System.Windows.Forms;
 
-namespace GanttChartTests
+namespace GanttChartNUnitTests
 {
     /// <summary>
     ///This is a test class for ChartTest and is intended
     ///to contain all ChartTest Unit Tests
     ///</summary>
-    [TestClass()]
+    [TestFixture()]
     public class ChartTest
     {
         private TestContext testContextInstance;
@@ -31,37 +29,7 @@ namespace GanttChartTests
             }
         }
 
-        #region Additional test attributes
-        // 
-        //You can use the following additional attributes as you write your tests:
-        //
-        //Use ClassInitialize to run code before running the first test in the class
-        //[ClassInitialize()]
-        //public static void MyClassInitialize(TestContext testContext)
-        //{
-        //}
-        //
-        //Use ClassCleanup to run code after all tests in a class have run
-        //[ClassCleanup()]
-        //public static void MyClassCleanup()
-        //{
-        //}
-        //
-        //Use TestInitialize to run code before running each test
-        //[TestInitialize()]
-        //public void MyTestInitialize()
-        //{
-        //}
-        //
-        //Use TestCleanup to run code after each test has run
-        //[TestCleanup()]
-        //public void MyTestCleanup()
-        //{
-        //}
-        //
-        #endregion
-
-        [TestMethod()]
+        [Test]
         public void AddChartToForm()
         {
             // add to form
@@ -77,7 +45,7 @@ namespace GanttChartTests
         /// <summary>
         ///A test for Init
         ///</summary>
-        [TestMethod()]
+        [Test]
         public void DeferredAddChartToForm()
         {
             Chart chart = new Chart();
@@ -92,7 +60,7 @@ namespace GanttChartTests
         /// <summary>
         /// Allow drawing without init
         /// </summary>
-        [TestMethod()]
+        [Test]
         public void DrawWithoutInit()
         {
             Chart chart = new Chart();

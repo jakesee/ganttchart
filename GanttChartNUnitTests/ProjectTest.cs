@@ -1,15 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using NUnit.Framework;
 using Braincase.GanttChart;
 
-namespace GanttChartTests
+namespace GanttChartNUnitTests
 {
-    [TestClass]
+    [TestFixture]
     public class ProjectTest
     {
-        [TestMethod]
+        [Test]
         public void CreateAndRemoveTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -38,7 +37,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.Tasks.Count() == 1);
         }
 
-        [TestMethod]
+        [Test]
         public void CreateAndRemoveTaskParts()
         {
             var manager = new ProjectManager<Task, object>();
@@ -95,7 +94,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IsPart(part3));
         }
 
-        [TestMethod]
+        [Test]
         public void CreateAndRemoveGroup()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -122,7 +121,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.DirectGroupOf(two) == null);   
         }
 
-        [TestMethod]
+        [Test]
         public void ProjectEmptyEnumerators()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -131,7 +130,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.Resources.Count() == 0);
         }
 
-        [TestMethod]
+        [Test]
         public void EnumerationShouldReturnEmptySet()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -149,7 +148,7 @@ namespace GanttChartTests
             Assert.IsNotNull(manager.TasksOf(alien), "TasksOf is null");
         }
 
-        [TestMethod]
+        [Test]
         public void KnownTasksEnumeration()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -167,7 +166,7 @@ namespace GanttChartTests
             Assert.IsNotNull(manager.TasksOf(local));
         }
 
-        [TestMethod]
+        [Test]
         public void MoveSingleTaskToCheckForOutOfBoundHandling()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -202,7 +201,7 @@ namespace GanttChartTests
             Assert.IsTrue(index == 0);
         }
 
-        [TestMethod]
+        [Test]
         public void MoveNonExistingTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -211,7 +210,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IndexOf(task) == -1);
         }
 
-        [TestMethod]
+        [Test]
         public void MoveTasksAroundSingleLevel()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -272,7 +271,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IndexOf(one) == 2);
         }
 
-        [TestMethod]
+        [Test]
         public void MoveTaskIntoGroupUpdatesGroupSchedule()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -333,7 +332,7 @@ namespace GanttChartTests
             Assert.IsTrue(group.Duration == two.Duration);
         }
 
-        [TestMethod]
+        [Test]
         public void MoveGroupsAround()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -514,7 +513,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IndexOf(g1t3) == 11, string.Format("{0} != {1}", 0, manager.IndexOf(g1t3)));
         }
 
-        [TestMethod]
+        [Test]
         public void MovePartBecomeMoveSplitTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -570,7 +569,7 @@ namespace GanttChartTests
         }
 
         #region groups
-        [TestMethod]
+        [Test]
         public void GroupSetStartAdjustAllMembers()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -627,7 +626,7 @@ namespace GanttChartTests
             Assert.IsTrue(dependant1.End == TimeSpan.FromDays(30));
         }
 
-        [TestMethod]
+        [Test]
         public void GroupKnownTasksAndGroups()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -679,7 +678,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.GroupsOf(six).Count() == 2);
         }
 
-        [TestMethod]
+        [Test]
         public void GroupUnknownTasksIntoGroup()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -697,7 +696,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.Tasks.Contains(group));
         }
 
-        [TestMethod]
+        [Test]
         public void GroupTaskIntoUnknownGroups()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -715,7 +714,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.Tasks.Contains(one));
         }
 
-        [TestMethod]
+        [Test]
         public void UngroupUnknownTasksFromGroup()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -735,7 +734,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.Tasks.Contains(group));
         }
 
-        [TestMethod]
+        [Test]
         public void UngroupTaskFromUnknownGroups()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -759,7 +758,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.Tasks.Contains(one));
         }
 
-        [TestMethod]
+        [Test]
         public void UngroupUnknownGroup()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -780,7 +779,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.Tasks.Count() == 0);
         }
 
-        [TestMethod]
+        [Test]
         public void UngroupAGroup()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -809,7 +808,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.Tasks.Count() == 4);
         }
 
-        [TestMethod]
+        [Test]
         public void UngroupNonGroup()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -821,7 +820,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsGroup(group1));
         }
 
-        [TestMethod]
+        [Test]
         public void UngroupNullGroup()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -839,7 +838,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.Tasks.Contains(one));
         }
 
-        [TestMethod]
+        [Test]
         public void UngroupNullTaskFromGroup()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -863,7 +862,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.Tasks.Contains(group1));
         }
 
-        [TestMethod]
+        [Test]
         public void UngroupPartShouldUngroupSplitTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -889,7 +888,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsMember(part1));
             Assert.IsTrue(!manager.IsMember(part2));
         }
-        [TestMethod]
+        [Test]
         public void AdjustGroupDurationOnUngroup()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -917,7 +916,7 @@ namespace GanttChartTests
             Assert.IsTrue(group.Duration == TimeSpan.FromDays(20));
         }
 
-        [TestMethod]
+        [Test]
         public void GroupNullTaskIntoGroup()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -929,7 +928,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.Tasks.Count() == 1);
         }
 
-        [TestMethod]
+        [Test]
         public void GroupTaskIntoNullGroup()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -942,7 +941,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.Tasks.Count() == 1);
         }
 
-        [TestMethod]
+        [Test]
         public void GroupIntoSelf()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -955,7 +954,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.DirectGroupOf(group1) == null);
         }
 
-        [TestMethod]
+        [Test]
         public void GroupChildIntoSelf()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -973,7 +972,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.DirectGroupOf(one) == group1);
         }
 
-        [TestMethod]
+        [Test]
         public void GroupIntoParent()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -992,7 +991,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.DirectGroupOf(one).Equals(group1));
         }
 
-        [TestMethod]
+        [Test]
         public void GroupIntoAnotherGroupWhenAlreadyHaveGroup()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1016,7 +1015,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.DirectMembersOf(group2).Count() == 1);
         }
 
-        [TestMethod]
+        [Test]
         public void SubGrouping()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1066,7 +1065,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.DirectMembersOf(d2).Contains(e3));
         }
 
-        [TestMethod]
+        [Test]
         public void SubGroupOrdering()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1129,7 +1128,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.IndexOf(d3) == 9, string.Format("Order a = {0} != {1}", manager.IndexOf(a), 9));
         }
 
-        [TestMethod]
+        [Test]
         public void GroupIntoGrandChild()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1151,7 +1150,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.DirectMembersOf(one).Count() == 0);
         }
 
-        [TestMethod]
+        [Test]
         public void GroupIntoGrandParent()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1176,7 +1175,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.DirectGroupOf(group1) == null);
         }
 
-        [TestMethod]
+        [Test]
         public void GroupIntoChild()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1197,7 +1196,7 @@ namespace GanttChartTests
 
         #endregion groups
 
-        [TestMethod]
+        [Test]
         public void GroupTaskLevelAndOrdering()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1275,7 +1274,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.DirectGroupOf(five) == null);
         }
 
-        [TestMethod]
+        [Test]
         public void CreateRelation()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1296,7 +1295,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.HasRelations(two));
         }
         
-        [TestMethod]
+        [Test]
         public void CreateRelationWithNull()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1314,7 +1313,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.HasRelations(null) == false);
         }
         
-        [TestMethod]
+        [Test]
         public void CreateRelationWithUnknownTasks()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1333,7 +1332,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.HasRelations(two) == false);
         }
        
-        [TestMethod]
+        [Test]
         public void CreateRelationThatAlreadyExist()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1353,7 +1352,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.PrecedentsOf(two).Contains(one));
         }
         
-        [TestMethod]
+        [Test]
         public void RemoveExistingRelation()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1373,7 +1372,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.PrecedentsOf(two).Count() == 0);
         }
        
-        [TestMethod]
+        [Test]
         public void RemoveAllDependantsRelation()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1405,7 +1404,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.PrecedentsOf(one).Contains(four));
         }
        
-        [TestMethod]
+        [Test]
         public void RemoveNonExistingRelation()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1424,7 +1423,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.HasRelations(two) == false);
         }
         
-        [TestMethod]
+        [Test]
         public void Create3LevelRelations()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1457,7 +1456,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.DirectPrecedentsOf(three).Count() == 1);
         }
         
-        [TestMethod]
+        [Test]
         public void CircularRelationLevel1()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1487,7 +1486,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.DependantsOf(two).Count() == 0);
         }
         
-        [TestMethod]
+        [Test]
         public void CircularRelationLevel2()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1520,7 +1519,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.PrecedentsOf(three).Contains(two));
         }
         
-        [TestMethod]
+        [Test]
         public void RelateMultipleDependants()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1547,7 +1546,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.DirectPrecedentsOf(three).Count() == 1);
         }
         
-        [TestMethod]
+        [Test]
         public void GroupCollapseDoesNotAffectRelateSplitTask()
         {
             var manager = new ProjectManager<Task, object>();
@@ -1619,7 +1618,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.DirectDependantsOf(precedent).Contains(split));
         }
 
-        [TestMethod]
+        [Test]
         public void AssignResource()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1642,7 +1641,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.TasksOf(res).Contains(one));
         }
         
-        [TestMethod]
+        [Test]
         public void AssignResourceForUnknownTasks()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1661,7 +1660,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.TasksOf(res).Count() == 0);
         }
 
-        [TestMethod]
+        [Test]
         public void AssignSameResourceToSameTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1688,7 +1687,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.TasksOf(res).Contains(one));
         }
 
-        [TestMethod]
+        [Test]
         public void AssignSameResourceToDifferentTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1720,7 +1719,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.TasksOf(res).Contains(two));
         }
 
-        [TestMethod]
+        [Test]
         public void TwoWayResourceLookup()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1762,7 +1761,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.TasksOf(r2).ElementAtOrDefault(1).Equals(two));
         }
 
-        [TestMethod]
+        [Test]
         public void UnassignSpecificResource()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1789,7 +1788,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.TasksOf(r2).Contains(one));
         }
 
-        [TestMethod]
+        [Test]
         public void UnassignAllResourceFromTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1827,7 +1826,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.TasksOf(r2).Contains(two));
         }
 
-        [TestMethod]
+        [Test]
         public void UnassignResourceFromAllTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1865,7 +1864,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.TasksOf(r2).Contains(two));
         }
        
-        [TestMethod]
+        [Test]
         public void GroupCannotBeRelated()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1897,7 +1896,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.HasRelations(one));
         }
         
-        [TestMethod]
+        [Test]
         public void HasRelationTaskCannotBecomeGroup()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1928,7 +1927,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsMember(member));
         }
 
-        [TestMethod]
+        [Test]
         public void SplitTaskAndConfirmStructure()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1960,7 +1959,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.PartsOf(split).Contains(part2));
         }
 
-        [TestMethod]
+        [Test]
         public void SplitTaskAndConfirmSchedule()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -1990,7 +1989,7 @@ namespace GanttChartTests
             Assert.IsTrue(split.Duration == TimeSpan.FromDays(15));
         }
 
-        [TestMethod]
+        [Test]
         public void SplitNullTaskNoEffect()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2007,7 +2006,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsPart(part2));
         }
 
-        [TestMethod]
+        [Test]
         public void SplitTaskUsingRegularTaskNoEffect()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2029,7 +2028,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsPart(two));
         }
 
-        [TestMethod]
+        [Test]
         public void SplitTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2053,7 +2052,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.PartsOf(split).ElementAt(1).Equals(part2));
         }
 
-        [TestMethod]
+        [Test]
         public void SplitNonExistingPart()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2072,7 +2071,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.Tasks.Count() == 0);
         }
 
-        [TestMethod]
+        [Test]
         public void SplitNullPart()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2104,7 +2103,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsPart(part3));
         }
 
-        [TestMethod]
+        [Test]
         public void JoinNullPart()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2119,7 +2118,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsPart(task));
         }
 
-        [TestMethod]
+        [Test]
         public void JoinPartFromDifferentSplitTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2164,7 +2163,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.PartsOf(split2).Contains(part2b));
         }
 
-        [TestMethod]
+        [Test]
         public void JoinPartsConfirmPackedSchedule()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2216,7 +2215,7 @@ namespace GanttChartTests
             Assert.IsTrue(part3.End == TimeSpan.FromDays(40));
         }
 
-        [TestMethod]
+        [Test]
         public void AllowRelateSplitTaskToTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2255,7 +2254,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.PrecedentsOf(split).Contains(task));
         }
 
-        [TestMethod]
+        [Test]
         public void DoNotRelatePartsOfTheSameSplitTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2289,7 +2288,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.HasRelations(part1b));
         }
 
-        [TestMethod]
+        [Test]
         public void RelateUnrelatePartsBecomeRelateUnrelateSplitTasks()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2350,7 +2349,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.HasRelations(part2b));
         }
 
-        [TestMethod]
+        [Test]
         public void SplitTaskUsingSamePartsNoEffect()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2372,7 +2371,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsPart(part));
         }
 
-        [TestMethod]
+        [Test]
         public void SplitPartUsingSamePartsNoEffect()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2400,7 +2399,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.PartsOf(split).ElementAt(1).Equals(part2));
         }
 
-        [TestMethod]
+        [Test]
         public void RelatedTaskCannotBecomeParts()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2427,7 +2426,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsPart(part2));
         }
 
-        [TestMethod]
+        [Test]
         public void SplitPart()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2488,7 +2487,7 @@ namespace GanttChartTests
             Assert.IsTrue(part4.Start < part4.End);
         }
 
-        [TestMethod]
+        [Test]
         public void SplitPartAsThoughItIsTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2515,7 +2514,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsPart(part4));
         }
 
-        [TestMethod]
+        [Test]
         public void JoinParts()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2548,7 +2547,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.PartsOf(split).ElementAt(1) == part3);
         }
 
-        [TestMethod]
+        [Test]
         public void JoinPartRemainSinglePartBecomeRegularTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2577,7 +2576,7 @@ namespace GanttChartTests
             Assert.IsTrue(split.Duration == TimeSpan.FromDays(1));
         }
 
-        [TestMethod]
+        [Test]
         public void MergeSplittedTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2615,7 +2614,7 @@ namespace GanttChartTests
             Assert.IsTrue(split.Duration == TimeSpan.FromDays(1));
         }
 
-        [TestMethod]
+        [Test]
         public void GroupPartsBecomeGroupSplitTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2664,7 +2663,7 @@ namespace GanttChartTests
             Assert.IsTrue(manager.DirectMembersOf(group).Contains(split));
         }
 
-        [TestMethod]
+        [Test]
         public void UngroupPartBecomeUngroupSplitTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2706,7 +2705,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.DirectMembersOf(group).Contains(split));
         }
 
-        [TestMethod]
+        [Test]
         public void JoinPartConfirmSchedule()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2741,7 +2740,7 @@ namespace GanttChartTests
             Assert.IsTrue(split.End == TimeSpan.FromDays(40));
         }
 
-        [TestMethod]
+        [Test]
         public void JoinIntoMerge()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2763,7 +2762,7 @@ namespace GanttChartTests
             Assert.IsTrue(!manager.IsPart(part2));
         }
 
-        [TestMethod]
+        [Test]
         public void DeleteMiddlePart()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2805,7 +2804,7 @@ namespace GanttChartTests
             Assert.IsTrue(split.End == TimeSpan.FromDays(30));
         }
 
-        [TestMethod]
+        [Test]
         public void DeleteLastPart()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2844,7 +2843,7 @@ namespace GanttChartTests
             Assert.IsTrue(split.End == TimeSpan.FromDays(9));
         }
 
-        [TestMethod]
+        [Test]
         public void DeleteFirstPart()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2885,7 +2884,7 @@ namespace GanttChartTests
             Assert.IsTrue(split.End == TimeSpan.FromDays(30));
         }
 
-        [TestMethod]
+        [Test]
         public void CannotSetCompleteOnSplitTask()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2908,7 +2907,7 @@ namespace GanttChartTests
             Assert.IsTrue(part2.Complete == 0);
         }
 
-        [TestMethod]
+        [Test]
         public void AdjustGroupDurationOnSplit()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
@@ -2932,7 +2931,7 @@ namespace GanttChartTests
             Assert.IsTrue(group.End == part3.End);
         }
 
-        [TestMethod]
+        [Test]
         public void AdjustGroupDuringJoin()
         {
             IProjectManager<Task, object> manager = new ProjectManager<Task, object>();
