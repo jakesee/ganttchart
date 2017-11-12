@@ -6,3 +6,7 @@ install:
 script:
     - xbuild /p:Configuration=Release GanttChart.sln
     - mono ./testrunner/NUnit.ConsoleRunner.3.7.0/tools/nunit3-console.exe ./GanttChartNUnitTests/bin/Release/GanttChartNUnitTests.dll
+before_script: # this block is needed to deal with https://stackoverflow.com/questions/37310786/c-sharp-tests-with-windows-forms-fails-on-mono-travis 
+  - "export DISPLAY=:99.0"
+  - "sh -e /etc/init.d/xvfb start"
+  - sleep 3 # give xvfb some time to start
