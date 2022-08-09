@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
 using System.Windows.Forms;
@@ -19,6 +20,9 @@ namespace Braincase.GanttChart
         OverlayPainter _mOverlay = new OverlayPainter();
 
         ProjectManager _mManager = null;
+        TaskFormat TkFormat;
+        TaskFormat CTFormat;
+        HeaderFormat HFormat;
 
         /// <summary>
         /// Example starts here
@@ -130,7 +134,28 @@ namespace Braincase.GanttChart
             // Init the rest of the UI
             _InitExampleUI();            
         }
+        void DefaultColors()
+        {
+            
+            btnTaskColor.BackColor = ((SolidBrush)_mChart.TaskFormat.Color).Color;
+            btnTaskBorder.BackColor = _mChart.TaskFormat.Border.Color;
+            btnTaskBackFill.BackColor = ((SolidBrush)_mChart.TaskFormat.BackFill).Color;
+            btnTaskForeFill.BackColor = ((SolidBrush)_mChart.TaskFormat.ForeFill).Color;
+           // btnTaskSlackFill.BackColor = ((SolidBrush)_mChart.TaskFormat.SlackFill).Color;
 
+            btnCriticalTaskColor.BackColor = ((SolidBrush)_mChart.CriticalTaskFormat.Color).Color;
+            btnCriticalTaskBorder.BackColor = _mChart.CriticalTaskFormat.Border.Color;
+            btnCriticalTaskBackFill.BackColor = ((SolidBrush)_mChart.CriticalTaskFormat.BackFill).Color;
+            btnCriticalTaskForeFill.BackColor = ((SolidBrush)_mChart.CriticalTaskFormat.ForeFill).Color;
+            //btnCriticalTaskSlackFill.BackColor = ((SolidBrush)_mChart.CriticalTaskFormat.SlackFill).Color;
+
+            btnHeaderColor.BackColor = ((SolidBrush)_mChart.HeaderFormat.Color).Color;
+            btnHeaderBorder.BackColor = _mChart.HeaderFormat.Border.Color;
+            btnHeaderGradientLight.BackColor = _mChart.HeaderFormat.GradientLight;
+            btnHeaderGradientDark.BackColor = _mChart.HeaderFormat.GradientDark;
+            
+
+        }
         void _mChart_TaskSelected(object sender, TaskMouseEventArgs e)
         {
             _mTaskGrid.SelectedObjects = _mChart.SelectedTasks.Select(x => _mManager.IsPart(x) ? _mManager.SplitTaskOf(x) : x).ToArray();
@@ -142,6 +167,7 @@ namespace Braincase.GanttChart
         {
             lblStatus.Text = "";
             _mChart.Invalidate();
+            
         }
 
         void _mChart_TaskMouseOver(object sender, TaskMouseEventArgs e)
@@ -163,7 +189,8 @@ namespace Braincase.GanttChart
 
             mnuFileImgPrint100.Click += (s, e) => _PrintImage(1.0f);
             mnuFileImgPrint50.Click += (s, e) => _PrintImage(0.5f);
-            mnuFileImgPrint10.Click += (s, e) => _PrintImage(0.1f);            
+            mnuFileImgPrint10.Click += (s, e) => _PrintImage(0.1f);
+            DefaultColors();
         }
 
         #region Main Menu
@@ -370,6 +397,379 @@ namespace Braincase.GanttChart
 
 
         #endregion Print        
+
+
+        #region ColorChangeBTN
+
+        private void label5_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void btnTaskColor_Click(object sender, EventArgs e)
+        {
+            ColorDialog TaskDialog = new ColorDialog();
+            TaskDialog.AllowFullOpen = false;
+            TaskDialog.ShowHelp = true;
+            TaskDialog.Color = this.BackColor;
+           
+
+            if (TaskDialog.ShowDialog() == DialogResult.OK)
+            {
+                btnTaskColor.BackColor = TaskDialog.Color;
+                Brush b = new SolidBrush(TaskDialog.Color);
+                TaskFormat temp = new TaskFormat()
+                { Color = b,
+                  Border = _mChart.TaskFormat.Border,
+                  BackFill = _mChart.TaskFormat.BackFill,
+                  ForeFill = _mChart.TaskFormat.ForeFill,
+                  SlackFill = _mChart.TaskFormat.SlackFill
+
+                };
+                _mChart.TaskFormat = temp;
+                    
+            }    
+        }
+
+        private void btnTaskBorder_Click(object sender, EventArgs e)
+        {
+            ColorDialog TaskDialog = new ColorDialog();
+            TaskDialog.AllowFullOpen = false;
+            TaskDialog.ShowHelp = true;
+            TaskDialog.Color = this.BackColor;
+
+
+            if (TaskDialog.ShowDialog() == DialogResult.OK)
+            {
+                btnTaskBorder.BackColor = TaskDialog.Color;                
+                Pen p = new Pen(TaskDialog.Color);
+                TaskFormat temp = new TaskFormat()
+                {
+                    Color = _mChart.TaskFormat.Color,
+                    Border = p,
+                    BackFill = _mChart.TaskFormat.BackFill,
+                    ForeFill = _mChart.TaskFormat.ForeFill,
+                    SlackFill = _mChart.TaskFormat.SlackFill
+
+                };
+                _mChart.TaskFormat = temp;
+
+            }
+        }
+
+        private void btnTaskBackFill_Click(object sender, EventArgs e)
+        {
+            ColorDialog TaskDialog = new ColorDialog();
+            TaskDialog.AllowFullOpen = false;
+            TaskDialog.ShowHelp = true;
+            TaskDialog.Color = this.BackColor;
+
+
+            if (TaskDialog.ShowDialog() == DialogResult.OK)
+            {
+                btnTaskBackFill.BackColor = TaskDialog.Color;
+                Brush b = new SolidBrush(TaskDialog.Color);
+                TaskFormat temp = new TaskFormat()
+                {
+                    Color = _mChart.TaskFormat.Color,
+                    Border = _mChart.TaskFormat.Border,
+                    BackFill = b,
+                    ForeFill = _mChart.TaskFormat.ForeFill,
+                    SlackFill = _mChart.TaskFormat.SlackFill
+
+                };
+                _mChart.TaskFormat = temp;
+
+            }
+        }
+
+        private void btnTaskForeFill_Click(object sender, EventArgs e)
+        {
+            ColorDialog TaskDialog = new ColorDialog();
+            TaskDialog.AllowFullOpen = false;
+            TaskDialog.ShowHelp = true;
+            TaskDialog.Color = this.BackColor;
+
+
+            if (TaskDialog.ShowDialog() == DialogResult.OK)
+            {
+                btnTaskForeFill.BackColor = TaskDialog.Color;
+                Brush b = new SolidBrush(TaskDialog.Color);
+                TaskFormat temp = new TaskFormat()
+                {
+                    Color = _mChart.TaskFormat.Color,
+                    Border = _mChart.TaskFormat.Border,
+                    BackFill = _mChart.TaskFormat.BackFill,
+                    ForeFill = b,
+                    SlackFill = _mChart.TaskFormat.SlackFill
+
+                };
+                _mChart.TaskFormat = temp;
+
+            }
+        }
+        private void btnTaskSlackFill_Click(object sender, EventArgs e)
+        {
+            ColorDialog TaskDialog = new ColorDialog();
+            TaskDialog.AllowFullOpen = false;
+            TaskDialog.ShowHelp = true;
+            TaskDialog.Color = this.BackColor;
+
+
+            if (TaskDialog.ShowDialog() == DialogResult.OK)
+            {
+                btnTaskSlackFill.BackColor = TaskDialog.Color;
+                Brush b = new SolidBrush(TaskDialog.Color);
+                TaskFormat temp = new TaskFormat()
+                {
+                    Color = _mChart.TaskFormat.Color,
+                    Border = _mChart.TaskFormat.Border,
+                    BackFill = _mChart.TaskFormat.BackFill,
+                    ForeFill = _mChart.TaskFormat.ForeFill,
+                    SlackFill = b
+
+                };
+                _mChart.TaskFormat = temp;
+
+            }
+        }
+        private void btnCriticalTaskColor_Click(object sender, EventArgs e)
+        {
+            ColorDialog TaskDialog = new ColorDialog();
+            TaskDialog.AllowFullOpen = false;
+            TaskDialog.ShowHelp = true;
+            TaskDialog.Color = this.BackColor;
+
+
+            if (TaskDialog.ShowDialog() == DialogResult.OK)
+            {
+                btnCriticalTaskColor.BackColor = TaskDialog.Color;
+                Brush b = new SolidBrush(TaskDialog.Color);
+                TaskFormat temp = new TaskFormat()
+                {
+                    Color = b,
+                    Border = _mChart.CriticalTaskFormat.Border,
+                    BackFill = _mChart.CriticalTaskFormat.BackFill,
+                    ForeFill = _mChart.CriticalTaskFormat.ForeFill,
+                    SlackFill = _mChart.CriticalTaskFormat.SlackFill
+
+                };
+                _mChart.CriticalTaskFormat = temp;
+
+            }
+        }
+
+        private void btnCriticalTaskBorder_Click(object sender, EventArgs e)
+        {
+            ColorDialog TaskDialog = new ColorDialog();
+            TaskDialog.AllowFullOpen = false;
+            TaskDialog.ShowHelp = true;
+            TaskDialog.Color = this.BackColor;
+
+
+            if (TaskDialog.ShowDialog() == DialogResult.OK)
+            {
+                btnCriticalTaskBorder.BackColor = TaskDialog.Color;                
+                Pen p = new Pen(TaskDialog.Color);
+                TaskFormat temp = new TaskFormat()
+                {
+                    Color = _mChart.CriticalTaskFormat.Color,
+                    Border = p,
+                    BackFill = _mChart.CriticalTaskFormat.BackFill,
+                    ForeFill = _mChart.CriticalTaskFormat.ForeFill,
+                    SlackFill = _mChart.CriticalTaskFormat.SlackFill
+
+                };
+                _mChart.CriticalTaskFormat = temp;
+
+            }
+        }
+
+        private void btnCriticalTaskBackFill_Click(object sender, EventArgs e)
+        {
+            ColorDialog TaskDialog = new ColorDialog();
+            TaskDialog.AllowFullOpen = false;
+            TaskDialog.ShowHelp = true;
+            TaskDialog.Color = this.BackColor;
+
+
+            if (TaskDialog.ShowDialog() == DialogResult.OK)
+            {
+                btnCriticalTaskBackFill.BackColor = TaskDialog.Color;
+                Brush b = new SolidBrush(TaskDialog.Color);
+                TaskFormat temp = new TaskFormat()
+                {
+                    Color = _mChart.CriticalTaskFormat.Color,
+                    Border = _mChart.CriticalTaskFormat.Border,
+                    BackFill = b,
+                    ForeFill = _mChart.CriticalTaskFormat.ForeFill,
+                    SlackFill = _mChart.CriticalTaskFormat.SlackFill
+
+                };
+                _mChart.CriticalTaskFormat = temp;
+
+            }
+        }
+
+        
+
+        private void btnCriticalTaskForeFill_Click(object sender, EventArgs e)
+        {
+            ColorDialog TaskDialog = new ColorDialog();
+            TaskDialog.AllowFullOpen = false;
+            TaskDialog.ShowHelp = true;
+            TaskDialog.Color = this.BackColor;
+
+
+            if (TaskDialog.ShowDialog() == DialogResult.OK)
+            {
+                btnCriticalTaskForeFill.BackColor = TaskDialog.Color;
+                Brush b = new SolidBrush(TaskDialog.Color);
+                TaskFormat temp = new TaskFormat()
+                {
+                    Color = _mChart.CriticalTaskFormat.Color,
+                    Border = _mChart.CriticalTaskFormat.Border,
+                    BackFill = _mChart.CriticalTaskFormat.BackFill,
+                    ForeFill =b,
+                    SlackFill = _mChart.CriticalTaskFormat.SlackFill
+
+                };
+                _mChart.CriticalTaskFormat = temp;
+
+            }
+        }
+
+        private void btnCriticalTaskSlackFill_Click(object sender, EventArgs e)
+        {
+            ColorDialog TaskDialog = new ColorDialog();
+            TaskDialog.AllowFullOpen = false;
+            TaskDialog.ShowHelp = true;
+            TaskDialog.Color = this.BackColor;
+
+
+            if (TaskDialog.ShowDialog() == DialogResult.OK)
+            {
+                btnCriticalTaskSlackFill.BackColor = TaskDialog.Color;
+                Brush b = new SolidBrush(TaskDialog.Color);
+                TaskFormat temp = new TaskFormat()
+                {
+                    Color = _mChart.CriticalTaskFormat.Color,
+                    Border = _mChart.CriticalTaskFormat.Border,
+                    BackFill = _mChart.CriticalTaskFormat.BackFill,
+                    ForeFill = _mChart.CriticalTaskFormat.ForeFill,
+                    SlackFill = b
+
+                };
+                _mChart.CriticalTaskFormat = temp;
+
+            }
+        }
+
+        private void btnHeaderColor_Click(object sender, EventArgs e)
+        {
+            ColorDialog TaskDialog = new ColorDialog();
+            TaskDialog.AllowFullOpen = false;
+            TaskDialog.ShowHelp = true;
+            TaskDialog.Color = this.BackColor;
+
+
+            if (TaskDialog.ShowDialog() == DialogResult.OK)
+            {
+                btnHeaderColor.BackColor = TaskDialog.Color;
+                Brush b = new SolidBrush(TaskDialog.Color);
+                HeaderFormat temp = new HeaderFormat()
+                {
+                    Color = b,
+                    Border = _mChart.HeaderFormat.Border,
+                    GradientLight = _mChart.HeaderFormat.GradientLight,
+                    GradientDark = _mChart.HeaderFormat.GradientDark
+                   
+
+                };
+                _mChart.HeaderFormat = temp;
+
+            }
+        }
+
+        private void btnHeaderBorder_Click(object sender, EventArgs e)
+        {
+            ColorDialog TaskDialog = new ColorDialog();
+            TaskDialog.AllowFullOpen = false;
+            TaskDialog.ShowHelp = true;
+            TaskDialog.Color = this.BackColor;
+
+
+            if (TaskDialog.ShowDialog() == DialogResult.OK)
+            {
+                btnHeaderBorder.BackColor = TaskDialog.Color;                
+                Pen p = new Pen(TaskDialog.Color);
+                HeaderFormat temp = new HeaderFormat()
+                {
+                    Color = _mChart.HeaderFormat.Color,
+                    Border = p,
+                    GradientLight = _mChart.HeaderFormat.GradientLight,
+                    GradientDark = _mChart.HeaderFormat.GradientDark
+
+
+                };
+                _mChart.HeaderFormat = temp;
+
+            }
+        }
+
+        private void btnHeaderGradientLight_Click(object sender, EventArgs e)
+        {
+            ColorDialog TaskDialog = new ColorDialog();
+            TaskDialog.AllowFullOpen = false;
+            TaskDialog.ShowHelp = true;
+            TaskDialog.Color = this.BackColor;
+
+
+            if (TaskDialog.ShowDialog() == DialogResult.OK)
+            {
+                btnHeaderGradientLight.BackColor = TaskDialog.Color;
+                Brush b = new SolidBrush(TaskDialog.Color);
+                HeaderFormat temp = new HeaderFormat()
+                {
+                    Color = _mChart.HeaderFormat.Color,
+                    Border = _mChart.HeaderFormat.Border,
+                    GradientLight = TaskDialog.Color,
+                    GradientDark = _mChart.HeaderFormat.GradientDark
+
+
+                };
+                _mChart.HeaderFormat = temp;
+
+            }
+        }
+
+        private void btnHeaderGradientDark_Click(object sender, EventArgs e)
+        {
+            ColorDialog TaskDialog = new ColorDialog();
+            TaskDialog.AllowFullOpen = false;
+            TaskDialog.ShowHelp = true;
+            TaskDialog.Color = this.BackColor;
+
+
+            if (TaskDialog.ShowDialog() == DialogResult.OK)
+            {
+                btnHeaderGradientDark.BackColor = TaskDialog.Color;
+                Brush b = new SolidBrush(TaskDialog.Color);
+                HeaderFormat temp = new HeaderFormat()
+                {
+                    Color = _mChart.HeaderFormat.Color,
+                    Border = _mChart.HeaderFormat.Border,
+                    GradientLight = _mChart.HeaderFormat.GradientLight,
+                    GradientDark = TaskDialog.Color
+
+
+                };
+                _mChart.HeaderFormat = temp;
+
+            }
+        }
+
+        #endregion
     }
 
     #region overlay painter
