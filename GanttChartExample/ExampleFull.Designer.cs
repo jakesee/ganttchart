@@ -45,6 +45,38 @@
             this.tabPage4 = new System.Windows.Forms.TabPage();
             this.TaskGridView = new System.Windows.Forms.DataGridView();
             this.label1 = new System.Windows.Forms.Label();
+            this.tabPage5 = new System.Windows.Forms.TabPage();
+            this.groupBox6 = new System.Windows.Forms.GroupBox();
+            this.btnHeaderGradientDark = new System.Windows.Forms.Button();
+            this.btnHeaderGradientLight = new System.Windows.Forms.Button();
+            this.btnHeaderBorder = new System.Windows.Forms.Button();
+            this.btnHeaderColor = new System.Windows.Forms.Button();
+            this.label13 = new System.Windows.Forms.Label();
+            this.label14 = new System.Windows.Forms.Label();
+            this.label15 = new System.Windows.Forms.Label();
+            this.label16 = new System.Windows.Forms.Label();
+            this.groupBox5 = new System.Windows.Forms.GroupBox();
+            this.btnCriticalTaskSlackFill = new System.Windows.Forms.Button();
+            this.btnCriticalTaskForeFill = new System.Windows.Forms.Button();
+            this.btnCriticalTaskBackFill = new System.Windows.Forms.Button();
+            this.btnCriticalTaskBorder = new System.Windows.Forms.Button();
+            this.btnCriticalTaskColor = new System.Windows.Forms.Button();
+            this.label7 = new System.Windows.Forms.Label();
+            this.label8 = new System.Windows.Forms.Label();
+            this.label9 = new System.Windows.Forms.Label();
+            this.label10 = new System.Windows.Forms.Label();
+            this.label11 = new System.Windows.Forms.Label();
+            this.groupBox4 = new System.Windows.Forms.GroupBox();
+            this.btnTaskSlackFill = new System.Windows.Forms.Button();
+            this.btnTaskForeFill = new System.Windows.Forms.Button();
+            this.btnTaskBackFill = new System.Windows.Forms.Button();
+            this.btnTaskBorder = new System.Windows.Forms.Button();
+            this.btnTaskColor = new System.Windows.Forms.Button();
+            this.label6 = new System.Windows.Forms.Label();
+            this.label5 = new System.Windows.Forms.Label();
+            this.label4 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
             this._mChart = new Braincase.GanttChart.Chart();
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -68,10 +100,10 @@
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripSeparator();
             this.mnuFileExit = new System.Windows.Forms.ToolStripMenuItem();
             this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.mnuViewDays = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuViewWeeks = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripMenuItem5 = new System.Windows.Forms.ToolStripSeparator();
+            this.mnuViewDays = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuViewHours = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem5 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripSeparator();
             this.mnuViewRelationships = new System.Windows.Forms.ToolStripMenuItem();
             this.mnuViewSlack = new System.Windows.Forms.ToolStripMenuItem();
@@ -81,6 +113,7 @@
             this.mnuHelpAbout = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.lblStatus = new System.Windows.Forms.ToolStripStatusLabel();
+            this.colorDialog1 = new System.Windows.Forms.ColorDialog();
             ((System.ComponentModel.ISupportInitialize)(this._mSplitter1)).BeginInit();
             this._mSplitter1.Panel1.SuspendLayout();
             this._mSplitter1.Panel2.SuspendLayout();
@@ -94,6 +127,10 @@
             this.tabPage3.SuspendLayout();
             this.tabPage4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.TaskGridView)).BeginInit();
+            this.tabPage5.SuspendLayout();
+            this.groupBox6.SuspendLayout();
+            this.groupBox5.SuspendLayout();
+            this.groupBox4.SuspendLayout();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.SuspendLayout();
@@ -124,6 +161,7 @@
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Controls.Add(this.tabPage4);
+            this.tabControl1.Controls.Add(this.tabPage5);
             this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl1.Location = new System.Drawing.Point(0, 0);
             this.tabControl1.Name = "tabControl1";
@@ -156,10 +194,10 @@
             this.tabPage2.Controls.Add(this.groupBox3);
             this.tabPage2.Controls.Add(this.groupBox2);
             this.tabPage2.Controls.Add(this.groupBox1);
-            this.tabPage2.Location = new System.Drawing.Point(4, 22);
+            this.tabPage2.Location = new System.Drawing.Point(4, 24);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(229, 638);
+            this.tabPage2.Size = new System.Drawing.Size(229, 636);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Timeline";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -227,10 +265,10 @@
             // tabPage3
             // 
             this.tabPage3.Controls.Add(this._mResourceGrid);
-            this.tabPage3.Location = new System.Drawing.Point(4, 22);
+            this.tabPage3.Location = new System.Drawing.Point(4, 24);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(229, 638);
+            this.tabPage3.Size = new System.Drawing.Size(229, 636);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Resources";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -240,9 +278,10 @@
             this._mResourceGrid.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.colName});
             this._mResourceGrid.Dock = System.Windows.Forms.DockStyle.Fill;
+            this._mResourceGrid.HideSelection = false;
             this._mResourceGrid.Location = new System.Drawing.Point(3, 3);
             this._mResourceGrid.Name = "_mResourceGrid";
-            this._mResourceGrid.Size = new System.Drawing.Size(223, 632);
+            this._mResourceGrid.Size = new System.Drawing.Size(223, 630);
             this._mResourceGrid.TabIndex = 0;
             this._mResourceGrid.UseCompatibleStateImageBehavior = false;
             this._mResourceGrid.View = System.Windows.Forms.View.List;
@@ -282,6 +321,344 @@
             this.label1.Size = new System.Drawing.Size(153, 15);
             this.label1.TabIndex = 1;
             this.label1.Text = "Select a row to scroll to task";
+            // 
+            // tabPage5
+            // 
+            this.tabPage5.Controls.Add(this.groupBox6);
+            this.tabPage5.Controls.Add(this.groupBox5);
+            this.tabPage5.Controls.Add(this.groupBox4);
+            this.tabPage5.Location = new System.Drawing.Point(4, 24);
+            this.tabPage5.Name = "tabPage5";
+            this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage5.Size = new System.Drawing.Size(229, 636);
+            this.tabPage5.TabIndex = 4;
+            this.tabPage5.Text = "Change Colors";
+            this.tabPage5.UseVisualStyleBackColor = true;
+            // 
+            // groupBox6
+            // 
+            this.groupBox6.Controls.Add(this.btnHeaderGradientDark);
+            this.groupBox6.Controls.Add(this.btnHeaderGradientLight);
+            this.groupBox6.Controls.Add(this.btnHeaderBorder);
+            this.groupBox6.Controls.Add(this.btnHeaderColor);
+            this.groupBox6.Controls.Add(this.label13);
+            this.groupBox6.Controls.Add(this.label14);
+            this.groupBox6.Controls.Add(this.label15);
+            this.groupBox6.Controls.Add(this.label16);
+            this.groupBox6.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.groupBox6.Location = new System.Drawing.Point(3, 343);
+            this.groupBox6.Name = "groupBox6";
+            this.groupBox6.Size = new System.Drawing.Size(223, 290);
+            this.groupBox6.TabIndex = 5;
+            this.groupBox6.TabStop = false;
+            this.groupBox6.Text = "Header Color";
+            // 
+            // btnHeaderGradientDark
+            // 
+            this.btnHeaderGradientDark.Location = new System.Drawing.Point(163, 104);
+            this.btnHeaderGradientDark.Name = "btnHeaderGradientDark";
+            this.btnHeaderGradientDark.Size = new System.Drawing.Size(51, 23);
+            this.btnHeaderGradientDark.TabIndex = 20;
+            this.btnHeaderGradientDark.Text = "Color";
+            this.btnHeaderGradientDark.UseVisualStyleBackColor = true;
+            this.btnHeaderGradientDark.Click += new System.EventHandler(this.btnHeaderGradientDark_Click);
+            // 
+            // btnHeaderGradientLight
+            // 
+            this.btnHeaderGradientLight.Location = new System.Drawing.Point(163, 77);
+            this.btnHeaderGradientLight.Name = "btnHeaderGradientLight";
+            this.btnHeaderGradientLight.Size = new System.Drawing.Size(51, 23);
+            this.btnHeaderGradientLight.TabIndex = 19;
+            this.btnHeaderGradientLight.Text = "Color";
+            this.btnHeaderGradientLight.UseVisualStyleBackColor = true;
+            this.btnHeaderGradientLight.Click += new System.EventHandler(this.btnHeaderGradientLight_Click);
+            // 
+            // btnHeaderBorder
+            // 
+            this.btnHeaderBorder.Location = new System.Drawing.Point(163, 49);
+            this.btnHeaderBorder.Name = "btnHeaderBorder";
+            this.btnHeaderBorder.Size = new System.Drawing.Size(51, 23);
+            this.btnHeaderBorder.TabIndex = 18;
+            this.btnHeaderBorder.Text = "Color";
+            this.btnHeaderBorder.UseVisualStyleBackColor = true;
+            this.btnHeaderBorder.Click += new System.EventHandler(this.btnHeaderBorder_Click);
+            // 
+            // btnHeaderColor
+            // 
+            this.btnHeaderColor.Location = new System.Drawing.Point(163, 24);
+            this.btnHeaderColor.Name = "btnHeaderColor";
+            this.btnHeaderColor.Size = new System.Drawing.Size(51, 23);
+            this.btnHeaderColor.TabIndex = 17;
+            this.btnHeaderColor.Text = "Color";
+            this.btnHeaderColor.UseVisualStyleBackColor = true;
+            this.btnHeaderColor.Click += new System.EventHandler(this.btnHeaderColor_Click);
+            // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.Location = new System.Drawing.Point(5, 112);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(76, 15);
+            this.label13.TabIndex = 15;
+            this.label13.Text = "GradientDark";
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Location = new System.Drawing.Point(3, 85);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(79, 15);
+            this.label14.TabIndex = 14;
+            this.label14.Text = "GradientLight";
+            // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Location = new System.Drawing.Point(3, 57);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(42, 15);
+            this.label15.TabIndex = 13;
+            this.label15.Text = "Border";
+            // 
+            // label16
+            // 
+            this.label16.AutoSize = true;
+            this.label16.Location = new System.Drawing.Point(3, 32);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(36, 15);
+            this.label16.TabIndex = 12;
+            this.label16.Text = "Color";
+            // 
+            // groupBox5
+            // 
+            this.groupBox5.Controls.Add(this.btnCriticalTaskSlackFill);
+            this.groupBox5.Controls.Add(this.btnCriticalTaskForeFill);
+            this.groupBox5.Controls.Add(this.btnCriticalTaskBackFill);
+            this.groupBox5.Controls.Add(this.btnCriticalTaskBorder);
+            this.groupBox5.Controls.Add(this.btnCriticalTaskColor);
+            this.groupBox5.Controls.Add(this.label7);
+            this.groupBox5.Controls.Add(this.label8);
+            this.groupBox5.Controls.Add(this.label9);
+            this.groupBox5.Controls.Add(this.label10);
+            this.groupBox5.Controls.Add(this.label11);
+            this.groupBox5.Dock = System.Windows.Forms.DockStyle.Top;
+            this.groupBox5.Location = new System.Drawing.Point(3, 179);
+            this.groupBox5.Name = "groupBox5";
+            this.groupBox5.Size = new System.Drawing.Size(223, 164);
+            this.groupBox5.TabIndex = 4;
+            this.groupBox5.TabStop = false;
+            this.groupBox5.Text = "CriticalTask Color";
+            // 
+            // btnCriticalTaskSlackFill
+            // 
+            this.btnCriticalTaskSlackFill.Location = new System.Drawing.Point(163, 130);
+            this.btnCriticalTaskSlackFill.Name = "btnCriticalTaskSlackFill";
+            this.btnCriticalTaskSlackFill.Size = new System.Drawing.Size(51, 23);
+            this.btnCriticalTaskSlackFill.TabIndex = 21;
+            this.btnCriticalTaskSlackFill.Text = "Color";
+            this.btnCriticalTaskSlackFill.UseVisualStyleBackColor = true;
+            this.btnCriticalTaskSlackFill.Click += new System.EventHandler(this.btnCriticalTaskSlackFill_Click);
+            // 
+            // btnCriticalTaskForeFill
+            // 
+            this.btnCriticalTaskForeFill.Location = new System.Drawing.Point(163, 102);
+            this.btnCriticalTaskForeFill.Name = "btnCriticalTaskForeFill";
+            this.btnCriticalTaskForeFill.Size = new System.Drawing.Size(51, 23);
+            this.btnCriticalTaskForeFill.TabIndex = 20;
+            this.btnCriticalTaskForeFill.Text = "Color";
+            this.btnCriticalTaskForeFill.UseVisualStyleBackColor = true;
+            this.btnCriticalTaskForeFill.Click += new System.EventHandler(this.btnCriticalTaskForeFill_Click);
+            // 
+            // btnCriticalTaskBackFill
+            // 
+            this.btnCriticalTaskBackFill.Location = new System.Drawing.Point(163, 75);
+            this.btnCriticalTaskBackFill.Name = "btnCriticalTaskBackFill";
+            this.btnCriticalTaskBackFill.Size = new System.Drawing.Size(51, 23);
+            this.btnCriticalTaskBackFill.TabIndex = 19;
+            this.btnCriticalTaskBackFill.Text = "Color";
+            this.btnCriticalTaskBackFill.UseVisualStyleBackColor = true;
+            this.btnCriticalTaskBackFill.Click += new System.EventHandler(this.btnCriticalTaskBackFill_Click);
+            // 
+            // btnCriticalTaskBorder
+            // 
+            this.btnCriticalTaskBorder.Location = new System.Drawing.Point(163, 47);
+            this.btnCriticalTaskBorder.Name = "btnCriticalTaskBorder";
+            this.btnCriticalTaskBorder.Size = new System.Drawing.Size(51, 23);
+            this.btnCriticalTaskBorder.TabIndex = 18;
+            this.btnCriticalTaskBorder.Text = "Color";
+            this.btnCriticalTaskBorder.UseVisualStyleBackColor = true;
+            this.btnCriticalTaskBorder.Click += new System.EventHandler(this.btnCriticalTaskBorder_Click);
+            // 
+            // btnCriticalTaskColor
+            // 
+            this.btnCriticalTaskColor.Location = new System.Drawing.Point(163, 22);
+            this.btnCriticalTaskColor.Name = "btnCriticalTaskColor";
+            this.btnCriticalTaskColor.Size = new System.Drawing.Size(51, 23);
+            this.btnCriticalTaskColor.TabIndex = 17;
+            this.btnCriticalTaskColor.Text = "Color";
+            this.btnCriticalTaskColor.UseVisualStyleBackColor = true;
+            this.btnCriticalTaskColor.Click += new System.EventHandler(this.btnCriticalTaskColor_Click);
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Location = new System.Drawing.Point(5, 138);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(49, 15);
+            this.label7.TabIndex = 16;
+            this.label7.Text = "SlackFill";
+            // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(5, 110);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(45, 15);
+            this.label8.TabIndex = 15;
+            this.label8.Text = "ForeFill";
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(3, 83);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(47, 15);
+            this.label9.TabIndex = 14;
+            this.label9.Text = "BackFill";
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Location = new System.Drawing.Point(3, 55);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(42, 15);
+            this.label10.TabIndex = 13;
+            this.label10.Text = "Border";
+            // 
+            // label11
+            // 
+            this.label11.AutoSize = true;
+            this.label11.Location = new System.Drawing.Point(3, 30);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(36, 15);
+            this.label11.TabIndex = 12;
+            this.label11.Text = "Color";
+            // 
+            // groupBox4
+            // 
+            this.groupBox4.Controls.Add(this.btnTaskSlackFill);
+            this.groupBox4.Controls.Add(this.btnTaskForeFill);
+            this.groupBox4.Controls.Add(this.btnTaskBackFill);
+            this.groupBox4.Controls.Add(this.btnTaskBorder);
+            this.groupBox4.Controls.Add(this.btnTaskColor);
+            this.groupBox4.Controls.Add(this.label6);
+            this.groupBox4.Controls.Add(this.label5);
+            this.groupBox4.Controls.Add(this.label4);
+            this.groupBox4.Controls.Add(this.label3);
+            this.groupBox4.Controls.Add(this.label2);
+            this.groupBox4.Dock = System.Windows.Forms.DockStyle.Top;
+            this.groupBox4.Location = new System.Drawing.Point(3, 3);
+            this.groupBox4.Name = "groupBox4";
+            this.groupBox4.Size = new System.Drawing.Size(223, 176);
+            this.groupBox4.TabIndex = 3;
+            this.groupBox4.TabStop = false;
+            this.groupBox4.Text = "Task Color";
+            // 
+            // btnTaskSlackFill
+            // 
+            this.btnTaskSlackFill.Location = new System.Drawing.Point(166, 129);
+            this.btnTaskSlackFill.Name = "btnTaskSlackFill";
+            this.btnTaskSlackFill.Size = new System.Drawing.Size(51, 23);
+            this.btnTaskSlackFill.TabIndex = 11;
+            this.btnTaskSlackFill.Text = "Color";
+            this.btnTaskSlackFill.UseVisualStyleBackColor = true;
+            this.btnTaskSlackFill.Click += new System.EventHandler(this.btnTaskSlackFill_Click);
+            // 
+            // btnTaskForeFill
+            // 
+            this.btnTaskForeFill.Location = new System.Drawing.Point(166, 101);
+            this.btnTaskForeFill.Name = "btnTaskForeFill";
+            this.btnTaskForeFill.Size = new System.Drawing.Size(51, 23);
+            this.btnTaskForeFill.TabIndex = 10;
+            this.btnTaskForeFill.Text = "Color";
+            this.btnTaskForeFill.UseVisualStyleBackColor = true;
+            this.btnTaskForeFill.Click += new System.EventHandler(this.btnTaskForeFill_Click);
+            // 
+            // btnTaskBackFill
+            // 
+            this.btnTaskBackFill.Location = new System.Drawing.Point(166, 74);
+            this.btnTaskBackFill.Name = "btnTaskBackFill";
+            this.btnTaskBackFill.Size = new System.Drawing.Size(51, 23);
+            this.btnTaskBackFill.TabIndex = 9;
+            this.btnTaskBackFill.Text = "Color";
+            this.btnTaskBackFill.UseVisualStyleBackColor = true;
+            this.btnTaskBackFill.Click += new System.EventHandler(this.btnTaskBackFill_Click);
+            // 
+            // btnTaskBorder
+            // 
+            this.btnTaskBorder.Location = new System.Drawing.Point(166, 46);
+            this.btnTaskBorder.Name = "btnTaskBorder";
+            this.btnTaskBorder.Size = new System.Drawing.Size(51, 23);
+            this.btnTaskBorder.TabIndex = 8;
+            this.btnTaskBorder.Text = "Color";
+            this.btnTaskBorder.UseVisualStyleBackColor = true;
+            this.btnTaskBorder.Click += new System.EventHandler(this.btnTaskBorder_Click);
+            // 
+            // btnTaskColor
+            // 
+            this.btnTaskColor.Location = new System.Drawing.Point(166, 21);
+            this.btnTaskColor.Name = "btnTaskColor";
+            this.btnTaskColor.Size = new System.Drawing.Size(51, 23);
+            this.btnTaskColor.TabIndex = 7;
+            this.btnTaskColor.Text = "Color";
+            this.btnTaskColor.UseVisualStyleBackColor = true;
+            this.btnTaskColor.Click += new System.EventHandler(this.btnTaskColor_Click);
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(8, 137);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(49, 15);
+            this.label6.TabIndex = 4;
+            this.label6.Text = "SlackFill";
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(8, 109);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(45, 15);
+            this.label5.TabIndex = 3;
+            this.label5.Text = "ForeFill";
+            this.label5.Click += new System.EventHandler(this.label5_Click);
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(6, 82);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(47, 15);
+            this.label4.TabIndex = 2;
+            this.label4.Text = "BackFill";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(6, 54);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(42, 15);
+            this.label3.TabIndex = 1;
+            this.label3.Text = "Border";
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(6, 29);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(36, 15);
+            this.label2.TabIndex = 0;
+            this.label2.Text = "Color";
             // 
             // _mChart
             // 
@@ -466,66 +843,66 @@
             this.viewToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             this.viewToolStripMenuItem.Text = "View";
             // 
+            // mnuViewWeeks
+            // 
+            this.mnuViewWeeks.Name = "mnuViewWeeks";
+            this.mnuViewWeeks.Size = new System.Drawing.Size(144, 22);
+            this.mnuViewWeeks.Text = "Weeks";
+            this.mnuViewWeeks.Click += new System.EventHandler(this.mnuViewWeeks_Click);
+            // 
             // mnuViewDays
             // 
             this.mnuViewDays.Checked = true;
             this.mnuViewDays.CheckState = System.Windows.Forms.CheckState.Checked;
             this.mnuViewDays.Name = "mnuViewDays";
-            this.mnuViewDays.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewDays.Size = new System.Drawing.Size(144, 22);
             this.mnuViewDays.Text = "Days";
             this.mnuViewDays.Click += new System.EventHandler(this.mnuViewDays_Click);
-            // 
-            // mnuViewWeeks
-            // 
-            this.mnuViewWeeks.Name = "mnuViewWeeks";
-            this.mnuViewWeeks.Size = new System.Drawing.Size(152, 22);
-            this.mnuViewWeeks.Text = "Weeks";
-            this.mnuViewWeeks.Click += new System.EventHandler(this.mnuViewWeeks_Click);
-            // 
-            // toolStripMenuItem5
-            // 
-            this.toolStripMenuItem5.Name = "toolStripMenuItem5";
-            this.toolStripMenuItem5.Size = new System.Drawing.Size(149, 6);
             // 
             // mnuViewHours
             // 
             this.mnuViewHours.Name = "mnuViewHours";
-            this.mnuViewHours.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewHours.Size = new System.Drawing.Size(144, 22);
             this.mnuViewHours.Text = "Hours";
             this.mnuViewHours.Click += new System.EventHandler(this.mnuViewHours_Click);
+            // 
+            // toolStripMenuItem5
+            // 
+            this.toolStripMenuItem5.Name = "toolStripMenuItem5";
+            this.toolStripMenuItem5.Size = new System.Drawing.Size(141, 6);
             // 
             // toolStripMenuItem2
             // 
             this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(149, 6);
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(141, 6);
             // 
             // mnuViewRelationships
             // 
             this.mnuViewRelationships.Checked = true;
             this.mnuViewRelationships.CheckState = System.Windows.Forms.CheckState.Checked;
             this.mnuViewRelationships.Name = "mnuViewRelationships";
-            this.mnuViewRelationships.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewRelationships.Size = new System.Drawing.Size(144, 22);
             this.mnuViewRelationships.Text = "Relationships";
             this.mnuViewRelationships.Click += new System.EventHandler(this.mnuViewRelationships_Click);
             // 
             // mnuViewSlack
             // 
             this.mnuViewSlack.Name = "mnuViewSlack";
-            this.mnuViewSlack.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewSlack.Size = new System.Drawing.Size(144, 22);
             this.mnuViewSlack.Text = "Slack";
             this.mnuViewSlack.Click += new System.EventHandler(this.mnuViewSlack_Click);
             // 
             // toolStripMenuItem6
             // 
             this.toolStripMenuItem6.Name = "toolStripMenuItem6";
-            this.toolStripMenuItem6.Size = new System.Drawing.Size(149, 6);
+            this.toolStripMenuItem6.Size = new System.Drawing.Size(141, 6);
             // 
             // mnuViewIntructions
             // 
             this.mnuViewIntructions.Checked = true;
             this.mnuViewIntructions.CheckState = System.Windows.Forms.CheckState.Checked;
             this.mnuViewIntructions.Name = "mnuViewIntructions";
-            this.mnuViewIntructions.Size = new System.Drawing.Size(152, 22);
+            this.mnuViewIntructions.Size = new System.Drawing.Size(144, 22);
             this.mnuViewIntructions.Text = "Instructions";
             this.mnuViewIntructions.Click += new System.EventHandler(this.mnuViewIntructions_Click);
             // 
@@ -585,6 +962,13 @@
             this.tabPage4.ResumeLayout(false);
             this.tabPage4.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.TaskGridView)).EndInit();
+            this.tabPage5.ResumeLayout(false);
+            this.groupBox6.ResumeLayout(false);
+            this.groupBox6.PerformLayout();
+            this.groupBox5.ResumeLayout(false);
+            this.groupBox5.PerformLayout();
+            this.groupBox4.ResumeLayout(false);
+            this.groupBox4.PerformLayout();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
             this.statusStrip1.ResumeLayout(false);
@@ -649,6 +1033,39 @@
         private System.Windows.Forms.ToolStripMenuItem mnuFileImgPrint50;
         private System.Windows.Forms.ToolStripMenuItem mnuFileImgPrint10;
         private System.Windows.Forms.ToolStripMenuItem mnuViewHours;
+        private System.Windows.Forms.TabPage tabPage5;
+        private System.Windows.Forms.ColorDialog colorDialog1;
+        private System.Windows.Forms.GroupBox groupBox6;
+        private System.Windows.Forms.GroupBox groupBox5;
+        private System.Windows.Forms.GroupBox groupBox4;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.Button btnHeaderGradientDark;
+        private System.Windows.Forms.Button btnHeaderGradientLight;
+        private System.Windows.Forms.Button btnHeaderBorder;
+        private System.Windows.Forms.Button btnHeaderColor;
+        private System.Windows.Forms.Label label13;
+        private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.Label label15;
+        private System.Windows.Forms.Label label16;
+        private System.Windows.Forms.Button btnCriticalTaskSlackFill;
+        private System.Windows.Forms.Button btnCriticalTaskForeFill;
+        private System.Windows.Forms.Button btnCriticalTaskBackFill;
+        private System.Windows.Forms.Button btnCriticalTaskBorder;
+        private System.Windows.Forms.Button btnCriticalTaskColor;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.Label label11;
+        private System.Windows.Forms.Button btnTaskSlackFill;
+        private System.Windows.Forms.Button btnTaskForeFill;
+        private System.Windows.Forms.Button btnTaskBackFill;
+        private System.Windows.Forms.Button btnTaskBorder;
+        private System.Windows.Forms.Button btnTaskColor;
     }
 }
 
