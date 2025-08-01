@@ -4,16 +4,17 @@
 This .NET class library project provides a C# Winforms UserControl that draws a gantt chart using native GDI+.
 
 ## Getting Started
-The project is written with Microsoft Visual Studio 2017, simply download the latest source code from the master branch and build the library with the IDE.
+The project is written with Microsoft Visual Studio 2022, simply download the latest source code from the master branch and build the library with the IDE.
 
 ### Prerequisites
-No pre-requisites other than the .NET Framework.
+* .NET Framework 4.8 or higher
+* Visual Studio 2017 or later (recommended: Visual Studio 2022)
 
 ### Installing
 The project builds into a class library with example applications.
 
 ## Running the tests
-The source code includes a test project GanttChartTests which you can load and run within Microsoft Visual Studio 2017 from the test menu.
+The source code includes a test project GanttChartNUnitTests which you can load and run within Microsoft Visual Studio from the test menu or using the NUnit test runner.
 
 ## Features
 * Support time units Weeks, Days (default), Hours out-of-the-box, can be modified to support other time resolutions.
