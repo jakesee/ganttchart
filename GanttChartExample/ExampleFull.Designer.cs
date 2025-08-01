@@ -194,10 +194,10 @@
             this.tabPage2.Controls.Add(this.groupBox3);
             this.tabPage2.Controls.Add(this.groupBox2);
             this.tabPage2.Controls.Add(this.groupBox1);
-            this.tabPage2.Location = new System.Drawing.Point(4, 24);
+            this.tabPage2.Location = new System.Drawing.Point(4, 22);
             this.tabPage2.Name = "tabPage2";
             this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage2.Size = new System.Drawing.Size(229, 636);
+            this.tabPage2.Size = new System.Drawing.Size(229, 638);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Timeline";
             this.tabPage2.UseVisualStyleBackColor = true;
@@ -265,10 +265,10 @@
             // tabPage3
             // 
             this.tabPage3.Controls.Add(this._mResourceGrid);
-            this.tabPage3.Location = new System.Drawing.Point(4, 24);
+            this.tabPage3.Location = new System.Drawing.Point(4, 22);
             this.tabPage3.Name = "tabPage3";
             this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(229, 636);
+            this.tabPage3.Size = new System.Drawing.Size(229, 638);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "Resources";
             this.tabPage3.UseVisualStyleBackColor = true;
@@ -281,7 +281,7 @@
             this._mResourceGrid.HideSelection = false;
             this._mResourceGrid.Location = new System.Drawing.Point(3, 3);
             this._mResourceGrid.Name = "_mResourceGrid";
-            this._mResourceGrid.Size = new System.Drawing.Size(223, 630);
+            this._mResourceGrid.Size = new System.Drawing.Size(223, 632);
             this._mResourceGrid.TabIndex = 0;
             this._mResourceGrid.UseCompatibleStateImageBehavior = false;
             this._mResourceGrid.View = System.Windows.Forms.View.List;

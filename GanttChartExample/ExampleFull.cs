@@ -401,11 +401,6 @@ namespace Braincase.GanttChart
 
         #region ColorChangeBTN
 
-        private void label5_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void btnTaskColor_Click(object sender, EventArgs e)
         {
             ColorDialog TaskDialog = new ColorDialog();
@@ -419,12 +414,12 @@ namespace Braincase.GanttChart
                 btnTaskColor.BackColor = TaskDialog.Color;
                 Brush b = new SolidBrush(TaskDialog.Color);
                 TaskFormat temp = new TaskFormat()
-                { Color = b,
+                { 
+                  Color = b,
                   Border = _mChart.TaskFormat.Border,
                   BackFill = _mChart.TaskFormat.BackFill,
                   ForeFill = _mChart.TaskFormat.ForeFill,
                   SlackFill = _mChart.TaskFormat.SlackFill
-
                 };
                 _mChart.TaskFormat = temp;
                     
