@@ -1,8 +1,0 @@
-D:\NWU\CMPG323\Project1\Fork\ganttchart\GanttChart\bin\Debug\GanttChart.dll
-D:\NWU\CMPG323\Project1\Fork\ganttchart\GanttChart\bin\Debug\GanttChart.pdb
-D:\NWU\CMPG323\Project1\Fork\ganttchart\GanttChart\obj\Debug\GanttChart.csproj.AssemblyReference.cache
-D:\NWU\CMPG323\Project1\Fork\ganttchart\GanttChart\obj\Debug\Braincase.GanttChart.GDIExtention.resources
-D:\NWU\CMPG323\Project1\Fork\ganttchart\GanttChart\obj\Debug\GanttChart.csproj.GenerateResource.cache
-D:\NWU\CMPG323\Project1\Fork\ganttchart\GanttChart\obj\Debug\GanttChart.csproj.CoreCompileInputs.cache
-D:\NWU\CMPG323\Project1\Fork\ganttchart\GanttChart\obj\Debug\GanttChart.dll
-D:\NWU\CMPG323\Project1\Fork\ganttchart\GanttChart\obj\Debug\GanttChart.pdb
