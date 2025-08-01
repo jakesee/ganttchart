@@ -17,7 +17,7 @@ The source code includes a test project GanttChartTests which you can load and r
 
 ## Features
 * Support time units Weeks, Days (default), Hours out-of-the-box, can be modified to support other time resolutions.
-* Single tasks, grouped tasks, precedent/dependant tasks, split tasks, tagged resources 
+* Single tasks, grouped tasks, precedent/dependant tasks, split tasks, tagged resources
 * Printing respects page margin, orientation and multiple pages per page
 * Percentage complete property for each task
 * Various mouse events for customising UI experience directly on the chart.
@@ -25,9 +25,9 @@ The source code includes a test project GanttChartTests which you can load and r
 * Determines critical path and slack
 
 # Documentation
-Jump directly to the [doxygen documentation](http://www.jakesee.com/docs/ganttchart), or visit my [blog](http://www.jakesee.com/net-c-winforms-gantt-chart-control/) for more information. (Please make sure you are reading the updated versions while I try to keep up, thanks.)
+Jump directly to the [documentation](https://jakesee.github.io/ganttchart/) for more information.
 
-![](http://www.jakesee.com/codeplex/ganttchart.jpg)
+![GanttChart Screenshot](docs/resource/screenshot.png)
 
 ## Basic Usage
 ### Create Chart and Adding Tasks
@@ -40,7 +40,7 @@ Jump directly to the [doxygen documentation](http://www.jakesee.com/docs/ganttch
 	    manager.Add(task);
 	    var chart = new Chart();
 	    chart.Init(manage);
-	    
+
 	    this.Controls.Add(chart);
 
 	    this.AutoScroll = true; // this is no longer required
@@ -92,7 +92,7 @@ You can change the default task appearance for all task, or as in here change in
 	            e.Format = format;
 	        }
 	    };
-			
+
 	    // Grab custom data for tasks
 	    _mChart.TaskSelected += (s, e) =>
 	    {
