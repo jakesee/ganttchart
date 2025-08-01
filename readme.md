@@ -29,7 +29,6 @@ The source code includes a test project GanttChartNUnitTests which you can load 
 Jump directly to the [documentation](https://jakesee.github.io/ganttchart/) for more information.
 
 ![GanttChart Screenshot](docs/resource/screenshot.png)
-![GanttChart View](docs/resource/ganttchart-coords.jpg)
 
 ## Basic Usage
 ### Create Chart and Adding Tasks
@@ -41,13 +40,14 @@ Jump directly to the [documentation](https://jakesee.github.io/ganttchart/) for 
 	    var task = new Task() { Name = "Hello World" };
 	    manager.Add(task);
 	    var chart = new Chart();
-	    chart.Init(manage);
+	    chart.Init(manager);
 
 	    this.Controls.Add(chart);
 
 	    this.AutoScroll = true; // this is no longer required
 	}
 
+![GanttChart View](docs/resource/ganttchart-coords.jpg)
 
 ### Common Task Manipulation
 You can manipulate the task through code using various methods in the ProjectManager:
