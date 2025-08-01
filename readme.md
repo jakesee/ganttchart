@@ -29,6 +29,7 @@ The source code includes a test project GanttChartNUnitTests which you can load 
 Jump directly to the [documentation](https://jakesee.github.io/ganttchart/) for more information.
 
 ![GanttChart Screenshot](docs/resource/screenshot.png)
+![GanttChart View](docs/resource/ganttchart-coords.jpg)
 
 ## Basic Usage
 ### Create Chart and Adding Tasks
