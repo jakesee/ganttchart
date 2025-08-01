@@ -43,8 +43,6 @@ Jump directly to the [documentation](https://jakesee.github.io/ganttchart/) for 
 	    chart.Init(manager);
 
 	    this.Controls.Add(chart);
-
-	    this.AutoScroll = true; // this is no longer required
 	}
 
 ![GanttChart View](docs/resource/ganttchart-coords.jpg)

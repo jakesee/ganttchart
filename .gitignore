@@ -372,3 +372,13 @@ docs/doxygen_log.txt
 
 # Project specific files
 diagram.pptx
+
+# Windows system files
+desktop.ini
+Thumbs.db
+
+# Build scripts (environment specific)
+doxygen_gen_docs.bat
+
+# Test runners and tools
+testrunner/
