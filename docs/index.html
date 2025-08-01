@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="GanttChart - A C# library for creating Gantt charts">
+    <meta name="author" content="Jake See">
+    <title>GanttChart Documentation</title>
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>GanttChart</h1>
+            <p class="subtitle">A C# library for creating Gantt charts</p>
+        </header>
+
+        <nav>
+            <ul>
+                <li><a href="#overview">Overview</a></li>
+                <li><a href="#getting-started">Getting Started</a></li>
+                <li><a href="#documentation">Documentation</a></li>
+                <li><a href="#examples">Examples</a></li>
+                <li><a href="#api-reference">API Reference</a></li>
+                <li><a href="html/index.html">Generated Docs</a></li>
+            </ul>
+        </nav>
+
+        <div class="content">
+            <section id="overview" class="section">
+                <h2>Overview</h2>
+                <p>
+                    GanttChart is a powerful C# library designed for creating and managing Gantt charts in your applications.
+                    It provides an intuitive API for creating projects, tasks, and visualizing project timelines.
+                </p>
+
+                <div class="highlight">
+                    <strong>Key Features:</strong>
+                    <ul>
+                        <li>Easy-to-use API for creating Gantt charts</li>
+                        <li>Support for projects and tasks</li>
+                        <li>Customizable chart appearance</li>
+                        <li>Viewport functionality for large charts</li>
+                        <li>Comprehensive test coverage</li>
+                    </ul>
+                </div>
+
+                <div style="text-align: center; margin: 20px 0;">
+                    <img src="resource/screenshot.png" alt="GanttChart Screenshot" style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                </div>
+            </section>
+
+            <section id="getting-started" class="section">
+                <h2>Getting Started</h2>
+                <p>To get started with GanttChart, follow these simple steps:</p>
+
+                <h3>Installation</h3>
+                <p>Clone the repository and build the solution:</p>
+                <pre><code>git clone https://github.com/jakesee/ganttchart.git
+cd ganttchart
+# Open GanttChart.sln in Visual Studio and build</code></pre>
+
+                <h3>Basic Usage</h3>
+                <p>Here's a simple example of how to use the GanttChart library:</p>
+                <pre><code>// Create a new chart
+var chart = new Chart();
+
+// Add a project
+var project = new Project("Sample Project");
+chart.AddProject(project);
+
+// Configure and display the chart
+chart.Show();</code></pre>
+            </section>
+
+            <section id="documentation" class="section">
+                <h2>Documentation</h2>
+                <p>
+                    Comprehensive documentation is available including:
+                </p>
+                <ul>
+                    <li><a href="html/index.html">Auto-generated API documentation</a> (Doxygen)</li>
+                    <li>Code examples in the <code>GanttChartExample</code> project</li>
+                    <li>Unit tests in the <code>GanttChartNUnitTests</code> project</li>
+                </ul>
+            </section>
+
+            <section id="examples" class="section">
+                <h2>Examples</h2>
+                <p>
+                    The repository includes example projects demonstrating various features:
+                </p>
+                <ul>
+                    <li><strong>ExampleSimple.cs</strong> - Basic usage patterns</li>
+                    <li><strong>ExampleFull.cs</strong> - Advanced features and customization</li>
+                </ul>
+                <p>
+                    Run the <code>GanttChartExample</code> project to see these examples in action.
+                </p>
+            </section>
+
+            <section id="api-reference" class="section">
+                <h2>API Reference</h2>
+                <p>
+                    The main classes in the GanttChart library include:
+                </p>
+                <ul>
+                    <li><code>Chart</code> - The main chart component</li>
+                    <li><code>Project</code> - Represents a project with tasks</li>
+                    <li><code>IProject</code> - Interface for project implementations</li>
+                    <li><code>Viewport</code> - Handles chart viewport and scrolling</li>
+                </ul>
+                <p>
+                    For detailed API documentation, please refer to the <a href="html/index.html">generated documentation</a>.
+                </p>
+            </section>
+        </div>
+
+        <footer>
+            <p>&copy; 2017-2025 Jake See. Licensed under the terms specified in LICENSE.md</p>
+            <p>
+                <a href="../CODE_OF_CONDUCT.md">Code of Conduct</a> |
+                <a href="../CONTRIBUTING.md">Contributing Guidelines</a> |
+                <a href="../LICENSE.md">License</a>
+            </p>
+        </footer>
+    </div>
+</body>
+</html>
