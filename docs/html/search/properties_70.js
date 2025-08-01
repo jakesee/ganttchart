@@ -1,0 +1,7 @@
+var searchData=
+[
+  ['precedent',['Precedent',['../class_braincase_1_1_gantt_chart_1_1_relation_paint_event_args.html#ac5a06f1c34756b008a7574a4b325e6be',1,'Braincase::GanttChart::RelationPaintEventArgs']]],
+  ['precedents',['Precedents',['../interface_braincase_1_1_gantt_chart_1_1_i_project_manager_3_01_t_00_01_r_01_4.html#ae4b47ae6c18a20f3de1b46c26ad67132',1,'Braincase.GanttChart.IProjectManager&lt; T, R &gt;.Precedents()'],['../class_braincase_1_1_gantt_chart_1_1_project_manager_3_01_t_00_01_r_01_4.html#adc1b03d4163fb94bf3ca43286369fcd7',1,'Braincase.GanttChart.ProjectManager&lt; T, R &gt;.Precedents()']]],
+  ['previouslocation',['PreviousLocation',['../class_braincase_1_1_gantt_chart_1_1_task_drag_drop_event_args.html#ae3afebf40a173ffd33d1fe50802cb371',1,'Braincase::GanttChart::TaskDragDropEventArgs']]],
+  ['projection',['Projection',['../interface_braincase_1_1_gantt_chart_1_1_i_viewport.html#a5058b133c9a360c776e06887f2279644',1,'Braincase.GanttChart.IViewport.Projection()'],['../class_braincase_1_1_gantt_chart_1_1_print_viewport.html#aab1a01dc5a89a0070db2797302359173',1,'Braincase.GanttChart.PrintViewport.Projection()'],['../class_braincase_1_1_gantt_chart_1_1_control_viewport.html#a99acfdad681fc43365e94bb142303cbf',1,'Braincase.GanttChart.ControlViewport.Projection()'],['../class_braincase_1_1_gantt_chart_1_1_image_viewport.html#a3c1906a7a0153c2acdc18b3468961f4e',1,'Braincase.GanttChart.ImageViewport.Projection()']]]
+];

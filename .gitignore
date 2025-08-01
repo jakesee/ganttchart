@@ -364,7 +364,6 @@ FodyWeavers.xsd
 *.sln.docstates
 
 # Generated documentation (keep source docs but ignore generated)
-docs/html/
 docs/doxygen_log.txt
 
 # AI/Copilot instructions
